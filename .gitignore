@@ -1,0 +1,12 @@
+# ignore .pyc files
+**/*.pyc
+
+#ignore pkl files
+**/*.pkl
+
+#ignore datasets
+**/data
+
+##ignore jetbrains directories
+**/venv
+**/.idea
