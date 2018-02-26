@@ -1,12 +1,20 @@
 # ignore .pyc files
 **/*.pyc
 
-#ignore pkl files
+# ignore pkl files
 **/*.pkl
 
-#ignore datasets
+# ignore datasets
 **/data
 
-##ignore jetbrains directories
+# ignore jetbrains directories
 **/venv
 **/.idea
+
+# ignore .t7 files
+**/*.t7
+
+# ignore .zip .tar .tar.gz files
+**/*.zip
+**/*.tar
+**/*.tar.gz
