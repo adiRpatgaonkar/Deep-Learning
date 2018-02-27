@@ -63,10 +63,14 @@ class CIFAR10():
             print("Creating data directory.")
             call(["mkdir", self.dir])
         os.chdir(os.getcwd() + '/' + self.dir)
+        # Download dataset
         if not os.path.isfile("cifar-10-python.tar.gz"):
             print('\n' + '-' * 20, '\nDownloading data ...\n' + '-' * 20)
             call(["wget", url])
-        elif (not os.path.isfile("data_batch_1"))\
+        else:
+            print('Dataset already downloaded.')
+        # Extract dataset
+        if (not os.path.isfile("data_batch_1"))\
         or (not os.path.isfile("data_batch_2"))\
         or (not os.path.isfile("data_batch_3"))\
         or (not os.path.isfile("data_batch_4"))\
