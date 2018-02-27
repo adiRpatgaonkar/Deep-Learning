@@ -17,6 +17,7 @@ import argsdo as do
 
 """
 TODO
+0. Batch normalization
 1. Optimize memory usage
 """
 # Set what to do

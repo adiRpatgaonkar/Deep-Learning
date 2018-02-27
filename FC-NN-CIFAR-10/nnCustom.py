@@ -16,14 +16,17 @@ if do.using_gpu and torch.cuda.is_available():
 else:
     dtype = torch.FloatTensor
 
-def feature_scale(data, data_size):
+def normalize(data, data_size):
     """ Normalizes the given data with mean and standard deviation """
-    data = data.view(data_size, -1)  # flatten 
+    data = data.view(data_size, -1)  # flatten
     mean = torch.mean(data, 1, keepdim=True)
     std_deviation = torch.std(data, 1, keepdim=True)  # print mean, std_deviation
     data = data - mean
     data = data / std_deviation
     return data
+
+def batch_norm():
+  pass
     
 def save_model(filename, nn_model):
     f = raw_input('Do you want to save the model? (y)es/(n)o: ').lower()
@@ -54,15 +57,20 @@ class ModelNN(object):
     """model class encapsulating torche all layers, functions, hyper parameters etc."""
 
     def __init__(self):
+        # Net structure
         self.net, self.layers, self.loss_history = "", [], []
         self.num_layers = 0
-        self.weights, self.biases, self.output = [], [], []
+        # Parameters
+        self.weights, self.biases, self.output, self.loss = [], [], [], 0
         self.grad_weights, self.grad_biases, self.grad_output = [], [], []
+        # Hyper parameters
         self.epochs = self.lr = self.decay_rate = 1
         self.reg = 1e-3  # regularization strength
-        self.loss = self.predictions = self.train_acc = self.test_acc = 0        
+        # Results
+        self.predictions = self.train_acc = self.test_acc = 0        
         self.optimum = {'Net': "", 'Loss':10, 'Epoch':0, 'Learning rate':self.lr, 'Weights':0, 
         'Biases':0, 'TrainAcc':self.train_acc, 'TestAcc':self.test_acc}
+        # Model status
         self.isTrain = False
 
     def add(self, lyrObj):
@@ -97,14 +105,14 @@ class ModelNN(object):
     def train(self, ipt, label):
         """ Fprop and Backprop to train """
         self.isTrain = True
-        ipt = feature_scale(ipt, ipt.size(0))
+        ipt = normalize(ipt, ipt.size(0))
         self.forward(ipt, label)
         self.backward(ipt, label)
         
     def test(self, ipt, target):
         """ Fprop to test torche model """
         self.isTrain = False
-        self.forward(feature_scale(ipt, ipt.size(0)), target)
+        self.forward(normalize(ipt, ipt.size(0)), target)
 
     def forward(self, ipt, label):
         """ Fprop for sequential NN layers """
