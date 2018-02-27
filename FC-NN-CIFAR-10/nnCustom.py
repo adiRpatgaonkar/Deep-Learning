@@ -1,9 +1,5 @@
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
 """
 Custom sequential neural network framework
-
-Created on torch Feb  8 17:51:22 2018
 
 @author: apatgao
 """

@@ -1,9 +1,5 @@
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
 """
 How to use the model?
-
-Created on Fri Feb 16 00:11:58 2018
 
 @author: apatgao
 """

@@ -1,8 +1,6 @@
 """ 
 Fetch, shuffle, normalize data set.
 
-Created on Fri Feb 16 00:11:58 2018
-
 @author: apatgao
 """
 # imports for system library

@@ -1,9 +1,5 @@
 """ 
-Using pickle data set CIFAR-10
-
-Friday 16 February 2018 05:02:12 PM IST 
-
-Created on Fri Feb 16 00:11:58 2018
+Using pickle data set CIFAR-10 
 
 @author: apatgao
 """
