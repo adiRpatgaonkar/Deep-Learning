@@ -13,22 +13,30 @@ import os, torch, numpy as np
 from termcolor import colored
 from subprocess import call
 # Custom imports
-import Dataset as dset, nnCustom as nnc, argsdo as do
+import argsdo as do
 
 """
 TODO
 1. Optimize memory usage
 """
+# Set what to do
 if (not do.model_load) and (not do.model_fit) and (not do.model_train) and (not do.model_test):
     print('Did nothing.')
     exit()
 call('clear', shell=True)
+# Setup GPU
 if do.using_gpu and torch.cuda.is_available():
-    torch.cuda.set_device(0) #  Subject to change
-    print('\nUsing GPU: %d' % torch.cuda.current_device())
+    if -1 < do.gpu_id < torch.cuda.device_count():
+        torch.cuda.set_device(do.gpu_id) #  Subject to change
+        print('\nUsing GPU: %d' % torch.cuda.current_device())
+    else:
+        print("Selected GPU %d does not exist." % do.gpu_id)
+        do.using_gpu = False
+        print('\nUsing CPU.')
 else:
     print('\nUsing CPU.')
-
+# Custom import & explore the dataset
+import Dataset as dset, nnCustom as nnc
 global train_dataset, test_dataset, images, labels, trainloader, testloader, optimizer # Global variables
 filename = 'optimum.pkl'
 
@@ -51,7 +59,7 @@ def main():
         print("\n+++++Model fitting+++++\n")
         train_dataset = dset.CIFAR10(directory='data/', download=True, train=True)  # Get data
         # Hyper parameters
-        model.epochs, model.lr = 10000, 0.2
+        model.epochs, model.lr = do.mfit_epochs, 0.2
         optimizer = nnc.Optimize(model)
         print("Learning rate: %.4f\n" % model.lr)
         fitting_loader = dset.data_loader(train_dataset.data, batch_size=dset.CIFAR10.batch_size, model_testing=True)
@@ -85,7 +93,7 @@ def main():
         if not do.model_fit:
             train_dataset = dset.CIFAR10(directory='data/', download=True, train=True)  # Get data
         # Hyper parameters
-        model.epochs, model.lr = 50, 0.08
+        model.epochs, model.lr = do.train_epochs, 0.08
         optimizer = nnc.Optimize(model)    
         print("\n# Stochastic gradient descent #")
         print("Learning rate: %.4f\n" % model.lr)
