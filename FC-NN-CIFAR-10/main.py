@@ -120,7 +120,7 @@ def main():
                 t = raw_input('Test a previously model? (y)es/(n)o: model? (y)es/(n)o: ').lower()
                 if t.lower() == 'y' or t.lower() == 'yes':
                     nnc.load_model(filename, model)
-        test_loader = dset.data_loader(test_dataset.data, batch_size=dset.test_size, shuffled=False)
+        test_loader = dset.data_loader(test_dataset.data, batch_size=dset.CIFAR10.test_size, shuffled=False)
         for images, labels in test_loader:
             if do.using_gpu:
                 images = images.cuda()

@@ -196,9 +196,9 @@ class ModelNN(object):
         if all_exp:
             for example in range(dset.CIFAR10.test_size):
                 print('Ground truth: (%d) %s || Predecition: (%d) %s || Confidence: %.2f %' %
-                      (target[example], dset.classes[int(target[example])], 
+                      (target[example], dset.CIFAR10.classes[int(target[example])], 
                       int(self.predictions[example]),
-                       dset.classes[int(self.predictions[example])], 
+                       dset.CIFAR10.classes[int(self.predictions[example])], 
                        self.output[-1][example] * 100))
         else:
             test_set = test_set.cpu()
@@ -209,10 +209,10 @@ class ModelNN(object):
                 if example < 0 or example >= dset.CIFAR10.test_size:
                     return
                 print('Ground truth: (%d) %s' % (int(target[example]), 
-                dset.classes[int(target[example])]))
+                dset.CIFAR10.classes[int(target[example])]))
                 plt.imshow(test_set[example])
                 plt.xlabel(str(int(self.predictions[example])) + ' : ' + 
-                dset.classes[int(self.predictions[example])])
+                dset.CIFAR10.classes[int(self.predictions[example])])
                 plt.ylabel('Confidence: ' + str(format(self.output[-1][example] * 100, '.2f')) + '%')
                 plt.show()
 
