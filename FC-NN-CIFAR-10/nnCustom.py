@@ -3,10 +3,12 @@ Custom sequential neural network framework
 
 @author: apatgao
 """
+# imports for system library
 from __future__ import print_function
 from numpy import nan
-import torch, matplotlib.pyplot as plt, math, pickle, argsdo as do
-import Dataset as dset
+import torch, matplotlib.pyplot as plt, math, pickle
+# Custom imports 
+import Dataset as dset, argsdo as do
 
 if do.using_gpu and torch.cuda.is_available():
     dtype = torch.cuda.FloatTensor

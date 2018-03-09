@@ -15,6 +15,7 @@ import argsdo as do
 TODO
 0. Batch normalization
 1. Optimize memory usage
+3. Data augmentation
 """
 # Set what to do
 if (not do.model_load) and (not do.model_fit) and (not do.model_train) and (not do.model_test):

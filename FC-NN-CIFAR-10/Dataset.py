@@ -44,7 +44,6 @@ class CIFAR10():
     classes = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
     
     def __init__(self, directory='.', download=False, train=False, test=False):
-        ## +++ Data info found here +++ ###
         self.data = []
         self.images = []
         self.labels = []
