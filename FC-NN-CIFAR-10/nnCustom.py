@@ -191,7 +191,7 @@ class ModelNN(object):
           plt.show()
         
 
-    def display_results(self, target, test_set=None, all_exp=False):
+    def inferences(self, target, test_set=None, all_exp=False):
         """ Display model results i.e. predictions on test set """
         if all_exp:
             for example in range(dset.CIFAR10.test_size):

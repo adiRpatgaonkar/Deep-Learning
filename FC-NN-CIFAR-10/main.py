@@ -144,8 +144,9 @@ def main():
         if len(model.loss_history) > 1:
             model.plot_loss(to_show=True)
         
+	# Inferences
         print('\n' + '-' * 15 + '\nViewing results\n' + '-' * 15)
-        model.display_results(labels, images)
+        model.inferences(labels, images)
         
         print('\n' + '-' * 7 + '\nExiting\n' + '-' * 7)
         

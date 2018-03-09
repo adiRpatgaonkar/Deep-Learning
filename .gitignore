@@ -18,3 +18,10 @@
 **/*.zip
 **/*.tar
 **/*.tar.gz
+
+# ignore .swp files
+**/*.swp
+
+# ignore .DS_Store files in macOS
+**/.DS_Store
+
