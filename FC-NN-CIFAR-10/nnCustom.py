@@ -4,6 +4,7 @@ Custom sequential neural network framework
 @author: apatgao
 """
 from __future__ import print_function
+from numpy import nan
 import torch, matplotlib.pyplot as plt, math, pickle, argsdo as do
 import Dataset as dset
 
@@ -171,6 +172,9 @@ class ModelNN(object):
         else:
             probs = -(torch.log(softmax) / torch.log(torch.Tensor([10]).type(dtype)))
             self.loss = torch.sum(probs) / dset.CIFAR10.test_size
+	if self.loss == nan:
+	    print('Loss is NaN\nExiting ...')
+	    sys.exit(1)
 
     def update_parameters(self):
         """ Bias and weight updates """
