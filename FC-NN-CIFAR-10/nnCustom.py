@@ -204,8 +204,6 @@ class ModelNN(object):
         plot(range(len(self.loss_history)), self.loss_history, linewidth=2.1)
         xlabel('Epochs')
         ylabel('Loss')
-        if to_show:
-            show()
 
     def inferences(self, target, test_set=None, all_exp=False):
         """ Display model results i.e. predictions on test set """
@@ -230,8 +228,6 @@ class ModelNN(object):
                 xlabel(str(int(self.predictions[example])) + ' : ' +
                        dset.CIFAR10.classes[int(self.predictions[example])])
                 ylabel('Confidence: ' + str(format(self.output[-1][example] * 100, '.2f')) + '%')
-                show()
-
 
 class LinearLayer(ModelNN):
     """Linear Layer class"""
