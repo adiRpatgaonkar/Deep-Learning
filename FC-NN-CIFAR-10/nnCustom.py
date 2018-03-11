@@ -15,12 +15,8 @@ from numpy import nan
 
 # Custom imports
 import Dataset as dset
-import argsdo as do
 
-if do.using_gpu and torch.cuda.is_available():
-    dtype = torch.cuda.FloatTensor
-else:
-    dtype = torch.FloatTensor
+dtype = torch.FloatTensor
 
 
 def normalize(data, data_size):
@@ -43,7 +39,7 @@ def save_model(filename, nn_model):
         f = open(filename, 'wb')
         print('\nSaving ...', end=" ")
         pickle.dump(nn_model.optimum, f)
-        print('done.')
+        print('Model saved as %s' % filename)
         f.close()
     else:
         print('Not saving model.')
@@ -67,6 +63,8 @@ class ModelNN(object):
     """model class encapsulating torche all layers, functions, hyper parameters etc."""
 
     def __init__(self):
+        # Model type
+        self.type = ""
         # Net structure
         self.net, self.layers, self.loss_history = "", [], []
         self.num_layers = 0
@@ -74,7 +72,8 @@ class ModelNN(object):
         self.weights, self.biases, self.output, self.loss = [], [], [], 0
         self.grad_weights, self.grad_biases, self.grad_output = [], [], []
         # Hyper parameters
-        self.epochs = self.lr = self.decay_rate = 1
+        self.lr_policy = ""
+        self.weights_decay = self.epochs = self.lr = self.decay_rate = 1
         self.reg = 1e-3  # regularization strength
         # Results
         self.predictions = self.train_acc = self.test_acc = 0
@@ -87,6 +86,7 @@ class ModelNN(object):
         """ Add layers, activations to the nn architecture """
         self.layers.append(layer_obj)
         if layer_obj.LayerName == 'Linear':
+            layer_obj.w *= self.weights_decay
             self.weights.append(layer_obj.w)
             self.biases.append(layer_obj.b)
             self.grad_weights.append(0)
@@ -185,8 +185,8 @@ class ModelNN(object):
         else:
             probs = -(torch.log(softmax) / torch.log(torch.Tensor([10]).type(dtype)))
             self.loss = torch.sum(probs) / dset.CIFAR10.test_size
-        if self.loss == nan:
-            print('Loss is NaN\nExiting ...')
+        if math.isnan(self.loss):
+            print('Loss is NaN\nExiting ...\n')
             sys.exit(1)
 
     def update_parameters(self):

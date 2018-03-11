@@ -25,3 +25,5 @@
 # ignore .DS_Store files in macOS
 **/.DS_Store
 
+# ignore buffer files
+**/*_buffer.py
