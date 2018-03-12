@@ -10,11 +10,18 @@ import Dataset as dset
 import nnCustom as nnc
 
 # Testing
-def test(model):
+def test(model, fitting_loader=None):
+    """ Evaluate model results on test/train set """
+    
     print("\n+++++++Testing+++++++\n")
-    test_dataset = dset.CIFAR10(directory='data/', download=True, test=True)  # Get data
-    optimizer = nnc.Optimize(model)
-    test_loader = dset.data_loader(test_dataset.data, batch_size=dset.CIFAR10.test_size, shuffled=False)
+    # Get data
+    if fitting_loader is None:
+        test_dataset = dset.CIFAR10(directory='data/', download=True, test=True)  
+        test_loader = dset.data_loader(test_dataset.data, batch_size=dset.CIFAR10.test_size, shuffled=False)
+    else:
+        test_dataset = dset.CIFAR10(directory='data/', download=True, train=True)
+        test_loader = fitting_loader
+        
     for images, labels in test_loader:
         if do.args.GPU:
             images = images.cuda()

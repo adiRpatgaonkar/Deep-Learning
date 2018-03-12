@@ -44,11 +44,8 @@ def save_model(filename, nn_model):
     else:
         print('Not saving model.')
 
-
 def load_model(filename, nn_model=None):
-    if nn_model is None:
-        print('\nChecking saved models ...')
-        return pickle.load(open(filename, 'rb'))
+    print('\nChecking saved models ...')
     print('\nLoading model from %s ...' % filename)
     t = pickle.load(open(filename, 'rb'))
     i = 0
@@ -57,6 +54,7 @@ def load_model(filename, nn_model=None):
             layer.w = t['Weights'][i]
             layer.b = t['Biases'][i]
             i += 1
+    return nn_model
 
 
 class ModelNN(object):
@@ -204,6 +202,7 @@ class ModelNN(object):
         plot(range(len(self.loss_history)), self.loss_history, linewidth=2.1)
         xlabel('Epochs')
         ylabel('Loss')
+        show()
 
     def inferences(self, target, test_set=None, all_exp=False):
         """ Display model results i.e. predictions on test set """

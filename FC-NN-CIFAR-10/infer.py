@@ -10,13 +10,19 @@ import do_stuff as do
 import Dataset as dset
 
 
-
-def inferences(model, all_exp=False):
-    """ Display model results i.e. predictions on test set """
-
+# Inference the model
+def inferences(model, fitting_loader=None, all_exp=False):
+    """ Display model results i.e. predictions on test/train set """
+    
+    print("\n+++++++Inference+++++++\n")
     # Get data
-    test_dataset = dset.CIFAR10(directory='data/', download=True, test=True)
-    infer_loader = dset.data_loader(test_dataset.data, batch_size=dset.CIFAR10.test_size, shuffled=False)
+    if fitting_loader is None:
+        test_dataset = dset.CIFAR10(directory='data/', download=True, test=True)
+        infer_loader = dset.data_loader(test_dataset.data, batch_size=dset.CIFAR10.test_size, shuffled=False)
+    else:
+        test_dataset = dset.CIFAR10(directory='data/', download=True, train=True)
+        infer_loader = fitting_loader
+        
     for images, ground_truths in infer_loader:
             if do.args.GPU:
                 images = images.cuda()

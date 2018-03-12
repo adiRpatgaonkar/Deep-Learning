@@ -7,41 +7,11 @@ import numpy as np
 import do_stuff as do
 import nnCustom as nnc
 import Dataset as dset
-
-
-def set_hyper_paramters(config):
-
-    with open(config, 'r') as f:
-        cfg = yaml.load(f)
-
-    model.type += cfg["MODEL"]["TYPE"]
-
-    model.weight_decay = cfg["SOLVER"]["WEIGHT_DECAY"]
-    model.reg = cfg["SOLVER"]["REG"]
-
-    model.lr = cfg["FIT"]["BASE_LR"]
-    model.lr_policy += cfg["FIT"]["LR_POLICY"]
-    model.decay_rate = cfg["FIT"]["DECAY_RATE"]
-    model.epochs = cfg["FIT"]["EPOCHS"]
-
-
-def create_model():
-    # Define the network
-    print('\n' + '+' * 16, '\nDefining network\n' + '+' * 16)
-    global model
-    model = nnc.ModelNN()
-    set_hyper_paramters(do.args.CFG)
-    model.add(nnc.LinearLayer(32 * 32 * 3, 1024))
-    model.add(nnc.Activation('ReLU'))
-    model.add(nnc.LinearLayer(1024, 512))
-    model.add(nnc.Activation('ReLU'))
-    model.add(nnc.LinearLayer(512, 10))
-    model.add(nnc.CeCriterion('Softmax'))
-    return model
+import create
 
 def fit():
 
-    model = create_model()
+    model = create.create_model()
 
     # Model fitting test
     print("\n+++++Model fitting+++++\n")
@@ -64,6 +34,10 @@ def fit():
         optimizer.time_decay(epoch, 0.0005)
         optimizer.set_optim_param(epoch)
     model.plot_loss()
+    if do.args.SAVE:
+        nnc.save_model('model_non_tested.pkl', model)
+    return model, fitting_loader
+    '''
     for images, labels in fitting_loader:
         if do.args.GPU:
             images = images.cuda()
@@ -73,6 +47,4 @@ def fit():
         (torch.mean((model.predictions == labels).float()) * 100)  # Training accuracy
     print("\nTraining accuracy = %.2f %%" % model.train_acc)
     model.loss_history = []
-
-    if do.args.SAVE:
-        nnc.save_model('model_non_tested.pkl', model)
+    '''
