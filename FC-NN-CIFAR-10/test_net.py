@@ -10,20 +10,20 @@ import Dataset as dset
 import nnCustom as nnc
 
 # Testing
-def test(model, fitting_loader=None):
+def test(model, fitting_loader=None, fitting=False):
     """ Evaluate model results on test/train set """
     
-    print("\n+++++++Testing+++++++\n")
+    print("\n+++++++     Testing     +++++++\n")
     # Get data
     if fitting_loader is None:
-        test_dataset = dset.CIFAR10(directory='data/', download=True, test=True)  
+        test_dataset = dset.CIFAR10(directory='data/cifar10/', download=True, test=True)  
         test_loader = dset.data_loader(test_dataset.data, batch_size=dset.CIFAR10.test_size, shuffled=False)
     else:
-        test_dataset = dset.CIFAR10(directory='data/', download=True, train=True)
+        test_dataset = dset.CIFAR10(directory='data/cifar10/', download=True, train=True)
         test_loader = fitting_loader
         
     for images, labels in test_loader:
-        if do.args.GPU:
+        if do.use_gpu:
             images = images.cuda()
         model.test(images, labels)
     labels = torch.from_numpy(np.array(labels))
@@ -34,13 +34,25 @@ def test(model, fitting_loader=None):
     print(colored('\nTesting accuracy:', 'green'), end="")
     print(" = %.2f %%" % model.test_acc)
     
-    if os.path.isfile('model_final.pkl'):
-        t = nnc.load_model('model_final.pkl')
-        print('Loss:', t['Loss'], '|', 'Testing accuracy:', t['TestAcc'], '%')
+    model.optimum['Tested'] = True
+    # Tested model status
+    print("\nModel status (current):")
+    print("{ Fitting tested:", model.optimum['Fitting tested'], "|", "Trained:", model.optimum['Trained'], "|", 
+          "Tested:", model.optimum['Tested'], "|", "Inferenced:", model.optimum['Inferenced'], "}")
+    print("{ Loss:", model.optimum['Loss'], "||", model.optimum['TestAcc'], "% }\n")
+    
+    # Comparison with saved models
+    if os.path.isfile('model.pkl'):
+        t = nnc.load_model('model.pkl')
+        print("\nModel status (previously saved):")
+        print("{ Fitting tested:", t['Fitting tested'], "|", "Trained:", t['Trained'], "|", 
+              "Tested:", t['Tested'], "|", "Inferenced:", t['Inferenced'], "}")
+        print("{ Loss:", t['Loss'], "||", "Testing accuracy:", t['TestAcc'], "% }\n")
         if t['TestAcc'] < model.test_acc:
-            print('\nThis is the best tested model.', end=" ")
+            print("\nThis is the best tested model.", end=" ")
         else:
-            print('\nBetter models exist.')
+            print("\nBetter models exist.")
     else:
-        print('No tested models exist.')
-    nnc.save_model('model_final.pkl', model)
+        print("No tested models exist.")
+            
+    nnc.save_model("model_final.pkl", model)

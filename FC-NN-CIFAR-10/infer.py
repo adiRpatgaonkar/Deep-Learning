@@ -14,17 +14,18 @@ import Dataset as dset
 def inferences(model, fitting_loader=None, all_exp=False):
     """ Display model results i.e. predictions on test/train set """
     
-    print("\n+++++++Inference+++++++\n")
+    print("\n+++++++     Inference     +++++++\n")
+
     # Get data
     if fitting_loader is None:
-        test_dataset = dset.CIFAR10(directory='data/', download=True, test=True)
+        test_dataset = dset.CIFAR10(directory='data/cifar10/', download=True, test=True)
         infer_loader = dset.data_loader(test_dataset.data, batch_size=dset.CIFAR10.test_size, shuffled=False)
     else:
-        test_dataset = dset.CIFAR10(directory='data/', download=True, train=True)
+        test_dataset = dset.CIFAR10(directory='data/cifar10/', download=True, train=True)
         infer_loader = fitting_loader
         
     for images, ground_truths in infer_loader:
-            if do.args.GPU:
+            if do.use_gpu:
                 images = images.cuda()
             model.test(images, ground_truths)
             ground_truths = torch.from_numpy(np.array(ground_truths))
@@ -42,7 +43,7 @@ def inferences(model, fitting_loader=None, all_exp=False):
         while True:
             example = input("Which test example? (0-9999): ")
             if example < 0 or example >= dset.CIFAR10.test_size:
-                return
+                break
             print('Ground truth: (%d) %s' % (int(ground_truths[example]),
                                              dset.CIFAR10.classes[int(ground_truths[example])]))
             imshow(images[example])
@@ -50,3 +51,13 @@ def inferences(model, fitting_loader=None, all_exp=False):
                    dset.CIFAR10.classes[int(model.predictions[example])])
             ylabel('Confidence: ' + str(format(model.output[-1][example] * 100, '.2f')) + '%')
             show()
+            
+    model.optimum['Inferenced'] = True
+    # Model status
+    print("\nModel status (current):")
+    print("{ Fitting tested:", model.optimum['Fitting tested'], "|", "Trained:", model.optimum['Trained'], "|", 
+          "Tested:", model.optimum['Tested'], "|", "Inferenced:", model.optimum['Inferenced'])
+    print("{ Loss:", model.optimum['Loss'], "||", model.optimum['TestAcc'], "% }\n")
+    
+    if do.args.SAVE:
+        nnc.save_model('model.pkl', model)

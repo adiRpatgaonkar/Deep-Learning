@@ -15,8 +15,7 @@ from numpy import nan
 
 # Custom imports
 import Dataset as dset
-
-dtype = torch.FloatTensor
+import init_setup as hw
 
 
 def normalize(data, data_size):
@@ -39,7 +38,7 @@ def save_model(filename, nn_model):
         f = open(filename, 'wb')
         print('\nSaving ...', end=" ")
         pickle.dump(nn_model.optimum, f)
-        print('Model saved as %s' % filename)
+        print('model saved as %s' % filename)
         f.close()
     else:
         print('Not saving model.')
@@ -47,6 +46,8 @@ def save_model(filename, nn_model):
 def load_model(filename, nn_model=None):
     print('\nChecking saved models ...')
     print('\nLoading model from %s ...' % filename)
+    if nn_model is None:
+        return pickle.load(open(filename, 'rb'))
     t = pickle.load(open(filename, 'rb'))
     i = 0
     for layer in nn_model.layers:
@@ -75,8 +76,9 @@ class ModelNN(object):
         self.reg = 1e-3  # regularization strength
         # Results
         self.predictions = self.train_acc = self.test_acc = 0
-        self.optimum = {'Net': "", 'Loss': 10, 'Epoch': 0, 'Learning rate': self.lr, 'Weights': 0,
-                        'Biases': 0, 'TrainAcc': self.train_acc, 'TestAcc': self.test_acc}
+        self.optimum = {'Trained': False, 'Fitting tested': False, 'Tested': False, 'Inferenced': False, 
+                        'Net': "", 'Loss': 10, 'Epoch': 0, 'Learning rate': self.lr, 'Weights': 0, 'Biases': 0, 
+                        'TrainAcc': self.train_acc, 'TestAcc': self.test_acc}
         # Model status
         self.isTrain = False
 
@@ -114,6 +116,8 @@ class ModelNN(object):
         """ Fprop and Backprop to train """
         self.isTrain = True
         ipt = normalize(ipt, ipt.size(0))
+        #print(type(ipt))
+        #print(hw.dtype)
         self.forward(ipt, label)
         self.backward(ipt, label)
 
@@ -172,7 +176,7 @@ class ModelNN(object):
     def cross_entropy_loss(self, softmax, targets):
         if self.isTrain:
             correct_log_probs = (-(torch.log(softmax[range(dset.CIFAR10.batch_size), targets])
-                                   / torch.log(torch.Tensor([10]).type(dtype))))
+                                   / torch.log(torch.Tensor([10]).type(hw.dtype))))
             # print correct_log_probs
             self.loss = torch.sum(correct_log_probs) / dset.CIFAR10.batch_size
             weights = self.parameters()
@@ -181,7 +185,7 @@ class ModelNN(object):
                 reg_loss += 0.5 * self.reg * torch.sum(w * w)
             self.loss += reg_loss
         else:
-            probs = -(torch.log(softmax) / torch.log(torch.Tensor([10]).type(dtype)))
+            probs = -(torch.log(softmax) / torch.log(torch.Tensor([10]).type(hw.dtype)))
             self.loss = torch.sum(probs) / dset.CIFAR10.test_size
         if math.isnan(self.loss):
             print('Loss is NaN\nExiting ...\n')
@@ -239,8 +243,8 @@ class LinearLayer(ModelNN):
         super(LinearLayer, self).__init__()
         self.ipt_neurons = num_ipt_neurons
         self.opt_neurons = num_opt_neurons
-        self.w = 0.01 * torch.rand(num_ipt_neurons, num_opt_neurons).type(dtype)
-        self.b = torch.zeros(1, num_opt_neurons).type(dtype)
+        self.w = 0.01 * torch.rand(num_ipt_neurons, num_opt_neurons).type(hw.dtype)
+        self.b = torch.zeros(1, num_opt_neurons).type(hw.dtype)
 
     def forward(self, ipt, target=None):
         #  if not dset.isTrain:

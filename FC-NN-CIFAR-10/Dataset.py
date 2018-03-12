@@ -87,7 +87,7 @@ class CIFAR10:
             call("rm -r cifar-10-batches-py", shell=True)
         else:
             print('\nDataset already downloaded and set up.\n')
-        os.chdir('..')
+        os.chdir('../../')
 
     def get_dataset(self, train=False, test=False):
         """ Obtains training or testing data from pickle files """
@@ -105,7 +105,7 @@ class CIFAR10:
             if train:
                 data_file = open('./' + self.dir + 'data_batch_' + str(batch + 1), 'rb')
             elif test:
-                data_file = open('./' + self.dir + 'test_batch', 'rb')
+                data_file = open('./'  + self.dir + 'test_batch', 'rb')
 
             tuples = pickle.load(data_file)
             data_file.close()
