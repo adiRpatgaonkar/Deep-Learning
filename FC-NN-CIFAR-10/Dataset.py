@@ -67,7 +67,8 @@ class CIFAR10:
         if not os.path.exists(self.dir):
             print("Creating data directory.")
             call(["mkdir", self.dir])
-        os.chdir(os.getcwd() + '/' + self.dir)
+	    call(["mkdir", self.dir + '/cifar10'])
+        os.chdir(os.getcwd() + '/' + self.dir + '/cifar10/')
         # Download dataset
         if not os.path.isfile("cifar-10-python.tar.gz"):
             print('\n' + '-' * 20, '\nDownloading data ...\n' + '-' * 20)
@@ -101,16 +102,18 @@ class CIFAR10:
             og_num_batches = 1
         og_batch_size = 10000
         self.labels = []
+
         for batch in range(og_num_batches):
             if train:
-                data_file = open('./' + self.dir + 'data_batch_' + str(batch + 1), 'rb')
+                data_file = open('./' + self.dir + '/cifar10/' + 'data_batch_' + str(batch + 1), 'rb')
             elif test:
-                data_file = open('./'  + self.dir + 'test_batch', 'rb')
+                data_file = open('./'  + self.dir + '/cifar10/' + 'test_batch', 'rb')
 
             tuples = pickle.load(data_file)
             data_file.close()
 
             image_data = tuples['data'].reshape(og_batch_size, 3, 32, 32).astype("uint8")
+
 
             if batch == 0:
                 self.images = torch.from_numpy(image_data).type(torch.FloatTensor)

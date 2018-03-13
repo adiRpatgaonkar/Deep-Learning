@@ -18,7 +18,7 @@ def train(fitting=False, model=None):
     # Training
     print("\n+++++     Training     +++++\n")
     # Get data
-    train_dataset = dset.CIFAR10(directory='data/cifar10/', download=True, train=True)
+    train_dataset = dset.CIFAR10(directory='data', download=True, train=True)
     # Optimizer
     optimizer = nnc.Optimize(model)
     print("\n# Stochastic gradient descent #")

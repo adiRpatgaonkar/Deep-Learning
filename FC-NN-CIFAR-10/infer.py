@@ -18,7 +18,7 @@ def inferences(model, fitting_loader=None, all_exp=False):
 
     # Get data
     if fitting_loader is None:
-        test_dataset = dset.CIFAR10(directory='data/cifar10/', download=True, test=True)
+        test_dataset = dset.CIFAR10(directory='data', download=True, test=True)
         infer_loader = dset.data_loader(test_dataset.data, batch_size=dset.CIFAR10.test_size, shuffled=False)
     else:
         test_dataset = dset.CIFAR10(directory='data/cifar10/', download=True, train=True)

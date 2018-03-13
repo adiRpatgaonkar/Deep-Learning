@@ -19,7 +19,7 @@ def fit(fitting=False, model=None):
     # Model fitting test
     print("\n+++++     Model fitting     +++++\n")
     # Get data
-    train_dataset = dset.CIFAR10(directory='data/cifar10/', download=True, train=True)  
+    train_dataset = dset.CIFAR10(directory='data', download=True, train=True)  
     optimizer = nnc.Optimize(model)
     print("Learning rate: %.4f\n" % model.lr)
     fitting_loader = dset.data_loader(train_dataset.data, batch_size=dset.CIFAR10.batch_size, model_testing=True)

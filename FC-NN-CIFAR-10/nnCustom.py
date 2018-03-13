@@ -35,8 +35,8 @@ def batch_norm():
 def save_model(filename, nn_model):
     f = raw_input('Do you want to save the model? (y)es/(n)o: ').lower()
     if f.lower() == 'y' or f.lower() == 'yes':
-        f = open(filename, 'wb')
         print('\nSaving ...', end=" ")
+        f = open(filename, 'wb')
         pickle.dump(nn_model.optimum, f)
         print('model saved as %s' % filename)
         f.close()
@@ -50,6 +50,7 @@ def load_model(filename, nn_model=None):
         return pickle.load(open(filename, 'rb'))
     t = pickle.load(open(filename, 'rb'))
     i = 0
+    nn_model.optimum = t
     for layer in nn_model.layers:
         if layer.LayerName == 'Linear':
             layer.w = t['Weights'][i]
@@ -77,7 +78,7 @@ class ModelNN(object):
         # Results
         self.predictions = self.train_acc = self.test_acc = 0
         self.optimum = {'Trained': False, 'Fitting tested': False, 'Tested': False, 'Inferenced': False, 
-                        'Net': "", 'Loss': 10, 'Epoch': 0, 'Learning rate': self.lr, 'Weights': 0, 'Biases': 0, 
+                        'Net': "", 'Loss': float("inf"), 'Epoch': 0, 'Learning rate': self.lr, 'Weights': 0, 'Biases': 0, 
                         'TrainAcc': self.train_acc, 'TestAcc': self.test_acc}
         # Model status
         self.isTrain = False
