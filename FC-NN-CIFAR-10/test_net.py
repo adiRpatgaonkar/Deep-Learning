@@ -13,7 +13,7 @@ import nnCustom as nnc
 def test(model, fitting_loader=None, fitting=False):
     """ Evaluate model results on test/train set """
     
-    print("\n+++++++     Testing     +++++++\n")
+    print("\n+++++++     TESTING     +++++++\n")
     # Get data
     if fitting_loader is None:
         test_dataset = dset.CIFAR10(directory='data', download=True, test=True)  
@@ -35,7 +35,8 @@ def test(model, fitting_loader=None, fitting=False):
     print(" = %.2f %%" % model.test_acc)
 
     # Tested model status
-    model.model_tested = model.optimum['Tested'] = True    
+    if do.args.TRAIN:
+        model.model_tested = model.optimum['Tested'] = True    
     print("\nModel status (current):")
     print("{ Fitting tested:", model.optimum['Fitting tested'], "|", "Trained:", model.optimum['Trained'], "|", 
           "Tested:", model.optimum['Tested'], "|", "Inferenced:", model.optimum['Inferenced'], "}")

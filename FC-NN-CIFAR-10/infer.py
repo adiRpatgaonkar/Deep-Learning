@@ -14,8 +14,8 @@ import Dataset as dset
 def inferences(model, fitting_loader=None, all_exp=False):
     """ Display model results i.e. predictions on test/train set """
     
-    print("\n+++++++     Inference     +++++++\n")
-
+    print("\n+++++++     INFERENCE     +++++++\n")
+    
     # Get data
     if fitting_loader is None:
         test_dataset = dset.CIFAR10(directory='data', download=True, test=True)
@@ -23,7 +23,8 @@ def inferences(model, fitting_loader=None, all_exp=False):
     else:
         test_dataset = dset.CIFAR10(directory='data/cifar10/', download=True, train=True)
         infer_loader = fitting_loader
-        
+    
+    print("Test accuracy:", model.optimum['TestAcc'], '%')    
     for images, ground_truths in infer_loader:
             if do.use_gpu:
                 images = images.cuda()

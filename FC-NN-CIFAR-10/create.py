@@ -9,7 +9,7 @@ import nnCustom as nnc
 
 def create_model():
     # Define the network
-    print('\n' + '+' * 16, '\nDefining network\n' + '+' * 16)
+    print('\n' + '+' * 20, '\nBuilding net & model\n' + '+' * 20)
     global model
     model = nnc.ModelNN()
     set_hyper_paramters(do.args.CFG, model)
@@ -22,7 +22,7 @@ def create_model():
     return model
 
 def set_hyper_paramters(config, model):
-
+    global cfg
     with open(config, 'r') as f:
         cfg = yaml.load(f)
 

@@ -11,18 +11,17 @@ import init_setup
 
 def main():
     
+    # Parse argments provided
     do.parse_arg()
-    
+    # Setup GPU or CPU
     init_setup.setup_hardware()
     
     global model
-
+    # Load or create new ?
     if do.args.LOAD:
         print('\nWorking with loaded model.\n')         
         if do.args.FIT:
-            fitting = True
-            model = create.create_model()
-            model = nnc.load_model(do.args.LOAD, model)
+            model = nnc.load_model(do.args.LOAD)
             print('Fitting net for loaded model')
             model, fitting_loader = fitting_net.fit(model)
             if do.args.TEST:
@@ -33,8 +32,7 @@ def main():
                 infer.inferences(model)
             do.args.FIT = False
         elif do.args.TRAIN:
-            model = create.create_model()
-            model = nnc.load_model(do.args.LOAD, model)
+            model = nnc.load_model(do.args.LOAD)
             print('Training net for loaded model')
             model = train_net.train(model)
             if do.args.TEST:
@@ -45,15 +43,11 @@ def main():
                 infer.inferences(model)
             do.args.TRAIN = False
         elif do.args.TEST:
-            model = create.create_model()
-            model = nnc.load_model(do.args.LOAD, model)
-            print(model.optimum)            
+            model = nnc.load_model(do.args.LOAD)
             print('Testing net for loaded model')
             test_net.test(model)
         elif do.args.INFER:
-            model = create.create_model()
-            model = nnc.load_model(do.args.LOAD, model)
-            print(model.optimum)            
+            model = nnc.load_model(do.args.LOAD)            
             print('Testing net for loaded model')
             infer.inferences(model)
                 
@@ -69,7 +63,7 @@ def main():
                 print('Inferencing model fitting:')
                 infer.inferences(model)
             do.args.FIT = False
-        if do.args.TRAIN:
+        elif do.args.TRAIN:
             print('Training net for new model')
             model = train_net.train()
             if do.args.TEST:
@@ -80,7 +74,9 @@ def main():
                 infer.inferences(model)        
             do.args.TRAIN = False
 
+    # Final goodbye
     print('\n' + '-' * 7 + '\nExiting\n' + '-' * 7)
+    # Clear cache, just to be sure. Unsure of function effectivity
     if do.use_gpu:
         torch.cuda.empty_cache()
 

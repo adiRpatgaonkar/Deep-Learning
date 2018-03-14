@@ -1,21 +1,22 @@
 from __future__ import print_function
 from termcolor import colored
-import torch
 import yaml
+import torch
+
 
 import do_stuff as do
 import nnCustom as nnc
 import Dataset as dset
 import create
-
-
+    
 def train(model=None):
 
     if model is None:
         model = create.create_model()
-         
+    
     # Training
-    print("\n+++++     Training     +++++\n")
+    print("\n+++++     TRAINING     +++++\n")
+    model.show_log()
     # Get data
     train_dataset = dset.CIFAR10(directory='data', download=True, train=True)
     # Optimizer
@@ -36,7 +37,9 @@ def train(model=None):
         model.loss_history.append(model.loss)
         optimizer.time_decay(epoch, 0.005)
         optimizer.set_optim_param(epoch)
-        
+    
+    model.plot_loss()
+    
     # Model status
     model.model_trained = model.optimum['Trained'] = True        
     print("\nModel status:")
