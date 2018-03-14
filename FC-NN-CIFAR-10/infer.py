@@ -51,13 +51,21 @@ def inferences(model, fitting_loader=None, all_exp=False):
                    dset.CIFAR10.classes[int(model.predictions[example])])
             ylabel('Confidence: ' + str(format(model.output[-1][example] * 100, '.2f')) + '%')
             show()
-            
-    model.optimum['Inferenced'] = True
+    
+    model.set_logs()        
     # Model status
+    model.model_infered = model.optimum['Inferenced'] = True    
     print("\nModel status (current):")
     print("{ Fitting tested:", model.optimum['Fitting tested'], "|", "Trained:", model.optimum['Trained'], "|", 
           "Tested:", model.optimum['Tested'], "|", "Inferenced:", model.optimum['Inferenced'])
     print("{ Loss:", model.optimum['Loss'], "||", model.optimum['TestAcc'], "% }\n")
     
+    # Saving inferenced model    
     if do.args.SAVE:
         nnc.save_model('model.pkl', model)
+    else:
+        f = raw_input('Do you want to save the model? (y)es/(n)o: ').lower()
+        if f.lower() == 'y' or f.lower() == 'yes':
+            nnc.save_model('model.pkl', model)
+        else:
+            print('Not saving model.')

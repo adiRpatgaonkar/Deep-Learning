@@ -34,26 +34,35 @@ def test(model, fitting_loader=None, fitting=False):
     print(colored('\nTesting accuracy:', 'green'), end="")
     print(" = %.2f %%" % model.test_acc)
 
-    model.optimum['Tested'] = True
     # Tested model status
+    model.model_tested = model.optimum['Tested'] = True    
     print("\nModel status (current):")
     print("{ Fitting tested:", model.optimum['Fitting tested'], "|", "Trained:", model.optimum['Trained'], "|", 
           "Tested:", model.optimum['Tested'], "|", "Inferenced:", model.optimum['Inferenced'], "}")
     print("{ Loss:", model.optimum['Loss'], "||", model.optimum['TestAcc'], "% }\n")
     
     # Comparison with saved models
-    if not do.args.LOAD:
-        if os.path.isfile('model.pkl'):
-            t = nnc.load_model('model.pkl')
-            print("\nModel status (previously saved):")
-            print("{ Fitting tested:", t['Fitting tested'], "|", "Trained:", t['Trained'], "|", 
-              "Tested:", t['Tested'], "|", "Inferenced:", t['Inferenced'], "}")
-            print("{ Loss:", t['Loss'], "||", "Testing accuracy:", t['TestAcc'], "% }\n")
-            if t['TestAcc'] < model.test_acc:
-                print("\nThis is the best tested model.", end=" ")
-            else:
-                print("\nBetter models exist.")
+#    if not do.args.LOAD:
+#        if os.path.isfile('model.pkl'):
+#            t = nnc.load_model('model.pkl')
+#            print("\nModel status (previously saved):")
+#            print("{ Fitting tested:", t['Fitting tested'], "|", "Trained:", t['Trained'], "|", 
+#              "Tested:", t['Tested'], "|", "Inferenced:", t['Inferenced'], "}")
+#            print("{ Loss:", t['Loss'], "||", "Testing accuracy:", t['TestAcc'], "% }\n")
+#            if t['TestAcc'] < model.test_acc:
+#                print("\nThis is the best tested model.", end=" ")
+#            else:
+#                print("\nBetter models exist.")
+#        else:
+#            print("No tested models exist.")
+
+    model.set_logs()
+    # Saving tested model
+    if do.args.SAVE:
+        nnc.save_model('model.pkl', model)
+    else:
+        f = raw_input('Do you want to save the model? (y)es/(n)o: ').lower()
+        if f.lower() == 'y' or f.lower() == 'yes':
+            nnc.save_model('model.pkl', model)
         else:
-            print("No tested models exist.")
-    if do.args.SAVE:    
-        nnc.save_model("model.pkl", model)
+            print('Not saving model.')

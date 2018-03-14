@@ -26,9 +26,9 @@ def set_hyper_paramters(config, model):
     with open(config, 'r') as f:
         cfg = yaml.load(f)
 
-    model.type += cfg["MODEL"]["TYPE"]
+    model.model_type += cfg["MODEL"]["TYPE"]
    
-    model.weight_decay = cfg["SOLVER"]["WEIGHT_DECAY"]
+    model.weights_decay = cfg["SOLVER"]["WEIGHT_DECAY"]
     model.reg = cfg["SOLVER"]["REG"]
     if do.args.FIT:
         model.lr = cfg["FIT"]["BASE_LR"]

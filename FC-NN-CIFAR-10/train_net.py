@@ -9,12 +9,11 @@ import Dataset as dset
 import create
 
 
-def train(fitting=False, model=None):
+def train(model=None):
 
     if model is None:
         model = create.create_model()
-    if fitting:
-        model.optimum['Fitting tested'] = True         
+         
     # Training
     print("\n+++++     Training     +++++\n")
     # Get data
@@ -38,14 +37,22 @@ def train(fitting=False, model=None):
         optimizer.time_decay(epoch, 0.005)
         optimizer.set_optim_param(epoch)
         
-    model.optimum['Trained'] = True
     # Model status
+    model.model_trained = model.optimum['Trained'] = True        
     print("\nModel status:")
     print("{ Fitting tested:", model.optimum['Fitting tested'], "|", "Trained:", model.optimum['Trained'], "|", 
           "Tested:", model.optimum['Tested'], "|", "Inferenced:", model.optimum['Inferenced'], "}")
     print("{ Loss:", model.optimum['Loss'], "}\n")
     
+    model.set_logs()        
+    # Saving trained model    
     if do.args.SAVE:
         nnc.save_model('model.pkl', model)
+    else:
+        f = raw_input('Do you want to save the model? (y)es/(n)o: ').lower()
+        if f.lower() == 'y' or f.lower() == 'yes':
+            nnc.save_model('model.pkl', model)
+        else:
+            print('Not saving model.')
 
     return model

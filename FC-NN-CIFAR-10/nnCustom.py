@@ -33,24 +33,20 @@ def batch_norm():
 
 
 def save_model(filename, nn_model):
-    f = raw_input('Do you want to save the model? (y)es/(n)o: ').lower()
-    if f.lower() == 'y' or f.lower() == 'yes':
-        print('\nSaving ...', end=" ")
-        f = open(filename, 'wb')
-        pickle.dump(nn_model.optimum, f)
-        print('model saved as %s' % filename)
-        f.close()
-    else:
-        print('Not saving model.')
+    
+    print('\nSaving ...', end=" ")
+    f = open(filename, 'wb')
+    pickle.dump(nn_model.optimum, f)
+    print('model saved as %s' % filename)
+    f.close()
 
-def load_model(filename, nn_model=None):
+def load_model(filename):
     print('\nChecking saved models ...')
     print('\nLoading model from %s ...' % filename)
-    if nn_model is None:
-        return pickle.load(open(filename, 'rb'))
     t = pickle.load(open(filename, 'rb'))
     i = 0
     nn_model.optimum = t
+    nn_model.get_logs()    
     for layer in nn_model.layers:
         if layer.LayerName == 'Linear':
             layer.w = t['Weights'][i]
@@ -63,8 +59,10 @@ class ModelNN(object):
     """model class encapsulating torche all layers, functions, hyper parameters etc."""
 
     def __init__(self):
+        # Model status
+        self.model_fitted = self.model_trained = self.model_tested = self.model_infered = False
         # Model type
-        self.type = ""
+        self.model_type = ""
         # Net structure
         self.net, self.layers, self.loss_history = "", [], []
         self.num_layers = 0
@@ -77,9 +75,12 @@ class ModelNN(object):
         self.reg = 1e-3  # regularization strength
         # Results
         self.predictions = self.train_acc = self.test_acc = 0
-        self.optimum = {'Trained': False, 'Fitting tested': False, 'Tested': False, 'Inferenced': False, 
-                        'Net': "", 'Loss': float("inf"), 'Epoch': 0, 'Learning rate': self.lr, 'Weights': 0, 'Biases': 0, 
-                        'TrainAcc': self.train_acc, 'TestAcc': self.test_acc}
+        self.optimum = {'Fitting tested': self.model_fitted, 'Trained': self.model_trained, 'Tested': self.model_tested, 'Inferenced': self.model_infered, 
+                        'Model type': self.model_type, 'Net': self.net, 'Num layers': self.num_layers,'Layer objs': self.layers,  
+                        'Weights': 0, 'Biases': 0, 
+                        'Max epochs': self.epochs, 'Epoch': 0, 'Learning rate': self.lr, 'L.R. policy': self.lr_policy,
+                        'Weights decay': self.weights_decay, 'L.R. decay': self.decay_rate, 'Reg': self.reg,
+                        'Loss': float("inf"), 'TrainAcc': self.train_acc, 'TestAcc': self.test_acc}
         # Model status
         self.isTrain = False
 
@@ -109,7 +110,7 @@ class ModelNN(object):
                 self.net += '(' + l.classifier + ')'
             self.net += '-->\n'
         self.net += '}'
-        self.optimum['Net'] = self.net
+        self.optimum['Net'] += self.net
 
         print(self.net)
 
@@ -202,6 +203,23 @@ class ModelNN(object):
     def parameters(self):
         return [self.weights, self.biases]
 
+    def set_logs(self):
+        # Save other model params too
+        self.optimum['Model type'], self.optimum['Num layers'], self.optimum['Layer objs'], \
+        self.optimum['Max epochs'], self.optimum['L.R. policy'], self.optimum['Weights decay'], \
+        self.optimum['L.R. decay'], self.optimum['Reg'] = \
+        self.model_type, self.num_layers, self.layers, \
+        self.epochs, self.lr_policy, self.weights_decay, \
+        self.decay_rate, self.reg
+                
+    def get_logs(self):
+        self.model_type, self.num_layers, self.layers, \
+        self.epochs, self.lr_policy, self.weights_decay, \
+        self.decay_rate, self.reg = \
+        self.optimum['Model type'], self.optimum['Num layers'], self.optimum['Layer objs'], \
+        self.optimum['Max epochs'], self.optimum['L.R. policy'], self.optimum['Weights decay'], \
+        self.optimum['L.R. decay'], self.optimum['Reg']            
+        
     def plot_loss(self, to_show=False):
         """ Plot gradient descent curve """
         plot(range(len(self.loss_history)), self.loss_history, linewidth=2.1)
@@ -244,7 +262,7 @@ class LinearLayer(ModelNN):
         super(LinearLayer, self).__init__()
         self.ipt_neurons = num_ipt_neurons
         self.opt_neurons = num_opt_neurons
-        self.w = 0.01 * torch.rand(num_ipt_neurons, num_opt_neurons).type(hw.dtype)
+        self.w = torch.rand(num_ipt_neurons, num_opt_neurons).type(hw.dtype)
         self.b = torch.zeros(1, num_opt_neurons).type(hw.dtype)
 
     def forward(self, ipt, target=None):
@@ -345,6 +363,16 @@ class Optimize:
             # Set optimum parameters
             self.nn_alias.weights, self.nn_alias.biases = \
                 (self.nn_alias.optimum['Weights'], self.nn_alias.optimum['Biases'])
+
+            '''
+            self.optimum = {'Trained': False, 'Fitting tested': False, 'Tested': False, 'Inferenced': False, 
+                        'Model type': self.model_type, 'Net': self.net, 'Num layers': self.num_layers,'Layer objs': self.layers,  
+                        'Weights': 0, 'Biases': 0, 
+                        'Max epochs': self.epochs, 'Epoch': 0, 'Learning rate': self.lr, 'L.R. policy': self.lr_policy,
+                        'Weights decay': self.weights_decay, 'L.R. decay': self.decay_rate, 'Reg': self.reg,
+                        'Loss': float("inf"), 'TrainAcc': self.train_acc, 'TestAcc': self.test_acc}
+            '''
+            # Print least loss
             print("\nOptimum loss in %d epochs is: %f" %
                   (self.nn_alias.epochs, self.nn_alias.optimum['Loss']))
 

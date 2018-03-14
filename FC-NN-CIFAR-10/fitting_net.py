@@ -9,12 +9,10 @@ import nnCustom as nnc
 import Dataset as dset
 import create
 
-def fit(fitting=False, model=None):
+def fit(model=None):
 
     if model is None:
         model = create.create_model()
-    if fitting:
-        model.optimum['Fitting tested'] = True
           
     # Model fitting test
     print("\n+++++     Model fitting     +++++\n")
@@ -40,13 +38,22 @@ def fit(fitting=False, model=None):
         
     model.plot_loss()
         
-    model.optimum['Fitting tested'] = True    
     # Model status
+    model.model_fitted = model.optimum['Fitting tested'] = True        
     print("\nModel status:")
     print("{ Fitting tested:", model.optimum['Fitting tested'], "|", "Trained:", model.optimum['Trained'], "|", 
           "Tested:", model.optimum['Tested'], "|", "Inferenced:", model.optimum['Inferenced'], "}\n")
     print("{ Loss:", model.optimum['Loss'], "}\n")
+    
+    model.set_logs()    
+    # Saving fitted model    
     if do.args.SAVE:
         nnc.save_model('model.pkl', model)
+    else:
+        f = raw_input('Do you want to save the model? (y)es/(n)o: ').lower()
+        if f.lower() == 'y' or f.lower() == 'yes':
+            nnc.save_model('model.pkl', model)
+        else:
+            print('Not saving model.')                                
         
     return model, fitting_loader

@@ -16,8 +16,7 @@ def main():
     init_setup.setup_hardware()
     
     global model
-    global fitting
-    fitting = None
+
     if do.args.LOAD:
         print('\nWorking with loaded model.\n')         
         if do.args.FIT:
@@ -37,7 +36,7 @@ def main():
             model = create.create_model()
             model = nnc.load_model(do.args.LOAD, model)
             print('Training net for loaded model')
-            model = train_net.train(fitting, model)
+            model = train_net.train(model)
             if do.args.TEST:
                 print('Testing trained model:')
                 test_net.test(model)
@@ -48,18 +47,19 @@ def main():
         elif do.args.TEST:
             model = create.create_model()
             model = nnc.load_model(do.args.LOAD, model)
+            print(model.optimum)            
             print('Testing net for loaded model')
             test_net.test(model)
         elif do.args.INFER:
             model = create.create_model()
             model = nnc.load_model(do.args.LOAD, model)
+            print(model.optimum)            
             print('Testing net for loaded model')
             infer.inferences(model)
                 
     elif do.args.NEW:
         print('\nWorking with new model.\n')
         if do.args.FIT:
-            fitting = True
             print('Fitting net for new model')
             model, fitting_loader = fitting_net.fit()
             if do.args.TEST:
@@ -71,7 +71,7 @@ def main():
             do.args.FIT = False
         if do.args.TRAIN:
             print('Training net for new model')
-            model = train_net.train(fitting)
+            model = train_net.train()
             if do.args.TEST:
                 print('Testing trained model:')
                 test_net.test(model)
