@@ -14,6 +14,7 @@ def test(model, fitting_loader=None, fitting=False):
     """ Evaluate model results on test/train set """
     
     print("\n+++++++     TESTING     +++++++\n")
+    model.show_log(test=True)
     # Get data
     if fitting_loader is None:
         test_dataset = dset.CIFAR10(directory='data', download=True, test=True)  

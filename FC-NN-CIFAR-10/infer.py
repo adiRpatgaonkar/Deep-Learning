@@ -15,7 +15,7 @@ def inferences(model, fitting_loader=None, all_exp=False):
     """ Display model results i.e. predictions on test/train set """
     
     print("\n+++++++     INFERENCE     +++++++\n")
-    
+    model.show_log(infer=True)
     # Get data
     if fitting_loader is None:
         test_dataset = dset.CIFAR10(directory='data', download=True, test=True)

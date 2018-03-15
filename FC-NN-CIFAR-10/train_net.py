@@ -8,15 +8,14 @@ import do_stuff as do
 import nnCustom as nnc
 import Dataset as dset
 import create
-    
+# Training
 def train(model=None):
 
     if model is None:
         model = create.create_model()
     
-    # Training
     print("\n+++++     TRAINING     +++++\n")
-    model.show_log()
+    model.show_log(arch=True, train=True)
     # Get data
     train_dataset = dset.CIFAR10(directory='data', download=True, train=True)
     # Optimizer

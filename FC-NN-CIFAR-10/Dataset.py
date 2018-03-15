@@ -67,7 +67,7 @@ class CIFAR10:
         if not os.path.exists(self.dir):
             print("Creating data directory.")
             call(["mkdir", self.dir])
-	    call(["mkdir", self.dir + '/cifar10'])
+            call(["mkdir", self.dir + '/cifar10'])
         os.chdir(os.getcwd() + '/' + self.dir + '/cifar10/')
         # Download dataset
         if not os.path.isfile("cifar-10-python.tar.gz"):
@@ -87,7 +87,7 @@ class CIFAR10:
             call("mv cifar-10-batches-py/* .", shell=True)
             call("rm -r cifar-10-batches-py", shell=True)
         else:
-            print('\nDataset already downloaded and set up.\n')
+            print('\nDataset already set up.\n')
         os.chdir('../../')
 
     def get_dataset(self, train=False, test=False):

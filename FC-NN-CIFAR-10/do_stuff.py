@@ -21,7 +21,6 @@ def parse_arg():
     # Save the trained model
     parser.add_argument(
         "--SAVE",
-        default='model.pkl',
         metavar='model file',
         type=str  ,
         help="Save the trained model (pickle file only)"
@@ -29,7 +28,6 @@ def parse_arg():
     # Load pre-trained model
     parser.add_argument(
         "--LOAD",
-        default='model.pkl',
         metavar='model file', 
         type=str, 
         help="Load a pre-trained model"

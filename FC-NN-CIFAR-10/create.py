@@ -31,13 +31,19 @@ def set_hyper_paramters(config, model):
     model.weights_decay = cfg["SOLVER"]["WEIGHT_DECAY"]
     model.reg = cfg["SOLVER"]["REG"]
     if do.args.FIT:
+        model.data_set = cfg["FIT"]["DATASET"]
         model.lr = cfg["FIT"]["BASE_LR"]
         model.lr_policy += cfg["FIT"]["LR_POLICY"]
         model.decay_rate = cfg["FIT"]["DECAY_RATE"]
         model.epochs = cfg["FIT"]["EPOCHS"]
     elif do.args.TRAIN:
+        model.data_set = cfg["TRAIN"]["DATASET"]
         model.lr = cfg["TRAIN"]["BASE_LR"]
         model.lr_policy += cfg["TRAIN"]["LR_POLICY"]
         model.decay_rate = cfg["TRAIN"]["DECAY_RATE"]
         model.epochs = cfg["TRAIN"]["EPOCHS"]
+    if do.args.TEST:
+        model.data_set = cfg["TEST"]["DATASET"]
+    if do.args.INFER:
+        model.data_set = cfg["TEST"]["DATASET"]
     return

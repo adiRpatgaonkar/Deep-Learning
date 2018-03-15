@@ -5,7 +5,9 @@ Custom sequential neural network framework
 """
 # imports for system library
 from __future__ import print_function
+from subprocess import call
 
+import os
 import math
 import pickle
 import sys
@@ -19,6 +21,8 @@ import Dataset as dset
 import init_setup as hw
 import create
 
+# Some global vars
+global model
 
 def normalize(data, data_size):
     """ Normalizes the given data with mean and standard deviation """
@@ -32,20 +36,30 @@ def normalize(data, data_size):
 def batch_norm():
     pass
 
-def save_model(filename, nn_model):
+global saved_model_dir
+def save_model(filename, model): 
+    saved_model_dir = 'outputs/models/'
+    if not os.path.exists(saved_model_dir):
+        print("Creating outputs/models/ directory")    
+        call("mkdir outputs && mkdir outputs/models", shell=True)   
     """ Save the status dictionary """
     print('\nSaving ...', end=" ")
-    f = open(filename, 'wb')
-    pickle.dump(nn_model.optimum, f)
-    print('model saved as %s' % filename)
+    f = open(saved_model_dir + filename, 'wb')
+    pickle.dump(model.optimum, f)
+    print('model saved as %s' % saved_model_dir + filename)
     f.close()
 
 def load_model(filename):
     """ Load model dictionary and rebuild the model """
     print('\nChecking saved models ...')
-    print('\nLoading status dictionary from %s ...' % filename)
+    print('\nLoading status dictionary from %s ...' % saved_model_dir + filename)
     # Get the saved log (status dictionary)
-    t = pickle.load(open(filename, 'rb'))
+    if os.path.isfile(saved_model_dir + filename):
+        t = pickle.load(open(saved_model_dir + filename, 'rb'))
+    else:
+        print("Model file not found.")
+        sys.exit(1)
+
     # Create a model
     model = create.create_model()
     # Give the status dictionary to the created net
@@ -65,7 +79,7 @@ class ModelNN(object):
         # Model type
         self.model_type = ""
         # Net structure
-        self.net, self.layers, self.loss_history = "", [], []
+        self.arch, self.layers, self.loss_history = "", [], []
         self.num_layers = 0
         # Parameters
         self.weights, self.biases, self.output, self.loss = [], [], [], 0
@@ -76,8 +90,9 @@ class ModelNN(object):
         self.reg = 1e-3  # regularization strength
         # Results
         self.predictions = self.train_acc = self.test_acc = 0
+        self.data_set = ""
         self.optimum = {'Fitting tested': self.model_fitted, 'Trained': self.model_trained, 'Tested': self.model_tested, 'Inferenced': self.model_infered, 
-                        'Model type': self.model_type, 'Net': self.net, 'Num layers': self.num_layers,'Layer objs': self.layers,  
+                        'Model type': self.model_type, 'Arch': self.arch, 'Num layers': self.num_layers,'Layer objs': self.layers,  
                         'Weights': 0, 'Biases': 0, 
                         'Max epochs': self.epochs, 'Epoch': 0, 'Learning rate': self.lr, 'L.R. policy': self.lr_policy,
                         'Weights decay': self.weights_decay, 'L.R. decay': self.decay_rate, 'Reg': self.reg,
@@ -85,16 +100,27 @@ class ModelNN(object):
         # Model mode
         self.isTrain = False
         
-    def show_log(self):
-        if do.args.FIT:
+    def show_log(self, arch=False, fit=False, train=False, test=False, infer=False):
+        if arch:
+            self.show_arch()
+        if fit:
             print('FIT {', end="\n ")
-        elif do.args.TRAIN:
+        elif train:
             print('TRAIN {', end="\n ")
-            
-        print('TYPE:', self.model_type, '\n', 'NUM-LAYERS:', self.num_layers, '\n', 
-              'EPOCHS:', self.epochs, '\n', 'L.R.:', self.lr, '\n',  
-              'LR-POLICY:', self.lr_policy, '\n', 'WEIGHTS-DECAY:', self.weights_decay, '\n', 
-              'DECAY-RATE:', self.decay_rate, '\n', 'REG-STRENGTH:', self.reg, '\n', 'LOSS:', self.optimum['Loss'], end=" }\n\n")
+        elif test:
+            print('TEST', end=" ")
+            print('( DATASET: %s )' % self.data_set)
+            return
+        elif infer:
+            print('INFER', END=" ")
+            print('( DATASET: %s )' % self.data_set)
+            return
+        if fit or train:
+            print('( DATASET: %s )' % self.data_set, end="\n ")
+            print('TYPE:', self.model_type, '\n', 'NUM-LAYERS:', self.num_layers, '\n', 
+                  'EPOCHS:', self.epochs, '\n', 'L.R.:', self.lr, '\n',  
+                  'LR-POLICY:', self.lr_policy, '\n', 'WEIGHTS-DECAY:', self.weights_decay, '\n', 
+                  'DECAY-RATE:', self.decay_rate, '\n', 'REG-STRENGTH:', self.reg, '\n', 'LOSS:', self.optimum['Loss'], end=" }\n\n")
     
     def update_parameters(self):
         """ Bias and weight updates """
@@ -109,18 +135,18 @@ class ModelNN(object):
     def set_logs(self):
         """"""
         # Save other model params too (constant params; variable params are stored in set_optim_param)
-        self.optimum['Model type'], self.optimum['Num layers'], self.optimum['Layer objs'], \
-        self.optimum['Max epochs'], self.optimum['L.R. policy'], self.optimum['Weights decay'], \
-        self.optimum['L.R. decay'], self.optimum['Reg'] = \
+        self.optimum['Model type'], self.optimum['Num layers'], self.optimum['Arch'], \
+        self.optimum['Layer objs'], self.optimum['Max epochs'], self.optimum['L.R. policy'], \
+        self.optimum['Weights decay'], self.optimum['L.R. decay'], self.optimum['Reg'] = \
         self.model_type, self.num_layers, self.layers, \
-        self.epochs, self.lr_policy, self.weights_decay, \
-        self.decay_rate, self.reg
+        self.arch, self.epochs, self.lr_policy, \
+        self.weights_decay, self.decay_rate, self.reg
                 
     def get_logs(self):
         """ Rebuilding model while loading the status dictionary """
         # NOTE: L.R. has been set to the last L.R. in the latest training round
-        self.num_layers, self.layers, self.lr, self.decay_rate = (
-        self.optimum['Num layers'], self.optimum['Layer objs'], \
+        self.arch, self.num_layers, self.layers, self.lr, self.decay_rate = (
+       self.optimum['Arch'], self.optimum['Num layers'], self.optimum['Layer objs'], \
         self.optimum['Learning rate'], self.optimum['L.R. decay'])
         self.model_type = create.cfg["MODEL"]["TYPE"]
         self.weights_decay = create.cfg["SOLVER"]["WEIGHT_DECAY"]
@@ -160,23 +186,24 @@ class ModelNN(object):
         self.output.append(0)
         self.grad_output.append(0)
         self.num_layers += 1
+        self.patch_arch(layer_obj)
 
-    def show_net(self):
+    def patch_arch(self, l): 
+        self.arch += str(self.num_layers) + ': ' + l.LayerName
+        if l.LayerName == 'Linear':
+            self.arch += '(' + str(l.ipt_neurons) + 'x' + str(l.opt_neurons) + ')'
+        elif l.LayerName == 'Activation':
+            self.arch += '(' + l.activation + ')'
+        elif l.LayerName == 'Criterion':
+            self.arch += '(' + l.classifier + ')'
+        self.arch += '-->\n'
+        self.optimum['Arch'] += self.arch
+
+    def show_arch(self):
         print('\nNet arch:', end=" ")
-        self.net += '{\n'
-        for i, l in enumerate(self.layers):
-            self.net += str(i) + ': ' + l.LayerName
-            if l.LayerName == 'Linear':
-                self.net += '(' + str(l.ipt_neurons) + 'x' + str(l.opt_neurons) + ')'
-            elif l.LayerName == 'Activation':
-                self.net += '(' + l.activation + ')'
-            elif l.LayerName == 'Criterion':
-                self.net += '(' + l.classifier + ')'
-            self.net += '-->\n'
-        self.net += '}'
-        self.optimum['Net'] += self.net
-
-        print(self.net)
+        print('{')
+        print(self.arch, end="")
+        print('\t  }')
 
     def train(self, ipt, label):
         """ Fprop and Backprop to train """
