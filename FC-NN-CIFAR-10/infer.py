@@ -1,38 +1,40 @@
 """Inference code for saved models"""
 
 from __future__ import print_function
-from matplotlib.pyplot import ylabel, imshow, plot, show, xlabel
+
 import numpy as np
 import torch
+from matplotlib.pyplot import ylabel, imshow, show, xlabel
 
-import nnCustom as nnc
-import do_stuff as do
 import Dataset as dset
+import do_stuff as do
+import nnCustom as nnc
 
 
 # Inference the model
 def inferences(model, fitting_loader=None, all_exp=False):
     """ Display model results i.e. predictions on test/train set """
-    
+    args = do.arguments()
+
+    global images
     print("\n+++++++     INFERENCE     +++++++\n")
     model.show_log(infer=True)
     # Get data
+    test_dataset = dset.CIFAR10(directory='data/cifar10/', download=True, test=True)
     if fitting_loader is None:
-        test_dataset = dset.CIFAR10(directory='data', download=True, test=True)
         infer_loader = dset.data_loader(test_dataset.data, batch_size=dset.CIFAR10.test_size, shuffled=False)
     else:
-        test_dataset = dset.CIFAR10(directory='data/cifar10/', download=True, train=True)
         infer_loader = fitting_loader
     
     print("Test accuracy:", model.optimum['TestAcc'], '%')    
     for images, ground_truths in infer_loader:
-            if do.use_gpu:
-                images = images.cuda()
-            model.test(images, ground_truths)
-            ground_truths = torch.from_numpy(np.array(ground_truths))
+        if do.using_gpu:
+            images = images.cuda()
+        model.test(images, ground_truths)
+        ground_truths = torch.from_numpy(np.array(ground_truths))
     if all_exp:
         for example in range(dset.CIFAR10.test_size):
-            print('Ground truth: (%d) %s || Predecition: (%d) %s || Confidence: %.2f %' %
+            print("Ground truth: (%d) %s || Predecition: (%d) %s || Confidence: %.2f %" %
                   (ground_truths[example], dset.CIFAR10.classes[int(ground_truths[example])],
                    int(model.predictions[example]),
                    dset.CIFAR10.classes[int(model.predictions[example])],
@@ -62,7 +64,7 @@ def inferences(model, fitting_loader=None, all_exp=False):
     print("{ Loss:", model.optimum['Loss'], "||", model.optimum['TestAcc'], "% }\n")
     
     # Saving inferenced model    
-    if do.args.SAVE:
+    if args.SAVE:
         nnc.save_model('model.pkl', model)
     else:
         f = raw_input('Do you want to save the model? (y)es/(n)o: ').lower()
