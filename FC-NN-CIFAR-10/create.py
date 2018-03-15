@@ -35,10 +35,9 @@ def set_hyper_paramters(config, model):
         model.lr_policy += cfg["FIT"]["LR_POLICY"]
         model.decay_rate = cfg["FIT"]["DECAY_RATE"]
         model.epochs = cfg["FIT"]["EPOCHS"]
-        return
-    if do.args.TRAIN:
+    elif do.args.TRAIN:
         model.lr = cfg["TRAIN"]["BASE_LR"]
         model.lr_policy += cfg["TRAIN"]["LR_POLICY"]
         model.decay_rate = cfg["TRAIN"]["DECAY_RATE"]
         model.epochs = cfg["TRAIN"]["EPOCHS"]
-        return
+    return

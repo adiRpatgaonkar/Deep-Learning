@@ -51,11 +51,11 @@ def fit(model=None):
     model.set_logs()    
     # Saving fitted model    
     if do.args.SAVE:
-        nnc.save_model('model.pkl', model)
+        nnc.save_model(do.args.SAVE, model)
     else:
         f = raw_input('Do you want to save the model? (y)es/(n)o: ').lower()
         if f.lower() == 'y' or f.lower() == 'yes':
-            nnc.save_model('model.pkl', model)
+            nnc.save_model(do.args.SAVE, model)
         else:
             print('Not saving model.')                                
         

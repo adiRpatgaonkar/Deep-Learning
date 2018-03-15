@@ -87,13 +87,12 @@ class ModelNN(object):
         
     def show_log(self):
         if do.args.FIT:
-            print('FIT {')
+            print('FIT {', end="\n ")
         elif do.args.TRAIN:
-            print('TRAIN {')
+            print('TRAIN {', end="\n ")
             
-        print(' TYPE:', self.model_type, '\n', 'NUM-LAYERS:', self.num_layers, '\n', 
-              'LAYER-OBJs:', self.layers, '\n', 'EPOCHS:', self.epochs, '\n',
-              'L.R.:', self.lr, '\n',  
+        print('TYPE:', self.model_type, '\n', 'NUM-LAYERS:', self.num_layers, '\n', 
+              'EPOCHS:', self.epochs, '\n', 'L.R.:', self.lr, '\n',  
               'LR-POLICY:', self.lr_policy, '\n', 'WEIGHTS-DECAY:', self.weights_decay, '\n', 
               'DECAY-RATE:', self.decay_rate, '\n', 'REG-STRENGTH:', self.reg, '\n', 'LOSS:', self.optimum['Loss'], end=" }\n\n")
     
