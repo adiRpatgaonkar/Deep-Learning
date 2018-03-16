@@ -53,7 +53,7 @@ def train(model=None):
     else:
         f = raw_input('Do you want to save the model? (y)es/(n)o: ').lower()
         if f.lower() == 'y' or f.lower() == 'yes':
-            nnc.save_model(do.args.SAVE, model)
+            nnc.save_model('model.pkl', model)
         else:
             print('Not saving model.')
 

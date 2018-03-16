@@ -37,22 +37,25 @@ def batch_norm():
     pass
 
 global saved_model_dir
-def save_model(filename, model): 
-    saved_model_dir = 'outputs/models/'
+saved_model_dir = 'outputs/models/'
+def save_model(filename="model.pkl", model=None): 
+    if not model:
+        print("No model found")
     if not os.path.exists(saved_model_dir):
         print("Creating outputs/models/ directory")    
         call("mkdir outputs && mkdir outputs/models", shell=True)   
     """ Save the status dictionary """
     print('\nSaving ...', end=" ")
+    print(filename, 'to', saved_model_dir)
     f = open(saved_model_dir + filename, 'wb')
     pickle.dump(model.optimum, f)
-    print('model saved as %s' % saved_model_dir + filename)
+    print('Model saved as %s' % saved_model_dir + filename)
     f.close()
 
 def load_model(filename):
     """ Load model dictionary and rebuild the model """
     print('\nChecking saved models ...')
-    print('\nLoading status dictionary from %s ...' % saved_model_dir + filename)
+    print('\nLoading status dictionary from %s ... ' % saved_model_dir + filename)
     # Get the saved log (status dictionary)
     if os.path.isfile(saved_model_dir + filename):
         t = pickle.load(open(saved_model_dir + filename, 'rb'))
@@ -138,8 +141,8 @@ class ModelNN(object):
         self.optimum['Model type'], self.optimum['Num layers'], self.optimum['Arch'], \
         self.optimum['Layer objs'], self.optimum['Max epochs'], self.optimum['L.R. policy'], \
         self.optimum['Weights decay'], self.optimum['L.R. decay'], self.optimum['Reg'] = \
-        self.model_type, self.num_layers, self.layers, \
-        self.arch, self.epochs, self.lr_policy, \
+        self.model_type, self.num_layers, self.arch, \
+        self.layers, self.epochs, self.lr_policy, \
         self.weights_decay, self.decay_rate, self.reg
                 
     def get_logs(self):
@@ -191,11 +194,11 @@ class ModelNN(object):
     def patch_arch(self, l): 
         self.arch += str(self.num_layers) + ': ' + l.LayerName
         if l.LayerName == 'Linear':
-            self.arch += '(' + str(l.ipt_neurons) + 'x' + str(l.opt_neurons) + ')'
+            self.arch += '( ' + str(l.ipt_neurons) + ' x ' + str(l.opt_neurons) + ' )'
         elif l.LayerName == 'Activation':
-            self.arch += '(' + l.activation + ')'
+            self.arch += '( ' + l.activation + ' )'
         elif l.LayerName == 'Criterion':
-            self.arch += '(' + l.classifier + ')'
+            self.arch += '( ' + l.classifier + ' )'
         self.arch += '-->\n'
         self.optimum['Arch'] += self.arch
 
@@ -412,3 +415,4 @@ class Optimize:
 
     def clear_gradients(self):
         pass
+7777999
