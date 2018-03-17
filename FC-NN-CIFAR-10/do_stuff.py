@@ -1,5 +1,6 @@
-import sys, argparse
-import train_net
+import argparse
+import sys
+
 
 def parse_arg():
     parser = argparse.ArgumentParser()
@@ -22,7 +23,7 @@ def parse_arg():
     parser.add_argument(
         "--SAVE",
         metavar='model file',
-        type=str  ,
+        type=str,
         help="Save the trained model (pickle file only)"
     )
     # Load pre-trained model
@@ -75,3 +76,10 @@ def parse_arg():
     else:
         use_gpu = True
 
+
+def arguments():
+    return args
+
+
+def using_gpu():
+    return use_gpu

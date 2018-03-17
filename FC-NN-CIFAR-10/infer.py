@@ -16,11 +16,11 @@ def inferences(model, fitting_loader=None, all_exp=False):
     """ Display model results i.e. predictions on test/train set """
     args = do.arguments()
 
-    global images
+    global images, ground_truths
     print("\n+++++++     INFERENCE     +++++++\n")
     model.show_log(infer=True)
     # Get data
-    test_dataset = dset.CIFAR10(directory='data/cifar10/', download=True, test=True)
+    test_dataset = dset.CIFAR10(directory='data', download=True, test=True)
     if fitting_loader is None:
         infer_loader = dset.data_loader(test_dataset.data, batch_size=dset.CIFAR10.test_size, shuffled=False)
     else:

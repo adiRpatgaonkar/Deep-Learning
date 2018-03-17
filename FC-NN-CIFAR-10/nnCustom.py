@@ -5,24 +5,23 @@ Custom sequential neural network framework
 """
 # imports for system library
 from __future__ import print_function
-from subprocess import call
-
-import os
 import math
+import os
 import pickle
 import sys
+from subprocess import call
 import torch
-from matplotlib.pyplot import ylabel, imshow, plot, show, xlabel
-from numpy import nan
-
+from matplotlib.pyplot import ylabel, plot, show, xlabel
 # Custom imports
-import do_stuff as do
 import Dataset as dset
+from create import create_model, configs
+from do_stuff import arguments, using_gpu
 import init_setup as hw
-import create
 
 # Some global vars
-global model
+global saved_model_dir
+saved_model_dir = 'outputs/models/'
+
 
 def normalize(data, data_size):
     """ Normalizes the given data with mean and standard deviation """
@@ -33,17 +32,17 @@ def normalize(data, data_size):
     data = data / std_deviation
     return data
 
+
 def batch_norm():
     pass
 
-global saved_model_dir
-saved_model_dir = 'outputs/models/'
-def save_model(filename="model.pkl", model=None): 
+
+def save_model(filename="model.pkl", model=None):
     if not model:
         print("No model found")
     if not os.path.exists(saved_model_dir):
-        print("Creating outputs/models/ directory")    
-        call("mkdir outputs && mkdir outputs/models", shell=True)   
+        print("Creating outputs/models/ directory")
+        call("mkdir outputs && mkdir outputs/models", shell=True)
     """ Save the status dictionary """
     print('\nSaving ...', end=" ")
     print(filename, 'to', saved_model_dir)
@@ -51,6 +50,7 @@ def save_model(filename="model.pkl", model=None):
     pickle.dump(model.optimum, f)
     print('Model saved as %s' % saved_model_dir + filename)
     f.close()
+
 
 def load_model(filename):
     """ Load model dictionary and rebuild the model """
@@ -64,12 +64,12 @@ def load_model(filename):
         sys.exit(1)
 
     # Create a model
-    model = create.create_model()
+    model = create_model()
     # Give the status dictionary to the created net
     model.optimum = t
     # Use the given status dictionary to get the model up on its feet
     model.get_logs()
-    
+
     return model
 
 
@@ -94,15 +94,16 @@ class ModelNN(object):
         # Results
         self.predictions = self.train_acc = self.test_acc = 0
         self.data_set = ""
-        self.optimum = {'Fitting tested': self.model_fitted, 'Trained': self.model_trained, 'Tested': self.model_tested, 'Inferenced': self.model_infered, 
-                        'Model type': self.model_type, 'Arch': self.arch, 'Num layers': self.num_layers,'Layer objs': self.layers,  
-                        'Weights': 0, 'Biases': 0, 
-                        'Max epochs': self.epochs, 'Epoch': 0, 'Learning rate': self.lr, 'L.R. policy': self.lr_policy,
-                        'Weights decay': self.weights_decay, 'L.R. decay': self.decay_rate, 'Reg': self.reg,
-                        'Loss': float("inf"), 'TrainAcc': self.train_acc, 'TestAcc': self.test_acc}
+        self.optimum = {'Fitting tested': self.model_fitted, 'Trained': self.model_trained, 'Tested': self.model_tested,
+                        'Inferenced': self.model_infered, 'Model type': self.model_type, 'Arch': self.arch,
+                        'Num layers': self.num_layers, 'Layer objs': self.layers,
+                        'Weights': 0, 'Biases': 0, 'Max epochs': self.epochs, 'Epoch': 0, 'Learning rate': self.lr,
+                        'L.R. policy': self.lr_policy, 'Weights decay': self.weights_decay,
+                        'L.R. decay': self.decay_rate, 'Reg': self.reg, 'Loss': float("inf"),
+                        'TrainAcc': self.train_acc, 'TestAcc': self.test_acc}
         # Model mode
         self.isTrain = False
-        
+
     def show_log(self, arch=False, fit=False, train=False, test=False, infer=False):
         if arch:
             self.show_arch()
@@ -115,60 +116,62 @@ class ModelNN(object):
             print('( DATASET: %s )' % self.data_set)
             return
         elif infer:
-            print('INFER', END=" ")
+            print('INFER', end=" ")
             print('( DATASET: %s )' % self.data_set)
             return
         if fit or train:
             print('( DATASET: %s )' % self.data_set, end="\n ")
-            print('TYPE:', self.model_type, '\n', 'NUM-LAYERS:', self.num_layers, '\n', 
-                  'EPOCHS:', self.epochs, '\n', 'L.R.:', self.lr, '\n',  
-                  'LR-POLICY:', self.lr_policy, '\n', 'WEIGHTS-DECAY:', self.weights_decay, '\n', 
-                  'DECAY-RATE:', self.decay_rate, '\n', 'REG-STRENGTH:', self.reg, '\n', 'LOSS:', self.optimum['Loss'], end=" }\n\n")
-    
+            print('TYPE:', self.model_type, '\n', 'NUM-LAYERS:', self.num_layers, '\n',
+                  'EPOCHS:', self.epochs, '\n', 'L.R.:', self.lr, '\n',
+                  'LR-POLICY:', self.lr_policy, '\n', 'WEIGHTS-DECAY:', self.weights_decay, '\n',
+                  'DECAY-RATE:', self.decay_rate, '\n', 'REG-STRENGTH:', self.reg, '\n', 'LOSS:', self.optimum['Loss'],
+                  end=" }\n\n")
+
     def update_parameters(self):
         """ Bias and weight updates """
         for i, (grad_ws, grad_bs) in enumerate(zip(self.grad_weights, self.grad_biases)):
             grad_ws += self.reg * self.weights[i]
             self.weights[i] += (-self.lr * grad_ws)
             self.biases[i] += (-self.lr * grad_bs)
-    
+
     def parameters(self):
         return [self.weights, self.biases]
 
     def set_logs(self):
         """"""
         # Save other model params too (constant params; variable params are stored in set_optim_param)
-        self.optimum['Model type'], self.optimum['Num layers'], self.optimum['Arch'], \
-        self.optimum['Layer objs'], self.optimum['Max epochs'], self.optimum['L.R. policy'], \
-        self.optimum['Weights decay'], self.optimum['L.R. decay'], self.optimum['Reg'] = \
-        self.model_type, self.num_layers, self.arch, \
-        self.layers, self.epochs, self.lr_policy, \
-        self.weights_decay, self.decay_rate, self.reg
-                
+        [self.optimum['Model type'], self.optimum['Num layers'], self.optimum['Arch'],
+         self.optimum['Layer objs'], self.optimum['Max epochs'], self.optimum['L.R. policy'],
+         self.optimum['Weights decay'], self.optimum['L.R. decay'], self.optimum['Reg']] = \
+            [self.model_type, self.num_layers, self.arch,
+             self.layers, self.epochs, self.lr_policy,
+             self.weights_decay, self.decay_rate, self.reg]
+
     def get_logs(self):
+        cfg = configs()
         """ Rebuilding model while loading the status dictionary """
         # NOTE: L.R. has been set to the last L.R. in the latest training round
         self.arch, self.num_layers, self.layers, self.lr, self.decay_rate = (
-       self.optimum['Arch'], self.optimum['Num layers'], self.optimum['Layer objs'], \
-        self.optimum['Learning rate'], self.optimum['L.R. decay'])
-        self.model_type = create.cfg["MODEL"]["TYPE"]
-        self.weights_decay = create.cfg["SOLVER"]["WEIGHT_DECAY"]
-        if do.args.FIT:
+            self.optimum['Arch'], self.optimum['Num layers'], self.optimum['Layer objs'],
+            self.optimum['Learning rate'], self.optimum['L.R. decay'])
+        self.model_type = cfg["MODEL"]["TYPE"]
+        self.weights_decay = cfg["SOLVER"]["WEIGHT_DECAY"]
+        if arguments().FIT:
             mode = "FIT"
-        elif do.args.TRAIN:
+        elif arguments().TRAIN:
             mode = "TRAIN"
             # If loaded model has never been trained, 
             # then set L.R. as base lr.
             if not self.optimum['Trained']:
-                self.lr = create.cfg[mode]["BASE_LR"]
+                self.lr = cfg[mode]["BASE_LR"]
                 self.optimum['Loss'] = self.loss = float("inf")
         # Constant params
-        if do.args.FIT or do.args.TRAIN:
-          self.lr_policy = create.cfg[mode]["LR_POLICY"]
-          self.decay_rate = create.cfg[mode]["DECAY_RATE"]
-          self.epochs = create.cfg[mode]["EPOCHS"]
+        if arguments().FIT or arguments().TRAIN:
+            self.lr_policy = cfg[mode]["LR_POLICY"]
+            self.decay_rate = cfg[mode]["DECAY_RATE"]
+            self.epochs = cfg[mode]["EPOCHS"]
         # For all model working modes
-        self.weights, self.biases = self.optimum['Weights'], self.optimum['Biases']
+        [self.weights, self.biases] = self.optimum['Weights'], self.optimum['Biases']
         # Set layer weights and biases (for fprop)
         i = 0
         for layer in self.layers:
@@ -191,7 +194,7 @@ class ModelNN(object):
         self.num_layers += 1
         self.patch_arch(layer_obj)
 
-    def patch_arch(self, l): 
+    def patch_arch(self, l):
         self.arch += str(self.num_layers) + ': ' + l.LayerName
         if l.LayerName == 'Linear':
             self.arch += '( ' + str(l.ipt_neurons) + ' x ' + str(l.opt_neurons) + ' )'
@@ -212,8 +215,8 @@ class ModelNN(object):
         """ Fprop and Backprop to train """
         self.isTrain = True
         ipt = normalize(ipt, ipt.size(0))
-        #print(type(ipt))
-        #print(hw.dtype)
+        # print(type(ipt))
+        # print(hw.dtype)
         self.forward(ipt, label)
         self.backward(ipt, label)
 
@@ -285,11 +288,11 @@ class ModelNN(object):
             self.loss = torch.sum(probs) / dset.CIFAR10.test_size
         if math.isnan(self.loss):
             print('Loss is NaN\nExiting ...\n')
-            sys.exit(1)
-            if do.args.use_gpu:
+            if using_gpu():
                 torch.cuda.empty_cache()
-        
-    def plot_loss(self, to_show=False):
+            sys.exit(1)
+
+    def plot_loss(self):
         """ Plot gradient descent curve """
         plot(range(len(self.loss_history)), self.loss_history, linewidth=2.1)
         xlabel('Epochs')
@@ -415,4 +418,3 @@ class Optimize:
 
     def clear_gradients(self):
         pass
-7777999

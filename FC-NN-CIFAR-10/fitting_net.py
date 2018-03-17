@@ -1,61 +1,62 @@
 from __future__ import print_function
 from termcolor import colored
-import yaml
 import torch
-import numpy as np
 
-import do_stuff as do
-import nnCustom as nnc
-import Dataset as dset
+from do_stuff import arguments, using_gpu
+from nnCustom import save_model, Optimize
+from Dataset import data_loader, CIFAR10
 import create
+
+
 # Model fitting test
 def fit(model=None):
 
+    args = arguments()
+
     if model is None:
         model = create.create_model()
-          
     print("\n+++++     FITTING     +++++\n")
     model.show_log(arch=True, fit=True)
     # Get data
-    train_dataset = dset.CIFAR10(directory='data', download=True, train=True)
+    train_dataset = CIFAR10(directory='data', download=True, train=True)
     # Optimizer  
-    optimizer = nnc.Optimize(model)
+    optimizer = Optimize(model)
     print("\n# Stochastic gradient descent #")
     print("Learning rate: %.4f\n" % model.lr)
-    fitting_loader = dset.data_loader(train_dataset.data, batch_size=dset.CIFAR10.batch_size, model_testing=True)
+    fitting_loader = data_loader(train_dataset.data, batch_size=CIFAR10.batch_size, model_testing=True)
     for epoch in range(model.epochs):
         print('Epoch: [%d/%d]' % (epoch + 1, model.epochs), end=" ")
         for images, labels in fitting_loader:
-            if do.use_gpu:
+            if using_gpu():
                 images = images.cuda()
             # print(type(images))
             model.train(images, labels)
-            if do.use_gpu:
+            if using_gpu():
                 torch.cuda.empty_cache()
         print(colored('# Fitting test Loss:', 'red'), end="")
         print('[%.4f] @ L.R: %.9f' % (model.loss, model.lr))
         model.loss_history.append(model.loss)
         optimizer.time_decay(epoch, 0.0005)
         optimizer.set_optim_param(epoch)
-        
+
     model.plot_loss()
-        
+
     # Model status
-    model.model_fitted = model.optimum['Fitting tested'] = True        
+    model.model_fitted = model.optimum['Fitting tested'] = True
     print("\nModel status:")
-    print("{ Fitting tested:", model.optimum['Fitting tested'], "|", "Trained:", model.optimum['Trained'], "|", 
+    print("{ Fitting tested:", model.optimum['Fitting tested'], "|", "Trained:", model.optimum['Trained'], "|",
           "Tested:", model.optimum['Tested'], "|", "Inferenced:", model.optimum['Inferenced'], "}\n")
     print("{ Loss:", model.optimum['Loss'], "}\n")
-    
-    model.set_logs()    
+
+    model.set_logs()
     # Saving fitted model    
-    if do.args.SAVE:
-        nnc.save_model(do.args.SAVE, model)
+    if args.SAVE:
+        save_model(args.SAVE, model)
     else:
         f = raw_input('Do you want to save the model? (y)es/(n)o: ').lower()
         if f.lower() == 'y' or f.lower() == 'yes':
-            nnc.save_model(do.args.SAVE, model)
+            save_model(args.SAVE, model)
         else:
-            print('Not saving model.')                                
-        
-    return model, fitting_loader
+            print('Not saving model.')
+
+    return [model, fitting_loader]

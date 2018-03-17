@@ -14,8 +14,6 @@ from subprocess import call
 
 import torch
 
-global images, labels, data
-
 
 def data_loader(data_set, batch_size, model_testing=False, shuffled=False):
     """ Shuffles given data x"""
@@ -107,13 +105,12 @@ class CIFAR10:
             if train:
                 data_file = open('./' + self.dir + '/cifar10/' + 'data_batch_' + str(batch + 1), 'rb')
             elif test:
-                data_file = open('./'  + self.dir + '/cifar10/' + 'test_batch', 'rb')
+                data_file = open('./' + self.dir + '/cifar10/' + 'test_batch', 'rb')
 
             tuples = pickle.load(data_file)
             data_file.close()
 
             image_data = tuples['data'].reshape(og_batch_size, 3, 32, 32).astype("uint8")
-
 
             if batch == 0:
                 self.images = torch.from_numpy(image_data).type(torch.FloatTensor)
