@@ -1,8 +1,7 @@
 # Makefile for this project
-#
 
 clean:
-	rm -f *.pyc
+	find . -name \*.pyc -type f -delete
 
-clean_all:
-	rm -f *.pyc *.pkl
+clean_saved_models:
+	find . -name \*.pkl -type f -delete

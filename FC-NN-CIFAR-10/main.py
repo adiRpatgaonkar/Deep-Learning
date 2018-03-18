@@ -1,12 +1,14 @@
+""" Starts the drama """
 import torch
 
-from do_stuff import using_gpu, parse_arg, arguments
-from nnCustom import load_model
-from fitting_net import fit
-from train_net import train
-from test_net import test
-from infer import inferences
-from init_setup import setup_hardware
+from libs.check_args import using_gpu, parse_arg, arguments
+from libs.setup import setup_hardware
+
+from tools.model_store import load_model
+from tools.fit_net import fit
+from tools.train_net import train
+from tools.test_net import test
+from tools.infer import inferences
 
 
 def main():
@@ -20,7 +22,7 @@ def main():
     global model
     # Load or create new ?
     if args.LOAD:
-        print('\nWorking with loaded model.\n')         
+        print('\nWorking with loaded model.')
         if args.FIT:
             model = load_model(args.LOAD)
             print('Fitting net for loaded model')
@@ -53,7 +55,7 @@ def main():
             inferences(model)
                 
     elif args.NEW:
-        print('\nWorking with new model.\n')
+        print('\nWorking with new model.')
         if args.FIT:
             print('Fitting net for new model')
             model, fitting_loader = fit()
