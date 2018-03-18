@@ -1,6 +1,9 @@
 """ Starts the drama """
+
+# System imports
 import torch
 
+# Custom imports
 from libs.check_args import using_gpu, parse_arg, arguments
 from libs.setup import setup_hardware
 
