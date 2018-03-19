@@ -32,8 +32,9 @@ def train(model=None):
     train_dataset = dset.CIFAR10(directory='data', download=True, 
                     train=True)
     # Data augmentation
-    train_dataset = TransformData(train_dataset, 
-        transform='flip', augment=True)
+    train_dataset = TransformData(train_dataset, transform='flip')
+    train_dataset = TransformData(train_dataset, transform='crop')
+    print("Training set size:", len(train_dataset.data), "images.")
     # Optimizer
     optimizer = nnc.Optimize(model)
     print("\n# Stochastic gradient descent #")

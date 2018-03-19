@@ -93,10 +93,10 @@ class CIFAR10:
 
         print('Fetching', end=" ")
         if train:
-            print('training data ...')
+            print('training data ...', end = " ")
             og_num_batches = 5
         else:  # test
-            print('testing data ...')
+            print('testing data ...', end = " ")
             og_num_batches = 1
         og_batch_size = 10000
         self.labels = []
@@ -121,5 +121,7 @@ class CIFAR10:
 
         for i, l in zip(self.images, self.labels):
             self.data.append((i, l))
+
+        print("done.")
 
         return self.data

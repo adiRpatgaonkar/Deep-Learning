@@ -5,7 +5,7 @@
 **/*.pkl
 
 # ignore datasets
-**/data/*.pkl
+**/data/cifar10/
 
 # ignore jetbrains directories
 **/venv
