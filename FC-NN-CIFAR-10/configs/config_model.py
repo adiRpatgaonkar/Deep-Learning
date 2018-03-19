@@ -10,7 +10,7 @@ from libs.check_args import arguments
 def set_hyper_parameters(config_file, model):
     global cfg
     args = arguments()
-    with open('configs/' + config_file, 'r') as f:
+    with open(config_file, 'r') as f:
         cfg = yaml.load(f)
 
     model.model_type += cfg["MODEL"]["TYPE"]
