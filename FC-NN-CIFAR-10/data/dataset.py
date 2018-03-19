@@ -64,7 +64,8 @@ class CIFAR10:
         if not os.path.exists(self.dir):
             print("Creating data directory.")
             call(["mkdir", self.dir])
-            call(["mkdir", self.dir + '/cifar10'])
+        if not os.path.exists(self.dir + '/cifar10'):
+            call("mkdir " + self.dir + "/cifar10", shell=True)
         os.chdir(os.getcwd() + '/' + self.dir + '/cifar10/')
         # Download dataset
         if not os.path.isfile("cifar-10-python.tar.gz"):

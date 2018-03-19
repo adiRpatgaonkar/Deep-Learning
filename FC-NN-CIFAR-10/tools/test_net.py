@@ -33,6 +33,9 @@ def test(model, fitting_loader=None):
         if using_gpu():
             images = images.cuda()
         model.test(images, ground_truths)
+        # Clear cache if using GPU (Unsure of effectiveness)
+        if using_gpu():
+                torch.cuda.empty_cache()
     ground_truths = torch.from_numpy(np.array(ground_truths))
     print(colored('\n# Testing Loss:', 'red'), end="")
     print('[%.4f]' % model.loss)

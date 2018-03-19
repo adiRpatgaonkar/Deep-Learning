@@ -12,6 +12,8 @@ from libs.check_args import arguments, using_gpu
 
 from data import dataset as dset
 
+from vision.transforms import TransformData
+
 from model_store import save_model
 import create
 
@@ -27,18 +29,25 @@ def train(model=None):
     print("\n+++++     TRAINING     +++++\n")
     model.show_log(arch=True, train=True)
     # Get data
-    train_dataset = dset.CIFAR10(directory='data', download=True, train=True)
+    train_dataset = dset.CIFAR10(directory='data', download=True, 
+                    train=True)
+    # Data augmentation
+    train_dataset = TransformData(train_dataset, 
+        transform='flip', augment=True)
     # Optimizer
     optimizer = nnc.Optimize(model)
     print("\n# Stochastic gradient descent #")
     print("Learning rate: %.4f\n" % model.lr)
     for epoch in range(model.epochs):
         print('Epoch: [%d/%d]' % (epoch + 1, model.epochs), end=" ")
-        train_loader = dset.data_loader(train_dataset.data, batch_size=dset.CIFAR10.batch_size, shuffled=True)
+        # Prepare batches from whole dataset
+        train_loader = dset.data_loader(train_dataset.data, 
+                       batch_size=dset.CIFAR10.batch_size, shuffled=True)
         for images, labels in train_loader:
             if using_gpu():
                 images = images.cuda()
             model.train(images, labels)
+            # Clear cache if using GPU (Unsure of effectiveness)
             if using_gpu():
                 torch.cuda.empty_cache()
         print(colored('# Training Loss:', 'red'), end=" ")
@@ -52,8 +61,10 @@ def train(model=None):
     # Model status
     model.model_trained = model.optimum['Trained'] = True        
     print("\nModel status:")
-    print("{ Fitting tested:", model.optimum['Fitting tested'], "|", "Trained:", model.optimum['Trained'], "|", 
-          "Tested:", model.optimum['Tested'], "|", "Inferenced:", model.optimum['Inferenced'], "}")
+    print("{ Fitting tested:", model.optimum['Fitting tested'], "|", 
+          "Trained:", model.optimum['Trained'], "|", 
+          "Tested:", model.optimum['Tested'], "|", "Inferenced:", 
+          model.optimum['Inferenced'], "}")
     print("{ Loss:", model.optimum['Loss'], "}\n")
     
     model.set_logs()        

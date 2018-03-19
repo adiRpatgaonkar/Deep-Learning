@@ -34,8 +34,8 @@ def fit(model=None):
         for images, labels in fitting_loader:
             if using_gpu():
                 images = images.cuda()
-            # print(type(images))
             model.train(images, labels)
+            # Clear cache if using GPU (Unsure of effectiveness)
             if using_gpu():
                 torch.cuda.empty_cache()
         print(colored('# Fitting test Loss:', 'red'), end="")

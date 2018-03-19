@@ -82,7 +82,7 @@ def main():
 
     # Final goodbye
     print('\n' + '-' * 7 + '\nExiting\n' + '-' * 7)
-    # Clear cache, just to be sure. Unsure of function effectivity
+    # Clear cache if using GPU (Unsure of effectiveness)
     if using_gpu():
         torch.cuda.empty_cache()
 

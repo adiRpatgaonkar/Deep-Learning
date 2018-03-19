@@ -34,6 +34,12 @@ def inferences(model, fitting_loader=None, all_exp=False):
         if using_gpu:
             images = images.cuda()
         model.test(images, ground_truths)
+        if using_gpu():
+            images = images.cuda()
+        model.test(images, ground_truths)
+        # Clear cache if using GPU (Unsure of effectiveness)
+        if using_gpu():
+                torch.cuda.empty_cache()
         ground_truths = torch.from_numpy(np.array(ground_truths))
     if all_exp:
         for example in range(dset.CIFAR10.test_size):
