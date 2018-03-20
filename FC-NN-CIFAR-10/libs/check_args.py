@@ -7,7 +7,13 @@ import sys
 
 def parse_arg():
     parser = argparse.ArgumentParser()
-
+    
+    # Best model
+    parser.add_argument(
+        "--bms",
+        action="store_true",
+        help="Select the best one among the saved models"
+    )
     # Config file
     parser.add_argument(
         "--CFG", 

@@ -12,7 +12,7 @@ from tools.fit_net import fit
 from tools.train_net import train
 from tools.test_net import test
 from tools.infer import inferences
-
+from tools.best_model import best_model_selection
 
 def main():
     
@@ -24,7 +24,9 @@ def main():
     
     global model
     # Load or create new ?
-    if args.LOAD:
+    if args.bms:
+        best_model_selection(replace=True)
+    elif args.LOAD:
         print('\nWorking with loaded model.')
         if args.FIT:
             model = load_model(args.LOAD)
@@ -89,3 +91,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
