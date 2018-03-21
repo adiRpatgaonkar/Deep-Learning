@@ -265,6 +265,7 @@ class ModelNN(object):
         else:
             probs = -(torch.log(softmax) / torch.log(torch.Tensor([10]).type(default_tensor_type())))
             self.loss = torch.sum(probs) / dset.CIFAR10.test_size
+        # If fitting/training/testing loss is destroyed.    
         if math.isnan(self.loss):
             # Quit if loss is NaN.
             print('Loss is NaN\nExiting ...\n')
