@@ -31,7 +31,7 @@ def inferences(model, fitting_loader=None, all_exp=False):
     
     print("Test accuracy:", model.optimum['TestAcc'], '%')    
     for images, ground_truths in infer_loader:
-        if using_gpu:
+        if using_gpu():
             images = images.cuda()
         model.test(images, ground_truths)
         if using_gpu():

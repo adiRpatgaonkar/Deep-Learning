@@ -14,6 +14,7 @@ from tools.test_net import test
 from tools.infer import inferences
 from tools.best_model import best_model_selection
 
+
 def main():
     
     # Parse arguments provided

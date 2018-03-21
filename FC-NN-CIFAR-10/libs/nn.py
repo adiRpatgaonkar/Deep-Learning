@@ -11,7 +11,7 @@ import math
 import sys
 
 import torch
-from matplotlib.pyplot import ylabel, plot, show, xlabel
+from bokeh.plotting import figure, output_file, show
 
 # Custom imports
 from libs.check_args import arguments, using_gpu
@@ -79,6 +79,7 @@ class ModelNN(object):
         self.isTrain = False
 
     def show_log(self, arch=False, fit=False, train=False, test=False, infer=False):
+        """ Print out stats of the current activity """
         if arch:
             self.show_arch()
         if fit:
@@ -145,7 +146,8 @@ class ModelNN(object):
             self.decay_rate = cfg[mode]["DECAY_RATE"]
             self.epochs = cfg[mode]["EPOCHS"]
         # For all model working modes
-        [self.weights, self.biases] = self.optimum['Weights'], self.optimum['Biases']
+        [self.weights, self.biases] = (self.optimum['Weights'], 
+            self.optimum['Biases'])
         # Set layer weights and biases (for fprop)
         i = 0
         for layer in self.layers:
@@ -263,7 +265,8 @@ class ModelNN(object):
                 reg_loss += 0.5 * self.reg * torch.sum(w * w)
             self.loss += reg_loss
         else:
-            probs = -(torch.log(softmax) / torch.log(torch.Tensor([10]).type(default_tensor_type())))
+            probs = -((torch.log(softmax) / 
+                    torch.log(torch.Tensor([10]).type(default_tensor_type()))))
             self.loss = torch.sum(probs) / dset.CIFAR10.test_size
         # If fitting/training/testing loss is destroyed.    
         if math.isnan(self.loss):
@@ -273,12 +276,14 @@ class ModelNN(object):
                 torch.cuda.empty_cache()
             sys.exit(1)
 
-    def plot_loss(self):
+    def plot_loss(self, loss_type):
         """ Plot gradient descent curve """
-        plot(range(len(self.loss_history)), self.loss_history, linewidth=2.1)
-        xlabel('Epochs')
-        ylabel('Loss')
-        show()
+        output_file("outputs/loss_plots/output_file.html")
+        p = figure(title=loss_type, x_axis_label="Num epochs", 
+                y_axis_label="Loss")
+        p.line(range(len(self.loss_history)), self.loss_history, 
+                legend=loss_type, line_width=2.1)
+        show(p)
 
 
 class LinearLayer(ModelNN):
@@ -358,7 +363,8 @@ class CeCriterion(ModelNN):
         # computes and returns the gradient of the Loss with
         # respect to the input to this layer.
         d_probs = softmax
-        d_probs[range(dset.CIFAR10.batch_size), target] -= 1  # Derivation of gradient of loss
+        # Derivation of gradient of loss
+        d_probs[range(dset.CIFAR10.batch_size), target] -= 1  
         d_probs /= dset.CIFAR10.batch_size
         return d_probs
 
@@ -383,7 +389,8 @@ class Optimize:
     def set_optim_param(self, epoch=-1):
         # Check if you've got the best params
         if self.nn_alias.loss < self.nn_alias.optimum['Loss']:
-            self.nn_alias.optimum['Loss'], self.nn_alias.optimum['Epoch'], self.nn_alias.optimum['Learning rate'] = \
+            self.nn_alias.optimum['Loss'], self.nn_alias.optimum['Epoch'], \
+            self.nn_alias.optimum['Learning rate'] = \
                 (self.nn_alias.loss, epoch, self.nn_alias.lr)
             self.nn_alias.optimum['Weights'], self.nn_alias.optimum['Biases'] = \
                 (self.nn_alias.weights, self.nn_alias.biases)

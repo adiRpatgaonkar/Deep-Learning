@@ -122,6 +122,6 @@ class CIFAR10:
         for i, l in zip(self.images, self.labels):
             self.data.append((i, l))
 
-        print("done.")
+        print("done.\n")
 
         return self.data

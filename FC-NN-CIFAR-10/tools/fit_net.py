@@ -44,7 +44,7 @@ def fit(model=None):
         optimizer.time_decay(epoch, 0.0005)
         optimizer.set_optim_param(epoch)
 
-    model.plot_loss()
+    model.plot_loss('Fitting loss')
 
     # Model status
     model.model_fitted = model.optimum['Fitting tested'] = True
