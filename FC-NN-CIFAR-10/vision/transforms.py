@@ -2,79 +2,76 @@
 Flip the given data (training)
 Return appended (augmented dataset)
 """
+
+# System imports
 from __future__ import print_function
 import torch
 import numpy as np
-import copy
 from matplotlib.pyplot import imshow, show
+from data.dataset import CIFAR10
+
+# Global variables
+global image, ground_truth, np_image
 
 
-class TransformData:
+class Transforms:
+    """
+    Data transforms (for data augmentation)
 
-    def __init__(self, dataset, transform, times=1):
+    """
+    def __init__(self, dataset, lr_flip=False, ud_flip=False, crop=False, rotate90=False, times=0):
         """ Transform data acc. to the transform param """
-        self.transform = transform
-        if transform == 'flipLR':
-            self.data = self.flipLR(dataset)
-        if transform == 'flipUD':
-            self.data = self.flipUD(dataset)
-        if transform == 'crop':
-            self.data = self.crop(dataset)
-        if transform == 'rotate90':
-            self.data = self.rotate90(dataset, times)
 
-    @staticmethod
-    def flipLR(dataset):
-        """ Flips horizontally """
-        data_aug = copy.deepcopy(dataset)
-        data_aug.data = dataset.data[:]
-        print("Flipping training examples horizontally ...", end=" ")
-        for image, label in dataset.data:
-            t_image = np.flip(image.numpy(), 2)
-            t_image = torch.from_numpy(t_image.copy()).type(torch.FloatTensor)
-            data_aug.data.append((t_image, label))
-        print("done.")
-        return data_aug.data
+        # Alias of <dataset> object
+        self.original_dataset = dataset
+        # Augmented data
+        self.data = []
+        # Transforms
+        self.transform_data(lr_flip, ud_flip, crop, rotate90, times)
 
-    @staticmethod
-    def flipUD(dataset):
-        """ Flips upside-down """
-        data_aug = copy.deepcopy(dataset)
-        data_aug.data = dataset.data[:]
-        print("Flipping training examples upside down ...", end=" ")
-        for image, label in dataset.data:
-            # For 3 channels np.fliplr works as 
-            # putting the image as upside down
-            t_image = np.fliplr(image.numpy())
-            t_image = torch.from_numpy(t_image.copy()).type(torch.FloatTensor)
-            data_aug.data.append((t_image, label))
-        print("done.")
-        return data_aug.data
+    def transform_data(self, lr_flip, ud_flip, crop, rotate90, times):
+        """ Transform the data """
 
-    @staticmethod
-    def crop(dataset):
-        """ Crop 1 pixel boundary of image """
-        data_aug = copy.deepcopy(dataset)
-        data_aug.data = dataset.data[:]
-        print("Cropping training examples ...", end=" ")
-        for image, label in dataset.data:
-            image[:, 0] = image[0, :] = image[:, -1] = image[-1, :] = 0
-            data_aug.data.append((image, label))
-        print("done.")
-        return data_aug.data
+        if not lr_flip and not ud_flip and not crop and not rotate90:
+            print("No transforms done.")
+            return
+            
+        print("Augmenting data:")
+        if lr_flip:
+            print("Flipping training examples horizontally ...", end=" ")
+            for image, ground_truth in self.original_dataset.data:
+                np_image = np.flip(image.numpy(), 2)
+                np_image = torch.from_numpy(np_image.copy()).type(torch.FloatTensor)
+                self.data.append((np_image, ground_truth))
+            print("done.")
+        if ud_flip:
+            print("Flipping training examples upside down ...", end=" ")
+            for image, ground_truth in self.original_dataset.data:
+                np_image = np.flip(image.numpy(), 2)
+                np_image = torch.from_numpy(np_image.copy()).type(torch.FloatTensor)
+                self.data.append((np_image, ground_truth))
+            print("done.")
+        if crop:
+            print("Cropping training examples ...", end=" ")
+            for image, ground_truth in self.original_dataset.data:
+                image[:, 0] = image[0, :] = image[:, -1] = image[-1, :] = 0
+                self.data.append((image, ground_truth))
+            print("done.")
+        if rotate90:
+            if times is None:
+                print("No rotation.")
+                return
+            print("Rotating images by %d degrees ..." % 90 * times, end=" ")
+            for image, ground_truth in self.original_dataset.data:
+                np_image = np.rot90(image.numpy(), k=1, axes=(1, 2))
+                np_image = torch.from_numpy(np_image.copy()).type(torch.FloatTensor)
+                self.data.append((np_image, ground_truth))
+            print("done.")
+        
+        self.data += self.original_dataset.data
 
-    @staticmethod
-    def rotate90(dataset, times=1):
-        """ Rotate image anti/clockwise by 90*times """
-        data_aug = copy.deepcopy(dataset)
-        data_aug.data = dataset.data[:]
-        print("Rotating images by %d degrees ..." % 90 * times, end=" ")
-        for image, label in dataset.data:
-            t_image = np.rot90(image.numpy(), k=1, axes=(1, 2))
-            t_image = torch.from_numpy(t_image.copy()).type(torch.FloatTensor)
-            data_aug.data.append((t_image, label))
-        print("done.")
-        return data_aug.data
+        return
+
 
 def see(image):
     """ Use the vision """

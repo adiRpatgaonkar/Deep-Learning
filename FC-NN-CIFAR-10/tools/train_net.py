@@ -2,20 +2,17 @@
 
 # System imports
 from __future__ import print_function
-
-import torch
 from termcolor import colored
+import torch
 
 # Custom imports
-import libs.nn as nnc
 from libs.check_args import arguments, using_gpu
-
+import libs.nn as nnc
 from data import dataset as dset
-
-from vision.transforms import TransformData, see
-
+from vision.transforms import Transforms, see
+from tools import create
 from model_store import save_model
-import create
+
 
 
 # Training
@@ -36,19 +33,11 @@ def train(model=None):
         train=True)
 
     # Data augmentation
-    print("Augmenting data:")
-    # Horizhontal flips. Giving the best results
-    train_dataset = TransformData(dataset=train_dataset, 
-        transform='flipLR')
-    # Upside-down flips. Average results
-    train_dataset = TransformData(dataset=train_dataset, 
-        transform='flipUD')
-    # Crops. Bad results
-    train_dataset = TransformData(dataset=train_dataset, 
-        transform='crop')
-    # Rotate image 90*times
-    train_dataset = TransformData(train_dataset, 
-        transform='rotate90')
+    train_dataset = Transforms(
+        dataset=train_dataset,
+        lr_flip=True)
+
+    # Size after augmentation
     print("Training set size:", len(train_dataset.data), "images.")
 
     # Optimizer/Scheduler
@@ -60,6 +49,7 @@ def train(model=None):
 
     # Epochs
     for epoch in range(model.epochs):
+
         print('Epoch: [%d/%d]' % (epoch + 1, model.epochs), end=" ")
         # Prepare batches from whole dataset
         train_loader = dset.data_loader(data=train_dataset.data, 

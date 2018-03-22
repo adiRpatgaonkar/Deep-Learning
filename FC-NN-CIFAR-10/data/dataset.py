@@ -4,6 +4,7 @@ Fetch, setup, shuffle data set.
 @author: apatgao
 """
 
+# System imports
 from __future__ import print_function
 
 import os
@@ -38,10 +39,10 @@ def data_loader(data, batch_size, model_testing=False, shuffled=False):
 
 class CIFAR10:
     # +++ Data info found here +++ #
+
     data_size = 60000
     train_size = 50000
     batch_size = 100
-    train_batches = train_size / batch_size
     test_size = 10000
     classes = ['airplane', 'automobile',
                'bird', 'cat',
@@ -50,6 +51,8 @@ class CIFAR10:
                'ship', 'truck']
 
     def __init__(self, directory='.', download=False, train=False, test=False):
+        """ Setup necessary variables for Cifar10 dataset """
+        self.name = 'cifar10'
         self.data = []
         self.images = []
         self.labels = []
