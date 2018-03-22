@@ -11,24 +11,25 @@ from matplotlib.pyplot import imshow, show
 
 class TransformData:
 
-    def __init__(self, orig_dataset, transform, times=1):
+    def __init__(self, dataset, transform, times=1):
+        """ Transform data acc. to the transform param """
         self.transform = transform
         if transform == 'flipLR':
-            self.data = self.flipLR(orig_dataset)
+            self.data = self.flipLR(dataset)
         if transform == 'flipUD':
-            self.data = self.flipUD(orig_dataset)
+            self.data = self.flipUD(dataset)
         if transform == 'crop':
-            self.data = self.crop(orig_dataset)
+            self.data = self.crop(dataset)
         if transform == 'rotate90':
-            self.data = self.rotate90(orig_dataset, times)
+            self.data = self.rotate90(dataset, times)
 
     @staticmethod
-    def flipLR(orig_dataset):
+    def flipLR(dataset):
         """ Flips horizontally """
-        data_aug = copy.deepcopy(orig_dataset)
-        data_aug.data = orig_dataset.data[:]
+        data_aug = copy.deepcopy(dataset)
+        data_aug.data = dataset.data[:]
         print("Flipping training examples horizontally ...", end=" ")
-        for image, label in orig_dataset.data:
+        for image, label in dataset.data:
             t_image = np.flip(image.numpy(), 2)
             t_image = torch.from_numpy(t_image.copy()).type(torch.FloatTensor)
             data_aug.data.append((t_image, label))
@@ -36,12 +37,12 @@ class TransformData:
         return data_aug.data
 
     @staticmethod
-    def flipUD(orig_dataset):
+    def flipUD(dataset):
         """ Flips upside-down """
-        data_aug = copy.deepcopy(orig_dataset)
-        data_aug.data = orig_dataset.data[:]
+        data_aug = copy.deepcopy(dataset)
+        data_aug.data = dataset.data[:]
         print("Flipping training examples upside down ...", end=" ")
-        for image, label in orig_dataset.data:
+        for image, label in dataset.data:
             # For 3 channels np.fliplr works as 
             # putting the image as upside down
             t_image = np.fliplr(image.numpy())
@@ -51,24 +52,24 @@ class TransformData:
         return data_aug.data
 
     @staticmethod
-    def crop(orig_dataset):
+    def crop(dataset):
         """ Crop 1 pixel boundary of image """
-        data_aug = copy.deepcopy(orig_dataset)
-        data_aug.data = orig_dataset.data[:]
+        data_aug = copy.deepcopy(dataset)
+        data_aug.data = dataset.data[:]
         print("Cropping training examples ...", end=" ")
-        for image, label in orig_dataset.data:
+        for image, label in dataset.data:
             image[:, 0] = image[0, :] = image[:, -1] = image[-1, :] = 0
             data_aug.data.append((image, label))
         print("done.")
         return data_aug.data
 
     @staticmethod
-    def rotate90(orig_dataset, times=1):
+    def rotate90(dataset, times=1):
         """ Rotate image anti/clockwise by 90*times """
-        data_aug = copy.deepcopy(orig_dataset)
-        data_aug.data = orig_dataset.data[:]
+        data_aug = copy.deepcopy(dataset)
+        data_aug.data = dataset.data[:]
         print("Rotating images by %d degrees ..." % 90 * times, end=" ")
-        for image, label in orig_dataset.data:
+        for image, label in dataset.data:
             t_image = np.rot90(image.numpy(), k=1, axes=(1, 2))
             t_image = torch.from_numpy(t_image.copy()).type(torch.FloatTensor)
             data_aug.data.append((t_image, label))

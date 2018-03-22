@@ -46,8 +46,8 @@ class ModelNN(object):
 
     def __init__(self):
         # Model status
-        self.model_fitted = self.model_trained = \
-            self.model_tested = self.model_infered = False
+        self.fitted = self.trained = \
+            self.tested = self.infered = False
         # Model type
         self.model_type = ""
         # Net structure
@@ -67,19 +67,24 @@ class ModelNN(object):
         self.predictions = self.train_acc = self.test_acc = 0
         self.data_set = ""
         self.optimum = {
-            'Fitting tested': self.model_fitted, 'Trained': self.model_trained, 'Tested': self.model_tested,
-            'Inferenced': self.model_infered, 'Model type': self.model_type, 'Arch': self.arch,
+            'Fitting tested': self.fitted, 'Trained': self.trained, 'Tested': self.tested,
+            'Inferenced': self.infered, 'Model type': self.model_type, 'Arch': self.arch,
             'Num layers': self.num_layers, 'Layer objs': self.layers, 'Weights': 0, 'Biases': 0,
             'Max epochs': self.epochs, 'Epoch': 0, 'Learning rate': self.lr,
             'L.R. policy': self.lr_policy, 'Weights decay': self.weights_decay,
             'L.R. decay': self.decay_rate, 'Reg': self.reg, 'Loss': float("inf"),
             'TrainAcc': self.train_acc, 'TestAcc': self.test_acc
         }
-        # Model mode
+        # Model running in mode
         self.isTrain = False
 
-    def show_log(self, arch=False, fit=False, train=False, test=False, infer=False):
+    def show_log(self, arch=False, fit=False, train=False, test=False, infer=False, curr_status=None):
         """ Print out stats of the current activity """
+        if curr_status:
+            print("\nModel status (current):")
+            print("{ Fitting tested:", self.optimum['Fitting tested'], "|", "Trained:", self.optimum['Trained'], "|", 
+                "Tested:", self.optimum['Tested'], "|", "Inferenced:", self.optimum['Inferenced'], "}")
+            print("{ Loss:", self.optimum['Loss'], "||", self.optimum['TestAcc'], "% }\n")
         if arch:
             self.show_arch()
         if fit:
@@ -102,19 +107,11 @@ class ModelNN(object):
                   'DECAY-RATE:', self.decay_rate, '\n', 'REG-STRENGTH:', self.reg, '\n',
                   'LOSS:', self.optimum['Loss'], end=" }\n\n")
 
-    def update_parameters(self):
-        """ Bias and weight updates """
-        for i, (grad_ws, grad_bs) in enumerate(zip(self.grad_weights, self.grad_biases)):
-            grad_ws += self.reg * self.weights[i]
-            self.weights[i] += (-self.lr * grad_ws)
-            self.biases[i] += (-self.lr * grad_bs)
-
-    def parameters(self):
-        return [self.weights, self.biases]
-
     def set_logs(self):
-        """ Save other model params too 
+        """ Save/update model status, params too
         (constant params; variable params are stored in set_optim_param) """
+        [self.optimum['Fitting tested'], self.optimum['Trained'], self.optimum['Tested'], 
+        self.optimum['Inferenced']] = self.fitted, self.trained, self.tested, self.infered
         [self.optimum['Model type'], self.optimum['Num layers'], self.optimum['Arch'],
          self.optimum['Layer objs'], self.optimum['Max epochs'], self.optimum['L.R. policy'],
          self.optimum['Weights decay'], self.optimum['L.R. decay'], self.optimum['Reg']] = \
@@ -155,6 +152,16 @@ class ModelNN(object):
                 layer.w = self.optimum['Weights'][i]
                 layer.b = self.optimum['Biases'][i]
                 i += 1
+
+    def update_parameters(self):
+        """ Bias and weight updates """
+        for i, (grad_ws, grad_bs) in enumerate(zip(self.grad_weights, self.grad_biases)):
+            grad_ws += self.reg * self.weights[i]
+            self.weights[i] += (-self.lr * grad_ws)
+            self.biases[i] += (-self.lr * grad_bs)
+
+    def parameters(self):
+        return [self.weights, self.biases]
 
     def add(self, layer_obj):
         """ Add layers, activations to the nn architecture """
@@ -363,7 +370,7 @@ class CeCriterion(ModelNN):
         # computes and returns the gradient of the Loss with
         # respect to the input to this layer.
         d_probs = softmax
-        # Derivation of gradient of loss
+        # Gradient of loss
         d_probs[range(dset.CIFAR10.batch_size), target] -= 1  
         d_probs /= dset.CIFAR10.batch_size
         return d_probs
@@ -372,37 +379,36 @@ class CeCriterion(ModelNN):
 class Optimize:
     """Schedules learning rate and saves the optimum paramters"""
 
-    def __init__(self, nn_obj):
-        self.nn_alias = nn_obj
-        self.lr0 = nn_obj.lr
+    def __init__(self, m_object):
+        self.m_alias = m_object
+        self.lr0 = m_object.lr
 
     def time_decay(self, epoch, decay=0):
-        self.nn_alias.lr = self.lr0 / (1 + decay * epoch)
+        self.m_alias.lr = self.lr0 / (1 + decay * epoch)
 
     def step_decay(self, epoch, decay_after=5, drop=0.5):
         if decay_after is epoch:
-            self.nn_alias.lr *= drop
+            self.m_alias.lr *= drop
 
     def exp_decay(self, decay, epoch):
-        self.nn_alias.lr = (self.lr0 * math.exp(-decay * epoch))
+        self.m_alias.lr = (self.lr0 * math.exp(-decay * epoch))
 
     def set_optim_param(self, epoch=-1):
         # Check if you've got the best params
-        if self.nn_alias.loss < self.nn_alias.optimum['Loss']:
-            self.nn_alias.optimum['Loss'], self.nn_alias.optimum['Epoch'], \
-            self.nn_alias.optimum['Learning rate'] = \
-                (self.nn_alias.loss, epoch, self.nn_alias.lr)
-            self.nn_alias.optimum['Weights'], self.nn_alias.optimum['Biases'] = \
-                (self.nn_alias.weights, self.nn_alias.biases)
+        if self.m_alias.loss < self.m_alias.optimum['Loss']:
+            self.m_alias.optimum['Loss'], self.m_alias.optimum['Epoch'], \
+            self.m_alias.optimum['Learning rate'] = \
+                (self.m_alias.loss, epoch, self.m_alias.lr)
+            self.m_alias.optimum['Weights'], self.m_alias.optimum['Biases'] = \
+                (self.m_alias.weights, self.m_alias.biases)
         # Save best params @ last epoch
-        if epoch == self.nn_alias.epochs - 1:
+        if epoch == self.m_alias.epochs - 1:
             # Set optimum parameters
-            self.nn_alias.weights, self.nn_alias.biases = \
-                (self.nn_alias.optimum['Weights'], self.nn_alias.optimum['Biases'])
-
+            self.m_alias.weights, self.m_alias.biases = \
+                (self.m_alias.optimum['Weights'], self.m_alias.optimum['Biases'])
             # Print least loss
             print("\nOptimum loss in %d epochs is: %f" %
-                  (self.nn_alias.epochs, self.nn_alias.optimum['Loss']))
+                  (self.m_alias.epochs, self.m_alias.optimum['Loss']))
 
     def clear_gradients(self):
         pass

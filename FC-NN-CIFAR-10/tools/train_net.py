@@ -31,30 +31,40 @@ def train(model=None):
     model.show_log(arch=True, train=True)
 
     # Get data
-    train_dataset = dset.CIFAR10(directory='data', download=True, 
-                    train=True)
+    train_dataset = dset.CIFAR10(directory='data', 
+        download=True, 
+        train=True)
 
     # Data augmentation
     print("Augmenting data:")
     # Horizhontal flips. Giving the best results
-    train_dataset = TransformData(train_dataset, transform='flipLR')
+    train_dataset = TransformData(dataset=train_dataset, 
+        transform='flipLR')
     # Upside-down flips. Average results
-    # train_dataset = TransformData(train_dataset, transform='flipUD')
+    train_dataset = TransformData(dataset=train_dataset, 
+        transform='flipUD')
     # Crops. Bad results
-    # train_dataset = TransformData(train_dataset, transform='crop')
+    train_dataset = TransformData(dataset=train_dataset, 
+        transform='crop')
     # Rotate image 90*times
-    # train_dataset = TransformData(train_dataset, transform='rotate90')
+    train_dataset = TransformData(train_dataset, 
+        transform='rotate90')
     print("Training set size:", len(train_dataset.data), "images.")
 
-    # Optimizer
+    # Optimizer/Scheduler
     optimizer = nnc.Optimize(model)
+
+    # SGD
     print("\n# Stochastic gradient descent #")
     print("Learning rate: %.4f\n" % model.lr)
+
+    # Epochs
     for epoch in range(model.epochs):
         print('Epoch: [%d/%d]' % (epoch + 1, model.epochs), end=" ")
         # Prepare batches from whole dataset
-        train_loader = dset.data_loader(train_dataset.data, 
-                       batch_size=dset.CIFAR10.batch_size, shuffled=True)
+        train_loader = dset.data_loader(data=train_dataset.data, 
+            batch_size=dset.CIFAR10.batch_size, 
+            shuffled=True)
         # Iterate over batches
         for images, labels in train_loader:
             if using_gpu():
@@ -64,24 +74,22 @@ def train(model=None):
             # Clear cache if using GPU (Unsure of effectiveness)
             if using_gpu():
                 torch.cuda.empty_cache()
+        # Print training loss
         print(colored('# Training Loss:', 'red'), end=" ")
         print('[%.4f] @ L.R: %.4f' % (model.loss, model.lr))
         model.loss_history.append(model.loss)
+
         optimizer.time_decay(epoch, 0.005)
         optimizer.set_optim_param(epoch)
     
     # model.plot_loss('Training loss')
     
     # Model status
-    model.model_trained = model.optimum['Trained'] = True        
-    print("\nModel status:")
-    print("{ Fitting tested:", model.optimum['Fitting tested'], "|", 
-          "Trained:", model.optimum['Trained'], "|", 
-          "Tested:", model.optimum['Tested'], "|", "Inferenced:", 
-          model.optimum['Inferenced'], "}")
-    print("{ Loss:", model.optimum['Loss'], "}\n")
+    model.trained = True
     
-    model.set_logs()        
+    model.show_log(curr_status=True)
+    model.set_logs()
+
     # Saving fitted model    
     if args.SAVE:
         save_model(args.SAVE, model)

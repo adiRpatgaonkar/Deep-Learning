@@ -14,19 +14,19 @@ from subprocess import call
 import torch
 
 
-def data_loader(data_set, batch_size, model_testing=False, shuffled=False):
+def data_loader(data, batch_size, model_testing=False, shuffled=False):
     """ Prepares, shuffles given data x"""
     if shuffled:
-        shuffle(data_set)
+        shuffle(data)
     images, labels = [], []
-    for x, y in data_set:
+    for x, y in data:
         images.append(x)
         labels.append(y)
     images = torch.stack(images, dim=0)
     if model_testing:
         num_batches = 1
     else:
-        num_batches = len(data_set) / batch_size
+        num_batches = len(data) / batch_size
     mini_batches = []
     for batch in range(num_batches):
         b_start = batch * batch_size

@@ -22,13 +22,22 @@ def test(model, fitting_loader=None):
 
     print("\n+++++++     TESTING     +++++++\n")
     model.show_log(test=True)
+
     # Get data
-    test_dataset = dset.CIFAR10(directory='data', download=True, test=True)
+    test_dataset = dset.CIFAR10(directory='data', 
+        download=True, 
+        test=True)
+
+    # If fitting is done, get 
+    # the correct dataset to be tested
     if fitting_loader is None:
-        test_loader = dset.data_loader(test_dataset.data, batch_size=dset.CIFAR10.test_size, shuffled=False)
+        test_loader = dset.data_loader(data=test_dataset.data, 
+            batch_size=dset.CIFAR10.test_size, 
+            shuffled=False)
     else:
         test_loader = fitting_loader
-        
+    
+    # In case test set is divided in batches    
     for images, ground_truths in test_loader:
         if using_gpu():
             images = images.cuda()
@@ -36,7 +45,11 @@ def test(model, fitting_loader=None):
         # Clear cache if using GPU (Unsure of effectiveness)
         if using_gpu():
                 torch.cuda.empty_cache()
+
+    # Convert tensor --> numpy ndarray
     ground_truths = torch.from_numpy(np.array(ground_truths))
+
+    # Print testing loss & accuracy
     print(colored('\n# Testing Loss:', 'red'), end="")
     print('[%.4f]' % model.loss)
     model.test_acc = model.optimum['TestAcc'] = \
@@ -46,13 +59,11 @@ def test(model, fitting_loader=None):
 
     # Tested model status
     if args.TRAIN:
-        model.model_tested = model.optimum['Tested'] = True    
-    print("\nModel status (current):")
-    print("{ Fitting tested:", model.optimum['Fitting tested'], "|", "Trained:", model.optimum['Trained'], "|", 
-          "Tested:", model.optimum['Tested'], "|", "Inferenced:", model.optimum['Inferenced'], "}")
-    print("{ Loss:", model.optimum['Loss'], "||", model.optimum['TestAcc'], "% }\n")
+        model.tested = True
 
+    model.show_log(curr_status=True)
     model.set_logs()
+
     # Saving fitted model    
     if args.SAVE:
         save_model(args.SAVE, model)
