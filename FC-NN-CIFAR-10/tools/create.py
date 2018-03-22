@@ -17,6 +17,8 @@ def create_model():
     model.add(nnc.Activation('ReLU'))
     model.add(nnc.LinearLayer(1024, 512))
     model.add(nnc.Activation('ReLU'))
-    model.add(nnc.LinearLayer(512, 10))
+    model.add(nnc.LinearLayer(512, 256))
+    model.add(nnc.Activation('ReLU'))
+    model.add(nnc.LinearLayer(256, 10))
     model.add(nnc.CeCriterion('Softmax'))
     return model

@@ -35,6 +35,7 @@ def train(model=None):
                     train=True)
 
     # Data augmentation
+    print("Augmenting data:")
     # Horizhontal flips. Giving the best results
     train_dataset = TransformData(train_dataset, transform='flipLR')
     # Upside-down flips. Average results
@@ -42,7 +43,7 @@ def train(model=None):
     # Crops. Bad results
     # train_dataset = TransformData(train_dataset, transform='crop')
     # Rotate image 90*times
-    train_dataset = TransformData(train_dataset, transform='rotate90')
+    # train_dataset = TransformData(train_dataset, transform='rotate90')
     print("Training set size:", len(train_dataset.data), "images.")
 
     # Optimizer
@@ -69,7 +70,7 @@ def train(model=None):
         optimizer.time_decay(epoch, 0.005)
         optimizer.set_optim_param(epoch)
     
-    model.plot_loss('Training loss')
+    # model.plot_loss('Training loss')
     
     # Model status
     model.model_trained = model.optimum['Trained'] = True        

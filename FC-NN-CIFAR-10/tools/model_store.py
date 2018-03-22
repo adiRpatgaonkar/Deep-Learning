@@ -22,10 +22,11 @@ def save_model(filename="model.pkl", model=None):
     if not os.path.exists(saved_model_dir):
         print("Creating outputs/models/ directory")
         call("mkdir outputs && mkdir outputs/models", shell=True)
-    print('\nSaving ...', end=" ")
-    print(filename, 'to', saved_model_dir)
+    print('\nSaving', end=" ")
+    print(filename, 'to', saved_model_dir, end=" ... ")
     f = open(saved_model_dir + filename, 'wb')
     pickle.dump(model.optimum, f)
+    print("done.")
     print('Model saved as %s' % saved_model_dir + filename)
     f.close()
 
