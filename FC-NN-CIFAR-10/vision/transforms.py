@@ -19,7 +19,7 @@ class Transforms:
     Data transforms (for data augmentation)
 
     """
-    def __init__(self, dataset, lr_flip=False, ud_flip=False, crop=False, rotate90=False, times=0):
+    def __init__(self, dataset, lr_flip=False, ud_flip=False, crop=False, rotate90=False, times=None):
         """ Transform data acc. to the transform param """
 
         # Alias of <dataset> object
@@ -35,7 +35,7 @@ class Transforms:
         if not lr_flip and not ud_flip and not crop and not rotate90:
             print("No transforms done.")
             return
-            
+
         print("Augmenting data:")
         if lr_flip:
             print("Flipping training examples horizontally ...", end=" ")
@@ -60,13 +60,13 @@ class Transforms:
         if rotate90:
             if times is None:
                 print("No rotation.")
-                return
-            print("Rotating images by %d degrees ..." % 90 * times, end=" ")
-            for image, ground_truth in self.original_dataset.data:
-                np_image = np.rot90(image.numpy(), k=1, axes=(1, 2))
-                np_image = torch.from_numpy(np_image.copy()).type(torch.FloatTensor)
-                self.data.append((np_image, ground_truth))
-            print("done.")
+            else:
+                print("Rotating images by %d degrees ..." % 90 * times, end=" ")
+                for image, ground_truth in self.original_dataset.data:
+                    np_image = np.rot90(image.numpy(), k=1, axes=(1, 2))
+                    np_image = torch.from_numpy(np_image.copy()).type(torch.FloatTensor)
+                    self.data.append((np_image, ground_truth))
+                print("done.")
         
         self.data += self.original_dataset.data
 

@@ -35,7 +35,8 @@ def train(model=None):
     # Data augmentation
     train_dataset = Transforms(
         dataset=train_dataset,
-        lr_flip=True)
+        lr_flip=True,
+        rotate90=True, times=1)
 
     # Size after augmentation
     print("Training set size:", len(train_dataset.data), "images.")
@@ -69,7 +70,7 @@ def train(model=None):
         print('[%.4f] @ L.R: %.4f' % (model.loss, model.lr))
         model.loss_history.append(model.loss)
 
-        optimizer.time_decay(epoch, 0.005)
+        optimizer.time_decay(epoch, model.decay_rate)
         optimizer.set_optim_param(epoch)
     
     # model.plot_loss('Training loss')
