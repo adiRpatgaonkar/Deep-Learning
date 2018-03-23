@@ -51,11 +51,12 @@ class ModelNN(object):
         # Model type
         self.model_type = ""
         # Net structure
-        self.arch, self.layers, self.loss_history = "", [], []
-        self.num_layers = 0
+        self.arch, self.layers, self.num_layers, \
+        self.train_loss_history, self.val_loss_history, \
+        self.crossval_acc_history, self.val_acc_history = "", [], 0, [], [], [], []
         # Parameters
-        [self.weights, self.biases,
-         self.output, self.loss] = [], [], [], 0
+        [self.weights, self.biases, self.output, 
+         self.train_loss, self.val_loss] = [], [], [], 0, 0
         self.grad_weights, self.grad_biases, \
         self.grad_output = [], [], []
         # Hyper parameters
@@ -72,7 +73,8 @@ class ModelNN(object):
             'Num layers': self.num_layers, 'Layer objs': self.layers, 'Weights': 0, 'Biases': 0,
             'Max epochs': self.epochs, 'Epoch': 0, 'Learning rate': self.lr,
             'L.R. policy': self.lr_policy, 'Weights decay': self.weights_decay,
-            'L.R. decay': self.decay_rate, 'Reg': self.reg, 'Loss': float("inf"),
+            'L.R. decay': self.decay_rate, 'Reg': self.reg, 
+            'Training loss': float("inf"), 'Validation loss': float("inf"),
             'TrainAcc': self.train_acc, 'TestAcc': self.test_acc
         }
         # Model running in mode
@@ -84,7 +86,8 @@ class ModelNN(object):
             print("\nModel status (current):")
             print("{ Fitting tested:", self.optimum['Fitting tested'], "|", "Trained:", self.optimum['Trained'], "|", 
                 "Tested:", self.optimum['Tested'], "|", "Inferenced:", self.optimum['Inferenced'], "}")
-            print("{ Loss:", self.optimum['Loss'], "||", self.optimum['TestAcc'], "% }\n")
+            print("{Training loss:", self.optimum['Training loss'], "||", "Training accuracy:", self.optimum['TrainAcc'], "% }")
+            print("{Validation loss:", self.optimum['Validation loss'], "||", self.optimum['TestAcc'], "% }\n")
         if arch:
             self.show_arch()
         if fit:
@@ -105,7 +108,7 @@ class ModelNN(object):
                   'EPOCHS:', self.epochs, '\n', 'L.R.:', self.lr, '\n',
                   'LR-POLICY:', self.lr_policy, '\n', 'WEIGHTS-DECAY:', self.weights_decay, '\n',
                   'DECAY-RATE:', self.decay_rate, '\n', 'REG-STRENGTH:', self.reg, '\n',
-                  'LOSS:', self.optimum['Loss'], end=" }\n\n")
+                  'TRAINING LOSS:', self.optimum['Training loss'], end=" }\n\n")
 
     def set_logs(self):
         """ Save/update model status, params too
@@ -136,7 +139,9 @@ class ModelNN(object):
             # then set L.R. as base lr.
             if not self.optimum['Trained']:
                 self.lr = cfg[mode]["BASE_LR"]
-                self.optimum['Loss'] = self.loss = float("inf")
+                self.optimum['Training loss'] = self.train_loss = \
+                self.optimum['Validation loss'] = self.val_loss = \
+                float("inf")
         # Constant params
         if arguments().FIT or arguments().TRAIN:
             self.lr_policy = cfg[mode]["LR_POLICY"]
@@ -265,33 +270,44 @@ class ModelNN(object):
             correct_log_probs = (-(torch.log(softmax[range(dset.CIFAR10.batch_size), targets])
                                    / torch.log(torch.Tensor([10]).type(default_tensor_type()))))
             # print correct_log_probs
-            self.loss = torch.sum(correct_log_probs) / dset.CIFAR10.batch_size
+            self.train_loss = torch.sum(correct_log_probs) / dset.CIFAR10.batch_size
             weights = self.parameters()
             reg_loss = 0
             for w in weights[0]:
                 reg_loss += 0.5 * self.reg * torch.sum(w * w)
-            self.loss += reg_loss
+            self.train_loss += reg_loss
         else:
             probs = -((torch.log(softmax) / 
                     torch.log(torch.Tensor([10]).type(default_tensor_type()))))
-            self.loss = torch.sum(probs) / dset.CIFAR10.test_size
+            self.val_loss = torch.sum(probs) / dset.CIFAR10.test_size
         # If fitting/training/testing loss is destroyed.    
-        if math.isnan(self.loss):
+        if math.isnan(self.train_loss) or math.isnan(self.val_loss):
             # Quit if loss is NaN.
             print('Loss is NaN\nExiting ...\n')
             if using_gpu():
                 torch.cuda.empty_cache()
             sys.exit(1)
 
-    def plot_loss(self, loss_type):
+    def plot_history(self, loss_history, accuracy_history):
         """ Plot gradient descent curve """
-        output_file("outputs/loss_plots/output_file.html")
-        p = figure(title=loss_type, x_axis_label="Num epochs", 
-                y_axis_label="Loss")
-        p.line(range(len(self.loss_history)), self.loss_history, 
-                legend=loss_type, line_width=2.1)
-        show(p)
-
+        if loss_history is True:
+            output_file("outputs/loss_plots/loss_history.html")
+            p = figure(title="Losses", x_axis_label="Num epochs", 
+                    y_axis_label="Loss")
+            p.line(range(len(self.train_loss_history)), self.train_loss_history, 
+                legend='Training loss', line_color='red', line_width=2.1)
+            p.line(range(len(self.val_loss_history)), self.val_loss_history, 
+                legend='Validation loss', line_color='green', line_width=2.1)
+            show(p)
+        if accuracy_history is True:
+            output_file("outputs/loss_plots/accuracy_history.html")
+            p = figure(title="Accuracies", x_axis_label="Num epochs", 
+                    y_axis_label="Loss")
+            p.line(range(len(self.crossval_acc_history)), self.crossval_acc_history, 
+                legend='Cross val accuracy', line_color='red', line_width=2.1)
+            p.line(range(len(self.val_acc_history)), self.val_acc_history, 
+                legend='Testing accuracy', line_color='green', line_width=2.1)
+            show(p)
 
 class LinearLayer(ModelNN):
     """Linear Layer class"""
@@ -395,20 +411,24 @@ class Optimize:
 
     def set_optim_param(self, epoch=-1):
         # Check if you've got the best params
-        if self.m_alias.loss < self.m_alias.optimum['Loss']:
-            self.m_alias.optimum['Loss'], self.m_alias.optimum['Epoch'], \
+        if self.m_alias.test_acc > self.m_alias.optimum['TestAcc']:
+            self.m_alias.optimum['Training loss'], self.m_alias.optimum['Epoch'], \
             self.m_alias.optimum['Learning rate'] = \
-                (self.m_alias.loss, epoch, self.m_alias.lr)
+                (self.m_alias.train_loss, epoch, self.m_alias.lr)
+            self.m_alias.optimum['TestAcc'] = self.m_alias.test_acc
             self.m_alias.optimum['Weights'], self.m_alias.optimum['Biases'] = \
                 (self.m_alias.weights, self.m_alias.biases)
+            self.m_alias.optimum['Validation loss'] = self.m_alias.val_loss
         # Save best params @ last epoch
         if epoch == self.m_alias.epochs - 1:
             # Set optimum parameters
             self.m_alias.weights, self.m_alias.biases = \
                 (self.m_alias.optimum['Weights'], self.m_alias.optimum['Biases'])
             # Print least loss
-            print("\nOptimum loss in %d epochs is: %f" %
-                  (self.m_alias.epochs, self.m_alias.optimum['Loss']))
+            print("\nOptimum training loss & validation loss in %d epochs is: %f & %f resp." %
+                  (self.m_alias.epochs, 
+                    self.m_alias.optimum['Training loss'], 
+                    self.m_alias.optimum['Validation loss']))
 
     def clear_gradients(self):
         pass

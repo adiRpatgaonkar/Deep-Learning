@@ -15,7 +15,7 @@ from tools.model_store import save_model
 from data import dataset as dset
 
 
-def test(model, fitting_loader=None):
+def test(model, data_loader=None):
     """ Evaluate model results on test/train set """
     global images, ground_truths
     args = arguments()
@@ -30,12 +30,12 @@ def test(model, fitting_loader=None):
 
     # If fitting is done, get 
     # the correct dataset to be tested
-    if fitting_loader is None:
+    if data_loader is None:
         test_loader = dset.data_loader(data=test_dataset.data, 
             batch_size=dset.CIFAR10.test_size, 
             shuffled=False)
     else:
-        test_loader = fitting_loader
+        test_loader = data_loader
     
     # In case test set is divided in batches    
     for images, ground_truths in test_loader:
@@ -51,7 +51,7 @@ def test(model, fitting_loader=None):
 
     # Print testing loss & accuracy
     print(colored('\n# Testing Loss:', 'red'), end="")
-    print('[%.4f]' % model.loss)
+    print('[%.4f]' % model.val_loss)
     model.test_acc = model.optimum['TestAcc'] = \
         (torch.mean((model.predictions == ground_truths).float()) * 100)  # Testing accuracy
     print(colored('\nTesting accuracy:', 'green'), end="")

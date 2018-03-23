@@ -69,7 +69,8 @@ class Transforms:
                 print("done.")
         
         self.data += self.original_dataset.data
-
+        # Train set size after augmentation
+        print("Training set size (post-aug):", len(self.data), "images.")
         return
 
 

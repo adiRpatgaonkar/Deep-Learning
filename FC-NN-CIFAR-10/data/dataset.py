@@ -49,6 +49,7 @@ class CIFAR10:
                'deer', 'dog',
                'frog', 'horse',
                'ship', 'truck']
+    num_classes = len(classes)
 
     def __init__(self, directory='.', download=False, train=False, test=False):
         """ Setup necessary variables for Cifar10 dataset """
@@ -75,7 +76,7 @@ class CIFAR10:
             print('\n' + '-' * 20, '\nDownloading data ...\n' + '-' * 20)
             call(["wget", url])
         else:
-            print('Dataset already downloaded.')
+            print('\nDataset already downloaded.')
         # Extract dataset
         if (not os.path.isfile("data_batch_1")) \
                 or (not os.path.isfile("data_batch_2")) \
@@ -88,7 +89,7 @@ class CIFAR10:
             call("mv cifar-10-batches-py/* .", shell=True)
             call("rm -r cifar-10-batches-py", shell=True)
         else:
-            print('\nDataset already set up.\n')
+            print('Dataset already set up.')
         os.chdir('../../')
 
     def get_dataset(self, train=False, test=False):

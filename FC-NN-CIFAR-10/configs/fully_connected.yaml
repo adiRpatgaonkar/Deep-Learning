@@ -14,10 +14,10 @@ FIT:
 
 TRAIN:
   DATASET: 'cifar10'
-  BASE_LR: 0.1
+  BASE_LR: 0.08
   LR_POLICY: 'time_decay'
   DECAY_RATE: 0.005
-  EPOCHS: 200
+  EPOCHS: 50
 
 TEST:
   DATASET: 'cifar10'
