@@ -2,13 +2,11 @@
 
 # System imports
 from __future__ import print_function
-
+from termcolor import colored
 # Custom imports
 from data.dataset import CIFAR10, data_loader
-
 from libs.check_args import arguments, using_gpu
 from libs.nn import Optimize
-
 from model_store import save_model
 import create
 
@@ -39,7 +37,7 @@ def fit(model=None):
     # Get one batch from the dataset
     fitting_loader = data_loader(data=train_dataset.data, 
         batch_size=CIFAR10.batch_size,
-        model_testing=True)
+        fit_testing=True)
 
     # Epochs
     for epoch in range(model.epochs):
@@ -53,14 +51,14 @@ def fit(model=None):
                 torch.cuda.empty_cache()
         # Print fitting loss
         print(colored('# Fitting test Loss:', 'red'), end="")
-        print('[%.4f] @ L.R: %.9f' % (model.loss, model.lr))
-        model.loss_history.append(model.loss)
+        print('[%.4f] @ L.R: %.9f' % (model.train_loss, model.lr))
+        model.train_loss_history.append(model.train_loss)
 
         optimizer.time_decay(epoch, 0.0005)
         optimizer.set_optim_param(epoch)
 
-    # model.plot_loss('Fitting loss')
-
+    # Plot fitting history   
+    model.plot_history(loss_history=True)
     # Model status
     model.fitted = True
 

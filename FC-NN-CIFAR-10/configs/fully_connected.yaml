@@ -7,9 +7,9 @@ SOLVER:
 
 FIT:
   DATASET: 'cifar10'
-  BASE_LR: 0.1
+  BASE_LR: 0.08
   LR_POLICY: 'time_decay'
-  DECAY_RATE: 0.0005
+  DECAY_RATE: 0.06
   EPOCHS: 10000
 
 TRAIN:
@@ -17,7 +17,7 @@ TRAIN:
   BASE_LR: 0.08
   LR_POLICY: 'time_decay'
   DECAY_RATE: 0.005
-  EPOCHS: 50
+  EPOCHS: 5
 
 TEST:
   DATASET: 'cifar10'

@@ -294,10 +294,12 @@ class ModelNN(object):
             output_file("outputs/loss_plots/loss_history.html")
             p = figure(title="Losses", x_axis_label="Num epochs", 
                     y_axis_label="Loss")
-            p.line(range(len(self.train_loss_history)), self.train_loss_history, 
-                legend='Training loss', line_color='red', line_width=2.1)
-            p.line(range(len(self.val_loss_history)), self.val_loss_history, 
-                legend='Validation loss', line_color='green', line_width=2.1)
+            if len(self.train_loss_history) != 0: 
+                p.line(range(len(self.train_loss_history)), self.train_loss_history, 
+                    legend='Training loss', line_color='red', line_width=2.1)
+            if len(self.val_loss_history) != 0:
+                p.line(range(len(self.val_loss_history)), self.val_loss_history, 
+                    legend='Validation loss', line_color='green', line_width=2.1)
             show(p)
         if accuracy_history is True:
             output_file("outputs/loss_plots/accuracy_history.html")
@@ -308,6 +310,7 @@ class ModelNN(object):
             p.line(range(len(self.val_acc_history)), self.val_acc_history, 
                 legend='Testing accuracy', line_color='green', line_width=2.1)
             show(p)
+
 
 class LinearLayer(ModelNN):
     """Linear Layer class"""

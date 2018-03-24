@@ -15,7 +15,7 @@ from subprocess import call
 import torch
 
 
-def data_loader(data, batch_size, model_testing=False, shuffled=False):
+def data_loader(data, batch_size, fit_testing=False, shuffled=False):
     """ Prepares, shuffles given data x"""
     if shuffled:
         shuffle(data)
@@ -24,7 +24,7 @@ def data_loader(data, batch_size, model_testing=False, shuffled=False):
         images.append(x)
         labels.append(y)
     images = torch.stack(images, dim=0)
-    if model_testing:
+    if fit_testing:
         num_batches = 1
     else:
         num_batches = len(data) / batch_size

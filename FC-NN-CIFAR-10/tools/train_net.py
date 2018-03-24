@@ -60,7 +60,7 @@ def train(model=None):
             batch_size=dset.CIFAR10.batch_size, 
             shuffled=True)
         # Iterate over batches
-        for i, (images, ground_truths) in enumerate(train_loader):
+        for i, (images, ground_truths) in enumerate(train_loader[:-1]):
             if using_gpu():
                 images = images.cuda()
             # Training round
@@ -73,13 +73,16 @@ def train(model=None):
             if using_gpu():
                 torch.cuda.empty_cache()
        
-        # +++++ Cross validation over a portion of train set +++++ #
-        model.test(images, ground_truths)
-        ground_truths = torch.from_numpy(np.array(ground_truths))
         # Print training loss after every epoch
         print(colored('# Training loss:', 'red'), end=" ")
         print('[%.4f]' % model.train_loss)
         model.train_loss_history.append(model.train_loss)
+        # +++++ Cross validation over a portion of train set +++++ #
+        for images, ground_truths in train_loader[-2:-1]:
+            if using_gpu():
+                images = images.cuda()
+            model.test(images, ground_truths)
+        ground_truths = torch.from_numpy(np.array(ground_truths))
         # Training accuracy after every epoch
         model.train_acc = torch.mean((model.predictions == ground_truths).float()) * 100
         print(colored('# Cross validation accuracy:', 'red'), end=" ")
