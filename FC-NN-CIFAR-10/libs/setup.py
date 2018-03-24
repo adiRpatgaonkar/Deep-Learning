@@ -23,7 +23,6 @@ def setup_hardware():
             dtype = torch.cuda.FloatTensor
         else:  # GPU_ID doesn't/isn't exist/available
             print("Selected GPU %d is NOT available." % args.GPU_ID)
-            use_gpu = False
             print('\nUSING CPU.')
             dtype = torch.FloatTensor
     else:  # Want CPU

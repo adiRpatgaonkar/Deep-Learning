@@ -20,13 +20,13 @@ def best_model_selection(replace=False):
     # and store the accuracy to be compared
     for files in os.listdir("."):
         if files.endswith(".pkl"):
-            print('Loading %s.' % files, end = " ")
+            print('Loading %s.' % files, end=" ")
             dict_models[files] = pickle.load(open(files, 'rb'))['TestAcc']
             print(dict_models[files], "%")
 
     # Sort w.r.t testing accuracy of all models
-    best_one['Best model file'] = sorted(dict_models.items(), key=op.itemgetter(1), 
-    reverse=True)[0][0]     
+    best_one['Best model file'] = sorted(dict_models.items(), key=op.itemgetter(1),
+                                         reverse=True)[0][0]
 
     # Save if better model found
     if not best_one['Best model file'] == "best_model.pkl":
@@ -45,4 +45,3 @@ def best_model_selection(replace=False):
     # Get back to root directory
     os.chdir("../../")
     return
-

@@ -24,19 +24,19 @@ def test(model, data_loader=None):
     model.show_log(test=True)
 
     # Get data
-    test_dataset = dset.CIFAR10(directory='data', 
-        download=True, 
-        test=True)
+    test_dataset = dset.CIFAR10(directory='data',
+                                download=True,
+                                test=True)
 
     # If fitting is done, get 
     # the correct dataset to be tested
     if data_loader is None:
-        test_loader = dset.data_loader(data=test_dataset.data, 
-            batch_size=dset.CIFAR10.test_size, 
-            shuffled=False)
+        test_loader = dset.data_loader(data=test_dataset.data,
+                                       batch_size=dset.CIFAR10.test_size,
+                                       shuffled=False)
     else:
         test_loader = data_loader
-    
+
     # In case test set is divided in batches    
     for images, ground_truths in test_loader:
         if using_gpu():
@@ -44,7 +44,7 @@ def test(model, data_loader=None):
         model.test(images, ground_truths)
         # Clear cache if using GPU (Unsure of effectiveness)
         if using_gpu():
-                torch.cuda.empty_cache()
+            torch.cuda.empty_cache()
 
     # Convert tensor --> numpy ndarray
     ground_truths = torch.from_numpy(np.array(ground_truths))

@@ -97,10 +97,10 @@ class CIFAR10:
 
         print('Fetching', end=" ")
         if train:
-            print('training data ...', end = " ")
+            print('training data ...', end=" ")
             og_num_batches = 5
         else:  # test
-            print('testing data ...', end = " ")
+            print('testing data ...', end=" ")
             og_num_batches = 1
         og_batch_size = 10000
         self.labels = []

@@ -3,6 +3,7 @@
 # System imports
 from __future__ import print_function
 from termcolor import colored
+import torch
 # Custom imports
 from data.dataset import CIFAR10, data_loader
 from libs.check_args import arguments, using_gpu

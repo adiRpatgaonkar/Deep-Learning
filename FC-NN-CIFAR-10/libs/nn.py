@@ -6,19 +6,15 @@ Custom sequential neural network framework
 
 # System imports
 from __future__ import print_function
-
 import math
 import sys
-
 import torch
 from bokeh.plotting import figure, output_file, show
 
 # Custom imports
 from libs.check_args import arguments, using_gpu
 from libs.setup import default_tensor_type
-
 from configs.config_model import configs
-
 from data import dataset as dset
 
 
@@ -27,7 +23,9 @@ def normalize(data, data_size):
     mean and standard deviation """
     # flatten
     data = data.view(data_size, -1)
+    # noinspection PyArgumentList
     mean = torch.mean(data, 1, keepdim=True)
+    # noinspection PyArgumentList
     std_deviation = torch.std(data, 1, keepdim=True)
     # print mean, std_deviation  
     data = data - mean
@@ -41,7 +39,7 @@ def batch_norm():
 
 
 class ModelNN(object):
-    """ Model class encapsulating torche all layers, 
+    """ Model class encapsulating the all layers,
     functions, hyper parameters etc. """
 
     def __init__(self):
@@ -51,14 +49,13 @@ class ModelNN(object):
         # Model type
         self.model_type = ""
         # Net structure
-        self.arch, self.layers, self.num_layers, \
-        self.train_loss_history, self.val_loss_history, \
-        self.crossval_acc_history, self.val_acc_history = "", [], 0, [], [], [], []
+        [self.arch, self.layers, self.num_layers,
+         self.train_loss_history, self.val_loss_history,
+         self.crossval_acc_history, self.val_acc_history] = "", [], 0, [], [], [], []
         # Parameters
-        [self.weights, self.biases, self.output, 
+        [self.weights, self.biases, self.output,
          self.train_loss, self.val_loss] = [], [], [], 0, 0
-        self.grad_weights, self.grad_biases, \
-        self.grad_output = [], [], []
+        self.grad_weights, self.grad_biases, self.grad_output = [], [], []
         # Hyper parameters
         self.lr_policy = ""
         self.weights_decay = self.epochs = \
@@ -73,20 +70,74 @@ class ModelNN(object):
             'Num layers': self.num_layers, 'Layer objs': self.layers, 'Weights': 0, 'Biases': 0,
             'Max epochs': self.epochs, 'Epoch': 0, 'Learning rate': self.lr,
             'L.R. policy': self.lr_policy, 'Weights decay': self.weights_decay,
-            'L.R. decay': self.decay_rate, 'Reg': self.reg, 
+            'L.R. decay': self.decay_rate, 'Reg': self.reg,
             'Training loss': float("inf"), 'Validation loss': float("inf"),
             'TrainAcc': self.train_acc, 'TestAcc': self.test_acc
         }
         # Model running in mode
         self.isTrain = False
 
+    def set_logs(self):
+        """ 
+        Save/update model status, params too
+        (constant params; variable params are stored in set_optim_param) 
+        """
+        [self.optimum['Fitting tested'], self.optimum['Trained'], self.optimum['Tested'],
+         self.optimum['Inferenced']] = self.fitted, self.trained, self.tested, self.infered
+        [self.optimum['Model type'], self.optimum['Num layers'], self.optimum['Arch'],
+         self.optimum['Layer objs'], self.optimum['Max epochs'], self.optimum['L.R. policy'],
+         self.optimum['Weights decay'], self.optimum['L.R. decay'], self.optimum['Reg'],
+         self.optimum['TrainAcc']] = \
+            [self.model_type, self.num_layers, self.arch,
+             self.layers, self.epochs, self.lr_policy,
+             self.weights_decay, self.decay_rate, self.reg,
+             self.train_acc]
+
+    def get_logs(self):
+        global mode
+        cfg = configs()
+        """ Rebuilding model while loading the status dictionary """
+        # NOTE: L.R. has been set to the last L.R. in the latest training round
+        self.arch, self.num_layers, self.layers, self.lr, self.decay_rate = (
+            self.optimum['Arch'], self.optimum['Num layers'], self.optimum['Layer objs'],
+            self.optimum['Learning rate'], self.optimum['L.R. decay'])
+        self.model_type = cfg["MODEL"]["TYPE"]
+        self.weights_decay = cfg["SOLVER"]["WEIGHT_DECAY"]
+        if arguments().FIT:
+            mode = "FIT"
+        elif arguments().TRAIN:
+            mode = "TRAIN"
+            # If loaded model has never been trained, 
+            # then set L.R. as base lr.
+            if not self.optimum['Trained']:
+                self.lr = cfg[mode]["BASE_LR"]
+                self.optimum['Training loss'] = self.train_loss = \
+                    self.optimum['Validation loss'] = self.val_loss = \
+                    float("inf")
+        # Constant params
+        if arguments().FIT or arguments().TRAIN:
+            self.lr_policy = cfg[mode]["LR_POLICY"]
+            self.decay_rate = cfg[mode]["DECAY_RATE"]
+            self.epochs = cfg[mode]["EPOCHS"]
+        # For all model working modes
+        [self.weights, self.biases] = (self.optimum['Weights'],
+                                       self.optimum['Biases'])
+        # Set layer weights and biases (for fprop)
+        i = 0
+        for layer in self.layers:
+            if layer.LayerName == 'Linear':
+                layer.w = self.optimum['Weights'][i]
+                layer.b = self.optimum['Biases'][i]
+                i += 1
+
     def show_log(self, arch=False, fit=False, train=False, test=False, infer=False, curr_status=None):
         """ Print out stats of the current activity """
         if curr_status:
             print("\nModel status (current):")
-            print("{ Fitting tested:", self.optimum['Fitting tested'], "|", "Trained:", self.optimum['Trained'], "|", 
-                "Tested:", self.optimum['Tested'], "|", "Inferenced:", self.optimum['Inferenced'], "}")
-            print("{Training loss:", self.optimum['Training loss'], "||", "Training accuracy:", self.optimum['TrainAcc'], "% }")
+            print("{ Fitting tested:", self.optimum['Fitting tested'], "|", "Trained:", self.optimum['Trained'], "|",
+                  "Tested:", self.optimum['Tested'], "|", "Inferenced:", self.optimum['Inferenced'], "}")
+            print("{Training loss:", self.optimum['Training loss'], "||", "Training accuracy:",
+                  self.optimum['TrainAcc'], "% }")
             print("{Validation loss:", self.optimum['Validation loss'], "||", self.optimum['TestAcc'], "% }\n")
         if arch:
             self.show_arch()
@@ -109,54 +160,6 @@ class ModelNN(object):
                   'LR-POLICY:', self.lr_policy, '\n', 'WEIGHTS-DECAY:', self.weights_decay, '\n',
                   'DECAY-RATE:', self.decay_rate, '\n', 'REG-STRENGTH:', self.reg, '\n',
                   'TRAINING LOSS:', self.optimum['Training loss'], end=" }\n\n")
-
-    def set_logs(self):
-        """ Save/update model status, params too
-        (constant params; variable params are stored in set_optim_param) """
-        [self.optimum['Fitting tested'], self.optimum['Trained'], self.optimum['Tested'], 
-        self.optimum['Inferenced']] = self.fitted, self.trained, self.tested, self.infered
-        [self.optimum['Model type'], self.optimum['Num layers'], self.optimum['Arch'],
-         self.optimum['Layer objs'], self.optimum['Max epochs'], self.optimum['L.R. policy'],
-         self.optimum['Weights decay'], self.optimum['L.R. decay'], self.optimum['Reg']] = \
-            [self.model_type, self.num_layers, self.arch,
-             self.layers, self.epochs, self.lr_policy,
-             self.weights_decay, self.decay_rate, self.reg]
-
-    def get_logs(self):
-        cfg = configs()
-        """ Rebuilding model while loading the status dictionary """
-        # NOTE: L.R. has been set to the last L.R. in the latest training round
-        self.arch, self.num_layers, self.layers, self.lr, self.decay_rate = (
-            self.optimum['Arch'], self.optimum['Num layers'], self.optimum['Layer objs'],
-            self.optimum['Learning rate'], self.optimum['L.R. decay'])
-        self.model_type = cfg["MODEL"]["TYPE"]
-        self.weights_decay = cfg["SOLVER"]["WEIGHT_DECAY"]
-        if arguments().FIT:
-            mode = "FIT"
-        elif arguments().TRAIN:
-            mode = "TRAIN"
-            # If loaded model has never been trained, 
-            # then set L.R. as base lr.
-            if not self.optimum['Trained']:
-                self.lr = cfg[mode]["BASE_LR"]
-                self.optimum['Training loss'] = self.train_loss = \
-                self.optimum['Validation loss'] = self.val_loss = \
-                float("inf")
-        # Constant params
-        if arguments().FIT or arguments().TRAIN:
-            self.lr_policy = cfg[mode]["LR_POLICY"]
-            self.decay_rate = cfg[mode]["DECAY_RATE"]
-            self.epochs = cfg[mode]["EPOCHS"]
-        # For all model working modes
-        [self.weights, self.biases] = (self.optimum['Weights'], 
-            self.optimum['Biases'])
-        # Set layer weights and biases (for fprop)
-        i = 0
-        for layer in self.layers:
-            if layer.LayerName == 'Linear':
-                layer.w = self.optimum['Weights'][i]
-                layer.b = self.optimum['Biases'][i]
-                i += 1
 
     def update_parameters(self):
         """ Bias and weight updates """
@@ -209,7 +212,7 @@ class ModelNN(object):
         self.backward(ipt, label)
 
     def test(self, ipt, target):
-        """ Fprop to test torche model """
+        """ Fprop to test the model """
         self.isTrain = False
         self.forward(normalize(ipt, ipt.size(0)), target)
 
@@ -239,7 +242,7 @@ class ModelNN(object):
                             (self.layers[lth].softmax(self.output[lth - 1]))
                 self.CELoss(self.output[lth], label)
 
-    def backward(self, ipts, targets):
+    def backward(self, inputs, targets):
         """ Backprop for sequential NN layers """
         param = len(self.weights) - 1
         for lth in range(self.num_layers - 1, -1, -1):
@@ -261,7 +264,7 @@ class ModelNN(object):
                             (self.layers[lth].backward_relu(self.output[lth], self.grad_output[lth + 1]))
             else:
                 self.grad_weights[0], self.grad_biases[0] = \
-                    (self.layers[0].backward(ipts, self.grad_output[1]))
+                    (self.layers[0].backward(inputs, self.grad_output[1]))
         self.update_parameters()
 
     def CELoss(self, softmax, targets):
@@ -277,8 +280,8 @@ class ModelNN(object):
                 reg_loss += 0.5 * self.reg * torch.sum(w * w)
             self.train_loss += reg_loss
         else:
-            probs = -((torch.log(softmax) / 
-                    torch.log(torch.Tensor([10]).type(default_tensor_type()))))
+            probs = -((torch.log(softmax) /
+                       torch.log(torch.Tensor([10]).type(default_tensor_type()))))
             self.val_loss = torch.sum(probs) / dset.CIFAR10.test_size
         # If fitting/training/testing loss is destroyed.    
         if math.isnan(self.train_loss) or math.isnan(self.val_loss):
@@ -292,23 +295,23 @@ class ModelNN(object):
         """ Plot gradient descent curve """
         if loss_history is True:
             output_file("outputs/loss_plots/loss_history.html")
-            p = figure(title="Losses", x_axis_label="Num epochs", 
-                    y_axis_label="Loss")
-            if len(self.train_loss_history) != 0: 
-                p.line(range(len(self.train_loss_history)), self.train_loss_history, 
-                    legend='Training loss', line_color='red', line_width=2.1)
+            p = figure(title="Losses", x_axis_label="Num epochs",
+                       y_axis_label="Loss")
+            if len(self.train_loss_history) != 0:
+                p.line(range(len(self.train_loss_history)), self.train_loss_history,
+                       legend='Training loss', line_color='red', line_width=2.1)
             if len(self.val_loss_history) != 0:
-                p.line(range(len(self.val_loss_history)), self.val_loss_history, 
-                    legend='Validation loss', line_color='green', line_width=2.1)
+                p.line(range(len(self.val_loss_history)), self.val_loss_history,
+                       legend='Validation loss', line_color='green', line_width=2.1)
             show(p)
         if accuracy_history is True:
             output_file("outputs/loss_plots/accuracy_history.html")
-            p = figure(title="Accuracies", x_axis_label="Num epochs", 
-                    y_axis_label="Loss")
-            p.line(range(len(self.crossval_acc_history)), self.crossval_acc_history, 
-                legend='Cross val accuracy', line_color='red', line_width=2.1)
-            p.line(range(len(self.val_acc_history)), self.val_acc_history, 
-                legend='Testing accuracy', line_color='green', line_width=2.1)
+            p = figure(title="Accuracies", x_axis_label="Num epochs",
+                       y_axis_label="Loss")
+            p.line(range(len(self.crossval_acc_history)), self.crossval_acc_history,
+                   legend='Cross val accuracy', line_color='red', line_width=2.1)
+            p.line(range(len(self.val_acc_history)), self.val_acc_history,
+                   legend='Testing accuracy', line_color='green', line_width=2.1)
             show(p)
 
 
@@ -327,7 +330,7 @@ class LinearLayer(ModelNN):
         self.b = torch.zeros(1, num_opt_neurons).type(default_tensor_type())
 
     def forward(self, ipt, target=None):
-        # Frop the linear layer
+        # Fprop the linear layer
         output = torch.mm(ipt, self.w) + self.b
         return output
 
@@ -335,6 +338,7 @@ class LinearLayer(ModelNN):
         # Backprop the linear layer
         if i == -1:
             grad_w = torch.mm(ipt.t(), grad_output)
+            # noinspection PyArgumentList,PyArgumentList
             grad_b = torch.sum(grad_output, dim=0, keepdim=True)
             return [grad_w, grad_b]
         grad_output = torch.mm(grad_output, ipt.t())
@@ -354,7 +358,7 @@ class Activation(ModelNN):
     @staticmethod
     def relu(ipt):
         # print ipt
-        activation_relu = torch.clamp(ipt, min=0)
+        activation_relu = torch.clamp(ipt, min=0, max=None)
         # print activation_relu
         return activation_relu
 
@@ -376,7 +380,9 @@ class CeCriterion(ModelNN):
     @staticmethod
     def softmax(opt):
         opt_exp = torch.exp(opt)
+        # noinspection PyArgumentList,PyArgumentList
         softmax_func = opt_exp / torch.sum(opt_exp, dim=1, keepdim=True)
+        # noinspection PyArgumentList
         value, index = torch.max(softmax_func, 1)
         # print value, index
         return [value, index.cpu(), softmax_func]
@@ -390,13 +396,13 @@ class CeCriterion(ModelNN):
         # respect to the input to this layer.
         d_probs = softmax
         # Gradient of loss
-        d_probs[range(dset.CIFAR10.batch_size), target] -= 1  
+        d_probs[range(dset.CIFAR10.batch_size), target] -= 1
         d_probs /= dset.CIFAR10.batch_size
         return d_probs
 
 
 class Optimize:
-    """Schedules learning rate and saves the optimum paramters"""
+    """Schedules learning rate and saves the optimum parameters"""
 
     def __init__(self, m_object):
         self.m_alias = m_object
@@ -413,10 +419,10 @@ class Optimize:
         self.m_alias.lr = (self.lr0 * math.exp(-decay * epoch))
 
     def set_optim_param(self, epoch=-1):
-        # Check if you've got the best params
+        # Check if you've got the best params via accuracies
         if self.m_alias.test_acc > self.m_alias.optimum['TestAcc']:
             self.m_alias.optimum['Training loss'], self.m_alias.optimum['Epoch'], \
-            self.m_alias.optimum['Learning rate'] = \
+                self.m_alias.optimum['Learning rate'] = \
                 (self.m_alias.train_loss, epoch, self.m_alias.lr)
             self.m_alias.optimum['TestAcc'] = self.m_alias.test_acc
             self.m_alias.optimum['Weights'], self.m_alias.optimum['Biases'] = \
@@ -429,9 +435,9 @@ class Optimize:
                 (self.m_alias.optimum['Weights'], self.m_alias.optimum['Biases'])
             # Print least loss
             print("\nOptimum training loss & validation loss in %d epochs is: %f & %f resp." %
-                  (self.m_alias.epochs, 
-                    self.m_alias.optimum['Training loss'], 
-                    self.m_alias.optimum['Validation loss']))
+                  (self.m_alias.epochs,
+                   self.m_alias.optimum['Training loss'],
+                   self.m_alias.optimum['Validation loss']))
 
     def clear_gradients(self):
         pass

@@ -8,17 +8,13 @@ from __future__ import print_function
 import torch
 import numpy as np
 from matplotlib.pyplot import imshow, show
-from data.dataset import CIFAR10
-
-# Global variables
-global image, ground_truth, np_image
 
 
 class Transforms:
     """
     Data transforms (for data augmentation)
-
     """
+
     def __init__(self, dataset, lr_flip=False, ud_flip=False, crop=False, rotate90=False, times=None):
         """ Transform data acc. to the transform param """
 
@@ -31,6 +27,8 @@ class Transforms:
 
     def transform_data(self, lr_flip, ud_flip, crop, rotate90, times):
         """ Transform the data """
+        # Global variables
+        global image, ground_truth, np_image
 
         if not lr_flip and not ud_flip and not crop and not rotate90:
             print("No transforms done.")
@@ -74,9 +72,9 @@ class Transforms:
         return
 
 
-def see(image):
+def see(img):
     """ Use the vision """
-    image = image.cpu()
-    image = image.numpy().reshape(3, 32, 32).transpose(1, 2, 0).astype("uint8")
-    imshow(image)
+    img = img.cpu()
+    img = img.numpy().reshape(3, 32, 32).transpose(1, 2, 0).astype("uint8")
+    imshow(img)
     show()

@@ -2,18 +2,18 @@
 
 # System imports
 from __future__ import print_function
-from termcolor import colored
-import torch
+
 import numpy as np
+import torch
+from termcolor import colored
 
 # Custom imports
-from libs.check_args import arguments, using_gpu
 import libs.nn as nnc
+from libs.check_args import arguments, using_gpu
 from data import dataset as dset
-from vision.transforms import Transforms, see
-from tools import create, test_net
 from model_store import save_model
-
+from tools import create
+from vision.transforms import Transforms
 
 
 # Training
@@ -29,21 +29,21 @@ def train(model=None):
     model.show_log(arch=True, train=True)
 
     # Get train data for training and cross validation
-    train_dataset = dset.CIFAR10(directory='data', 
-        download=True, 
-        train=True)
+    train_dataset = dset.CIFAR10(directory='data',
+                                 download=True,
+                                 train=True)
     # Data augmentation
     train_dataset = Transforms(
         dataset=train_dataset,
         lr_flip=True)
 
     # Get validation data
-    val_dataset = dset.CIFAR10(directory='data', 
-        download=True, 
-        test=True)
-    val_loader = dset.data_loader(data=val_dataset.data, 
-            batch_size=dset.CIFAR10.test_size, 
-            shuffled=False)
+    val_dataset = dset.CIFAR10(directory='data',
+                               download=True,
+                               test=True)
+    val_loader = dset.data_loader(data=val_dataset.data,
+                                  batch_size=dset.CIFAR10.test_size,
+                                  shuffled=False)
 
     # Optimizer/Scheduler
     optimizer = nnc.Optimize(model)
@@ -56,23 +56,23 @@ def train(model=None):
         print('Epoch: [%d/%d]' % (epoch + 1, model.epochs), end=" ")
         print("@ [L.R: %.4f]" % model.lr)
         # Prepare batches from whole dataset
-        train_loader = dset.data_loader(data=train_dataset.data, 
-            batch_size=dset.CIFAR10.batch_size, 
-            shuffled=True)
+        train_loader = dset.data_loader(data=train_dataset.data,
+                                        batch_size=dset.CIFAR10.batch_size,
+                                        shuffled=True)
         # Iterate over batches
         for i, (images, ground_truths) in enumerate(train_loader[:-1]):
             if using_gpu():
                 images = images.cuda()
             # Training round
-            model.train(images, ground_truths)         
-            # Print iterations over vatches
+            model.train(images, ground_truths)
+            # Print iterations over batches
             # print("Iter: [%d/%d]" % (i, len(train_loader)), end=" ")
             # print("# Training Loss: [%.4f] @ L.R: %.5f" % (model.train_loss, model.lr), end=" ")
 
             # Clear cache if using GPU (Unsure of effectiveness)
             if using_gpu():
                 torch.cuda.empty_cache()
-       
+
         # Print training loss after every epoch
         print(colored('# Training loss:', 'red'), end=" ")
         print('[%.4f]' % model.train_loss)
@@ -88,7 +88,7 @@ def train(model=None):
         print(colored('# Cross validation accuracy:', 'red'), end=" ")
         print("[%.2f%%]" % model.train_acc)
         model.crossval_acc_history.append(model.train_acc)
-        
+
         # +++++ Validation over test set +++++ #
         # For every epoch check validation accuracy
         for images, ground_truths in val_loader:
@@ -98,21 +98,22 @@ def train(model=None):
             # Clear cache if using GPU (Unsure of effectiveness)
             if using_gpu():
                 torch.cuda.empty_cache()
-        # Print validation loss over test set         
+        # Print validation loss over test set
         print(colored('# Validation loss:', 'green'), end=" ")
         print('[%.4f]' % model.val_loss)
         model.val_loss_history.append(model.val_loss)
         ground_truths = torch.from_numpy(np.array(ground_truths))
         # Validation accuracy
-        model.test_acc = torch.mean((model.predictions == ground_truths).float()) * 100  # Testing accuracy
+        # Testing accuracy
+        model.test_acc = torch.mean((model.predictions == ground_truths).float()) * 100
         print(colored('# Validation accuracy:', 'green'), end="")
         print("[%.2f%%]" % model.test_acc)
         model.val_acc_history.append(model.test_acc)
 
         # +++++ Class performance @ each epoch +++++ #
         class_performance = [0.0] * dset.CIFAR10.num_classes
-        for pred, gt in zip(model.predictions, ground_truths):
-            if pred == gt:
+        for predicted, gt in zip(model.predictions, ground_truths):
+            if predicted == gt:
                 class_performance[gt] += 1
         for i, c in enumerate(dset.CIFAR10.classes):
             print("%s:%.1f%% |" % (c, 100 * (class_performance[i] / dset.CIFAR10.test_size)), end=" ")
@@ -122,7 +123,6 @@ def train(model=None):
         optimizer.time_decay(epoch, model.decay_rate)
         optimizer.set_optim_param(epoch)
     # +++++ Epoch end +++++ #
-    
     # Model status
     model.trained = True
     # Plot training & validation, show & set logs.
