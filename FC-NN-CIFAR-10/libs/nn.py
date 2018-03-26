@@ -77,7 +77,7 @@ class ModelNN(object):
         # Model running in mode
         self.isTrain = False
 
-    def set_logs(self):
+    def save_state(self):
         """ 
         Save/update model status, params too
         (constant params; variable params are stored in set_optim_param) 
@@ -93,7 +93,7 @@ class ModelNN(object):
              self.weights_decay, self.decay_rate, self.reg,
              self.train_acc]
 
-    def get_logs(self):
+    def get_state(self):
         global mode
         cfg = configs()
         """ Rebuilding model while loading the status dictionary """
@@ -136,9 +136,9 @@ class ModelNN(object):
             print("\nModel status (current):")
             print("{ Fitting tested:", self.optimum['Fitting tested'], "|", "Trained:", self.optimum['Trained'], "|",
                   "Tested:", self.optimum['Tested'], "|", "Inferenced:", self.optimum['Inferenced'], "}")
-            print("{Training loss:", self.optimum['Training loss'], "||", "Training accuracy:",
+            print("{ Training loss:", self.optimum['Training loss'], "||", "Training accuracy:",
                   self.optimum['TrainAcc'], "% }")
-            print("{Validation loss:", self.optimum['Validation loss'], "||", self.optimum['TestAcc'], "% }\n")
+            print("{ Validation loss:", self.optimum['Validation loss'], "||", self.optimum['TestAcc'], "% }\n")
         if arch:
             self.show_arch()
         if fit:
@@ -294,7 +294,7 @@ class ModelNN(object):
     def plot_history(self, loss_history, accuracy_history):
         """ Plot gradient descent curve """
         if loss_history is True:
-            output_file("outputs/loss_plots/loss_history.html")
+            output_file("outputs/model_history/loss_history.html")
             p = figure(title="Losses", x_axis_label="Num epochs",
                        y_axis_label="Loss")
             if len(self.train_loss_history) != 0:
@@ -305,9 +305,9 @@ class ModelNN(object):
                        legend='Validation loss', line_color='green', line_width=2.1)
             show(p)
         if accuracy_history is True:
-            output_file("outputs/loss_plots/accuracy_history.html")
+            output_file("outputs/model_history/accuracy_history.html")
             p = figure(title="Accuracies", x_axis_label="Num epochs",
-                       y_axis_label="Loss")
+                       y_axis_label="Accuracy")
             p.line(range(len(self.crossval_acc_history)), self.crossval_acc_history,
                    legend='Cross val accuracy', line_color='red', line_width=2.1)
             p.line(range(len(self.val_acc_history)), self.val_acc_history,
@@ -358,7 +358,7 @@ class Activation(ModelNN):
     @staticmethod
     def relu(ipt):
         # print ipt
-        activation_relu = torch.clamp(ipt, min=0, max=None)
+        activation_relu = torch.clamp(ipt, min=0)
         # print activation_relu
         return activation_relu
 
@@ -421,6 +421,7 @@ class Optimize:
     def set_optim_param(self, epoch=-1):
         # Check if you've got the best params via accuracies
         if self.m_alias.test_acc > self.m_alias.optimum['TestAcc']:
+            print('Better')
             self.m_alias.optimum['Training loss'], self.m_alias.optimum['Epoch'], \
                 self.m_alias.optimum['Learning rate'] = \
                 (self.m_alias.train_loss, epoch, self.m_alias.lr)
@@ -433,9 +434,9 @@ class Optimize:
             # Set optimum parameters
             self.m_alias.weights, self.m_alias.biases = \
                 (self.m_alias.optimum['Weights'], self.m_alias.optimum['Biases'])
-            # Print least loss
-            print("\nOptimum training loss & validation loss in %d epochs is: %f & %f resp." %
-                  (self.m_alias.epochs,
+            # Print loss which gives best accuracy.
+            print("Best accuracy: %.2f%%\nOptimum training loss & validation loss in %d epochs is: %f & %f resp." %
+                  (self.m_alias.optimum['TestAcc'], self.m_alias.epochs,
                    self.m_alias.optimum['Training loss'],
                    self.m_alias.optimum['Validation loss']))
 

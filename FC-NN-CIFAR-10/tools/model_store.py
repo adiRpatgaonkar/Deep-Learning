@@ -49,6 +49,6 @@ def load_model(filename):
     model.optimum = t
     # Use the given status dictionary to get 
     # the model up on its feet
-    model.get_logs()
+    model.get_state()
 
     return model

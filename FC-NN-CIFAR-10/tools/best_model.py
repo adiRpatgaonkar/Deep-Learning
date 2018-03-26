@@ -20,7 +20,8 @@ def best_model_selection(replace=False):
     # and store the accuracy to be compared
     for files in os.listdir("."):
         if files.endswith(".pkl"):
-            print('Loading %s.' % files, end=" ")
+            print('Loaded %s:' % files, end=" ")
+            print('Accuracy:', end=" ")
             dict_models[files] = pickle.load(open(files, 'rb'))['TestAcc']
             print(dict_models[files], "%")
 

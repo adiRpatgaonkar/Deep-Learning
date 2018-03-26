@@ -85,7 +85,7 @@ def inferences(model, fitting_loader=None, all_exp=False):
     model.infered = True
 
     model.show_log(curr_status=True)
-    model.set_logs()
+    model.save_state()
 
     # Saving inferenced model    
     if args.SAVE:

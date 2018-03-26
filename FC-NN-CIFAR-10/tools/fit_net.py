@@ -64,7 +64,7 @@ def fit(model=None):
     model.fitted = True
 
     model.show_log(curr_status=True)
-    model.set_logs()
+    model.save_state()
 
     # Saving fitted model    
     if args.SAVE:

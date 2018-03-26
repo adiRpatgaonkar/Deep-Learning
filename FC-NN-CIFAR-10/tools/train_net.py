@@ -33,25 +33,25 @@ def train(model=None):
                                  download=True,
                                  train=True)
     # Data augmentation
-    train_dataset = Transforms(
-        dataset=train_dataset,
-        lr_flip=True)
+    train_dataset = Transforms(dataset=train_dataset,
+                               lr_flip=True)
 
     # Get validation data
     val_dataset = dset.CIFAR10(directory='data',
                                download=True,
                                test=True)
+    # Validation data in batches
     val_loader = dset.data_loader(data=val_dataset.data,
                                   batch_size=dset.CIFAR10.test_size,
                                   shuffled=False)
 
     # Optimizer/Scheduler
     optimizer = nnc.Optimize(model)
+
+    # +++++ Epoch start +++++ #
     # SGD
     print("\n# Stochastic gradient descent #")
     print("Base learning rate: %.4f\n" % model.lr)
-
-    # +++++ Epoch start +++++ #
     for epoch in range(model.epochs):
         print('Epoch: [%d/%d]' % (epoch + 1, model.epochs), end=" ")
         print("@ [L.R: %.4f]" % model.lr)
@@ -104,11 +104,15 @@ def train(model=None):
         model.val_loss_history.append(model.val_loss)
         ground_truths = torch.from_numpy(np.array(ground_truths))
         # Validation accuracy
-        # Testing accuracy
         model.test_acc = torch.mean((model.predictions == ground_truths).float()) * 100
         print(colored('# Validation accuracy:', 'green'), end="")
-        print("[%.2f%%]" % model.test_acc)
+        print("[%.2f%%]" % model.test_acc, end=" ")
+        print("Best val accuracy: [%.2f%%]" % model.optimum['TestAcc'])
         model.val_acc_history.append(model.test_acc)
+
+        # +++++ L.R. schedule & store best params +++++ #
+        optimizer.set_optim_param(epoch)
+        optimizer.time_decay(epoch, model.decay_rate)
 
         # +++++ Class performance @ each epoch +++++ #
         class_performance = [0.0] * dset.CIFAR10.num_classes
@@ -116,19 +120,15 @@ def train(model=None):
             if predicted == gt:
                 class_performance[gt] += 1
         for i, c in enumerate(dset.CIFAR10.classes):
-            print("%s:%.1f%% |" % (c, 100 * (class_performance[i] / dset.CIFAR10.test_size)), end=" ")
+            print("%s:%.1f%% |" % (c, 100 * (class_performance[i] / dset.CIFAR10.imgs_per_class)), end=" ")
         print("\n")
-
-        # +++++ L.R. schedule & store best params +++++ #
-        optimizer.time_decay(epoch, model.decay_rate)
-        optimizer.set_optim_param(epoch)
     # +++++ Epoch end +++++ #
     # Model status
     model.trained = True
     # Plot training & validation, show & set logs.
-    model.plot_history(loss_history=True, accuracy_history=True)
+    # model.plot_history(loss_history=True, accuracy_history=True)
+    model.save_state()
     model.show_log(curr_status=True)
-    model.set_logs()
     # Saving fitted model    
     if args.SAVE:
         save_model(args.SAVE, model)

@@ -9,9 +9,7 @@ from termcolor import colored
 
 # Custom imports
 from libs.check_args import arguments, using_gpu
-
 from tools.model_store import save_model
-
 from data import dataset as dset
 
 
@@ -62,7 +60,7 @@ def test(model, data_loader=None):
         model.tested = True
 
     model.show_log(curr_status=True)
-    model.set_logs()
+    model.save_state()
 
     # Saving fitted model    
     if args.SAVE:
