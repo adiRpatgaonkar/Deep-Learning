@@ -49,11 +49,8 @@ def train(model=None):
     optimizer = nnc.Optimize(model)
 
     # +++++ Epoch start +++++ #
-    # SGD
-    print("\n# Stochastic gradient descent #")
-    print("Base learning rate: %.4f\n" % model.lr)
-    for epoch in range(model.epochs):
-        print('Epoch: [%d/%d]' % (epoch + 1, model.epochs), end=" ")
+    for model.curr_epoch in range(model.max_epochs):
+        print('Epoch: [%d/%d]' % (model.curr_epoch + 1, model.max_epochs), end=" ")
         print("@ [L.R: %.4f]" % model.lr)
         # Prepare batches from whole dataset
         train_loader = dset.data_loader(data=train_dataset.data,
@@ -100,19 +97,19 @@ def train(model=None):
                 torch.cuda.empty_cache()
         # Print validation loss over test set
         print(colored('# Validation loss:', 'green'), end=" ")
-        print('[%.4f]' % model.val_loss)
-        model.val_loss_history.append(model.val_loss)
+        print('[%.4f]' % model.test_loss)
+        model.test_loss_history.append(model.test_loss)
         ground_truths = torch.from_numpy(np.array(ground_truths))
         # Validation accuracy
         model.test_acc = torch.mean((model.predictions == ground_truths).float()) * 100
         print(colored('# Validation accuracy:', 'green'), end="")
         print("[%.2f%%]" % model.test_acc, end=" ")
-        print("Best val accuracy: [%.2f%%]" % model.optimum['TestAcc'])
-        model.val_acc_history.append(model.test_acc)
+        print("Best val accuracy: [%.2f%%]" % model.optimum['Testing-accuracy'])
+        model.test_acc_history.append(model.test_acc)
 
         # +++++ L.R. schedule & store best params +++++ #
-        optimizer.set_optim_param(epoch)
-        optimizer.time_decay(epoch, model.decay_rate)
+        optimizer.set_optim_param()
+        optimizer.time_decay()
 
         # +++++ Class performance @ each epoch +++++ #
         class_performance = [0.0] * dset.CIFAR10.num_classes
