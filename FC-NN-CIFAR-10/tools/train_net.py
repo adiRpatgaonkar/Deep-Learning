@@ -8,7 +8,7 @@ import torch
 from termcolor import colored
 
 # Custom imports
-import libs.nn as nnc
+from church import nn
 from libs.check_args import arguments, using_gpu
 from data import dataset as dset
 from model_store import save_model
@@ -46,7 +46,7 @@ def train(model=None):
                                   shuffled=False)
 
     # Optimizer/Scheduler
-    optimizer = nnc.Optimize(model)
+    optimizer = nn.Optimize(model)
 
     # +++++ Epoch start +++++ #
     for model.curr_epoch in range(model.max_epochs):

@@ -5,7 +5,7 @@ from __future__ import print_function
 
 # Custom imports
 from configs.config_model import set_hyper_parameters
-from libs import nn as nnc
+from church import nn
 from libs.check_args import arguments
 
 
@@ -15,17 +15,17 @@ def create_model():
     # Define the network
     print('\n' + '+' * 20, '\nBuilding net & model\n' + '+' * 20)
     
-    model = nnc.ModelNN()
+    model = nn.ModelNN()
 
     set_hyper_parameters(args.CFG, model)
 
-    model.add(nnc.LinearLayer(32 * 32 * 3, 2048))
-    model.add(nnc.Activation('ReLU'))
-    model.add(nnc.LinearLayer(2048, 512))
-    model.add(nnc.Activation('ReLU'))
-    model.add(nnc.LinearLayer(512, 128))
-    model.add(nnc.Activation('ReLU'))
-    model.add(nnc.LinearLayer(128, 10))
-    model.add(nnc.CeCriterion('Softmax'))
+    model.add(nn.Linear(32 * 32 * 3, 2048))
+    model.add(nn.Activation('ReLU'))
+    model.add(nn.Linear(2048, 512))
+    model.add(nn.Activation('ReLU'))
+    model.add(nn.Linear(512, 128))
+    model.add(nn.Activation('ReLU'))
+    model.add(nn.Linear(128, 10))
+    model.add(nn.CeCriterion('Softmax'))
 
     return model

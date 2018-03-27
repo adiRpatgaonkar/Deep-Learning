@@ -155,8 +155,8 @@ class ModelNN(object):
         i = 0
         for layer in self.layers:
             if layer.LayerName == 'Linear':
-                layer.w = self.optimum['Weights'][i]
-                layer.b = self.optimum['Biases'][i]
+                layer.weight = self.optimum['Weights'][i]
+                layer.bias = self.optimum['Biases'][i]
                 i += 1
 
     def show_log(self, arch=False, fit=False, train=False, test=False, infer=False, curr_status=None):
@@ -185,20 +185,13 @@ class ModelNN(object):
                   'DECAY-RATE:', self.lr_decay, '\n', 'REG-STRENGTH:', self.reg, '\n',
                   'Training-loss:', self.optimum['Training-loss'], end=" }\n\n")
 
-    def update_parameters(self):
-        """ Bias and weight updates """
-        for i, (grad_ws, grad_bs) in enumerate(zip(self.grad_weights, self.grad_biases)):
-            grad_ws += self.reg * self.weights[i]
-            self.weights[i] += (-self.lr * grad_ws)
-            self.biases[i] += (-self.lr * grad_bs)
-
     def add(self, layer_obj):
         """ Add layers, activations to the nn architecture """
         self.layers.append(layer_obj)
         if layer_obj.LayerName == 'Linear':
-            layer_obj.w *= self.weights_decay
-            self.weights.append(layer_obj.w)
-            self.biases.append(layer_obj.b)
+            layer_obj.weight *= self.weights_decay
+            self.weights.append(layer_obj.weight)
+            self.biases.append(layer_obj.bias)
             self.grad_weights.append(0)
             self.grad_biases.append(0)
         self.output.append(0)
@@ -210,7 +203,7 @@ class ModelNN(object):
         """ Patch architecture string """
         self.arch += str(self.num_layers) + ': ' + l.LayerName
         if l.LayerName == 'Linear':
-            self.arch += '( ' + str(l.ipt_neurons) + ' x ' + str(l.opt_neurons) + ' )'
+            self.arch += '( ' + str(l.in_features) + ' x ' + str(l.out_features) + ' )'
         elif l.LayerName == 'Activation':
             self.arch += '( ' + l.activation + ' )'
         elif l.LayerName == 'Criterion':
@@ -224,6 +217,60 @@ class ModelNN(object):
         print('{')
         print(self.arch, end="")
         print('\t  }')
+
+    def plot_history(self, loss_history, accuracy_history):
+        """ Plot gradient descent curve """
+        if loss_history is True:
+            output_file("outputs/model_history/loss_history.html")
+            p = figure(title="Losses", x_axis_label="Num epochs",
+                       y_axis_label="Loss")
+            if len(self.train_loss_history) != 0:
+                p.line(range(len(self.train_loss_history)), self.train_loss_history,
+                       legend='Training-loss', line_color='red', line_width=2.1)
+            if len(self.test_loss_history) != 0:
+                p.line(range(len(self.test_loss_history)), self.test_loss_history,
+                       legend='Testing-loss', line_color='green', line_width=2.1)
+            show(p)
+        if accuracy_history is True:
+            output_file("outputs/model_history/accuracy_history.html")
+            p = figure(title="Accuracies", x_axis_label="Num epochs",
+                       y_axis_label="Accuracy")
+            p.line(range(len(self.crossval_acc_history)), self.crossval_acc_history,
+                   legend='Cross val accuracy', line_color='red', line_width=2.1)
+            p.line(range(len(self.test_acc_history)), self.test_acc_history,
+                   legend='Testing accuracy', line_color='green', line_width=2.1)
+            show(p)
+
+    def CELoss(self, softmax, targets):
+        """ Cross-entropy loss """
+        if self.isTrain:
+            correct_log_probs = (-(torch.log(softmax[range(dset.CIFAR10.batch_size), targets])
+                                   / torch.log(torch.Tensor([10]).type(default_tensor_type()))))
+            # print correct_log_probs
+            self.train_loss = torch.sum(correct_log_probs) / dset.CIFAR10.batch_size
+            weights = self.parameters()
+            reg_loss = 0
+            for w in weights[0]:
+                reg_loss += 0.5 * self.reg * torch.sum(w * w)
+            self.train_loss += reg_loss
+        else:
+            probs = -((torch.log(softmax) /
+                       torch.log(torch.Tensor([10]).type(default_tensor_type()))))
+            self.test_loss = torch.sum(probs) / dset.CIFAR10.test_size
+        # If fitting/training/Testing-loss is destroyed.    
+        if math.isnan(self.train_loss) or math.isnan(self.test_loss):
+            # Quit if loss is NaN.
+            print('Loss is NaN\nExiting ...\n')
+            if using_gpu():
+                torch.cuda.empty_cache()
+            sys.exit(1)
+
+    def update_parameters(self):
+        """ Bias and weight updates """
+        for i, (grad_ws, grad_bs) in enumerate(zip(self.grad_weights, self.grad_biases)):
+            grad_ws += self.reg * self.weights[i]
+            self.weights[i] += (-self.lr * grad_ws)
+            self.biases[i] += (-self.lr * grad_bs)
 
     def train(self, ipt, label):
         """ Fprop and Backprop to train """
@@ -292,82 +339,36 @@ class ModelNN(object):
                     (self.layers[0].backward(inputs, self.grad_output[1]))
         self.update_parameters()
 
-    def CELoss(self, softmax, targets):
-        """ Cross-entropy loss """
-        if self.isTrain:
-            correct_log_probs = (-(torch.log(softmax[range(dset.CIFAR10.batch_size), targets])
-                                   / torch.log(torch.Tensor([10]).type(default_tensor_type()))))
-            # print correct_log_probs
-            self.train_loss = torch.sum(correct_log_probs) / dset.CIFAR10.batch_size
-            weights = self.parameters()
-            reg_loss = 0
-            for w in weights[0]:
-                reg_loss += 0.5 * self.reg * torch.sum(w * w)
-            self.train_loss += reg_loss
-        else:
-            probs = -((torch.log(softmax) /
-                       torch.log(torch.Tensor([10]).type(default_tensor_type()))))
-            self.test_loss = torch.sum(probs) / dset.CIFAR10.test_size
-        # If fitting/training/Testing-loss is destroyed.    
-        if math.isnan(self.train_loss) or math.isnan(self.test_loss):
-            # Quit if loss is NaN.
-            print('Loss is NaN\nExiting ...\n')
-            if using_gpu():
-                torch.cuda.empty_cache()
-            sys.exit(1)
 
-    def plot_history(self, loss_history, accuracy_history):
-        """ Plot gradient descent curve """
-        if loss_history is True:
-            output_file("outputs/model_history/loss_history.html")
-            p = figure(title="Losses", x_axis_label="Num epochs",
-                       y_axis_label="Loss")
-            if len(self.train_loss_history) != 0:
-                p.line(range(len(self.train_loss_history)), self.train_loss_history,
-                       legend='Training-loss', line_color='red', line_width=2.1)
-            if len(self.test_loss_history) != 0:
-                p.line(range(len(self.test_loss_history)), self.test_loss_history,
-                       legend='Testing-loss', line_color='green', line_width=2.1)
-            show(p)
-        if accuracy_history is True:
-            output_file("outputs/model_history/accuracy_history.html")
-            p = figure(title="Accuracies", x_axis_label="Num epochs",
-                       y_axis_label="Accuracy")
-            p.line(range(len(self.crossval_acc_history)), self.crossval_acc_history,
-                   legend='Cross val accuracy', line_color='red', line_width=2.1)
-            p.line(range(len(self.test_acc_history)), self.test_acc_history,
-                   legend='Testing accuracy', line_color='green', line_width=2.1)
-            show(p)
-
-
-class LinearLayer(ModelNN):
+class Linear(ModelNN):
     """Linear Layer class"""
 
     LayerName = 'Linear'
 
-    def __init__(self, num_ipt_neurons, num_opt_neurons):
+    def __init__(self, in_features, out_features):
         # print 'Linear layer created'
         # allocate size for the state variables appropriately
-        super(LinearLayer, self).__init__()
-        self.ipt_neurons = num_ipt_neurons
-        self.opt_neurons = num_opt_neurons
-        self.w = torch.rand(num_ipt_neurons, num_opt_neurons).type(default_tensor_type())
-        self.b = torch.zeros(1, num_opt_neurons).type(default_tensor_type())
+        super(Linear, self).__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.weight = torch.rand(in_features, out_features).type(default_tensor_type())
+        self.bias = torch.zeros(1, out_features).type(default_tensor_type())
 
-    def forward(self, ipt, target=None):
+    def forward(self, inputs, target=None):
         # Fprop the linear layer
-        output = torch.mm(ipt, self.w) + self.b
+        output = torch.mm(inputs, self.weight) + self.bias
         return output
 
-    def backward(self, ipt, grad_output, i=-1):
+    def backward(self, inputs, grad_outputs, i=-1):
         # Backprop the linear layer
+        # Gradient for weights and biases
         if i == -1:
-            grad_w = torch.mm(ipt.t(), grad_output)
-            # noinspection PyArgumentList,PyArgumentList
-            grad_b = torch.sum(grad_output, dim=0, keepdim=True)
-            return [grad_w, grad_b]
-        grad_output = torch.mm(grad_output, ipt.t())
-        return grad_output
+            grad_weight = torch.mm(inputs.t(), grad_outputs)
+            grad_bias = torch.sum(grad_outputs, dim=0, keepdim=True)
+            return [grad_weight, grad_bias]
+        # Gradient for outputs
+        grad_outputs = torch.mm(grad_outputs, inputs.t())
+        return grad_outputs
 
 
 class Activation(ModelNN):
@@ -381,16 +382,16 @@ class Activation(ModelNN):
         self.activation = activate_func
 
     @staticmethod
-    def relu(ipt):
+    def relu(inputs):
         # print ipt
-        activation_relu = torch.clamp(ipt, min=0)
+        activations_relu = torch.clamp(inputs, min=0)
         # print activation_relu
-        return activation_relu
+        return activations_relu
 
     @staticmethod
-    def backward_relu(ipt, grad_output):
-        grad_output[ipt <= 0] = 0
-        return grad_output
+    def backward_relu(inputs, grad_outputs):
+        grad_outputs[inputs <= 0] = 0
+        return grad_outputs
 
 
 class CeCriterion(ModelNN):
@@ -403,10 +404,10 @@ class CeCriterion(ModelNN):
         self.classifier = classifier
 
     @staticmethod
-    def softmax(opt):
-        opt_exp = torch.exp(opt)
+    def softmax(output):
+        output_exp = torch.exp(output)
         # noinspection PyArgumentList,PyArgumentList
-        softmax_func = opt_exp / torch.sum(opt_exp, dim=1, keepdim=True)
+        softmax_func = output_exp / torch.sum(output_exp, dim=1, keepdim=True)
         # noinspection PyArgumentList
         value, index = torch.max(softmax_func, 1)
         # print value, index
