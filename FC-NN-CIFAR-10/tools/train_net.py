@@ -104,7 +104,7 @@ def train(model=None):
         model.test_acc = torch.mean((model.predictions == ground_truths).float()) * 100
         print(colored('# Validation accuracy:', 'green'), end="")
         print("[%.2f%%]" % model.test_acc, end=" ")
-        print("Best val accuracy: [%.2f%%]" % model.optimum['Testing-accuracy'])
+        print("# Best val accuracy: [%.2f%%]" % model.optimum['Testing-accuracy'])
         model.test_acc_history.append(model.test_acc)
 
         # +++++ L.R. schedule & store best params +++++ #

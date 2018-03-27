@@ -241,10 +241,10 @@ class ModelNN(object):
                    legend='Testing accuracy', line_color='green', line_width=2.1)
             show(p)
 
-    def CELoss(self, softmax, targets):
+    def CELoss(self, softmax, labels):
         """ Cross-entropy loss """
         if self.isTrain:
-            correct_log_probs = (-(torch.log(softmax[range(dset.CIFAR10.batch_size), targets])
+            correct_log_probs = (-(torch.log(softmax[range(dset.CIFAR10.batch_size), labels])
                                    / torch.log(torch.Tensor([10]).type(default_tensor_type()))))
             # print correct_log_probs
             self.train_loss = torch.sum(correct_log_probs) / dset.CIFAR10.batch_size
@@ -272,28 +272,28 @@ class ModelNN(object):
             self.weights[i] += (-self.lr * grad_ws)
             self.biases[i] += (-self.lr * grad_bs)
 
-    def train(self, ipt, label):
+    def train(self, inputs, labels):
         """ Fprop and Backprop to train """
         # SGD
         if self.curr_epoch == self.start_epoch and self.isTrain is False:
             print("\n# Stochastic gradient descent #")
             print("Base learning rate: %.4f\n" % self.lr)
         self.isTrain = True
-        ipt = normalize(ipt, ipt.size(0))
-        self.forward(ipt, label)
-        self.backward(ipt, label)
+        inputs = normalize(inputs, inputs.size(0))
+        self.forward(inputs, labels)
+        self.backward(inputs, labels)
 
-    def test(self, ipt, target):
+    def test(self, inputs, labels):
         """ Fprop to test the model """
         self.isTrain = False
-        self.forward(normalize(ipt, ipt.size(0)), target)
+        self.forward(normalize(inputs, inputs.size(0)), labels)
 
-    def forward(self, ipt, label):
+    def forward(self, inputs, labels):
         """ Fprop for sequential NN layers """
         for lth in range(self.num_layers):
             if lth == 0:  # Input layer
                 if self.layers[lth].LayerName == 'Linear':
-                    self.output[lth] = self.layers[lth].forward(ipt)
+                    self.output[lth] = self.layers[lth].forward(inputs)
             elif lth < self.num_layers - 1:  # Hidden layers
                 if self.layers[lth].LayerName == 'Linear':
                     self.output[lth] = \
@@ -312,9 +312,9 @@ class ModelNN(object):
                     if self.layers[lth].LayerName == 'Criterion':
                         self.output[lth], self.predictions, _ = \
                             (self.layers[lth].softmax(self.output[lth - 1]))
-                self.CELoss(self.output[lth], label)
+                self.CELoss(self.output[lth], labels)
 
-    def backward(self, inputs, targets):
+    def backward(self, inputs, labels):
         """ Backprop for sequential NN layers """
         param = len(self.weights) - 1
         for lth in range(self.num_layers - 1, -1, -1):
@@ -322,7 +322,7 @@ class ModelNN(object):
                 if self.layers[lth].LayerName == 'Criterion':
                     if self.layers[lth].classifier == 'Softmax':
                         self.grad_output[lth] = \
-                            (self.layers[lth].backward_softmax(self.output[lth], targets))
+                            (self.layers[lth].backward_softmax(self.output[lth], labels))
             elif self.num_layers - 1 > lth > 0:  # Hidden layers
                 if self.layers[lth].LayerName == 'Linear':
                     self.grad_weights[param], self.grad_biases[param] = (
@@ -354,7 +354,7 @@ class Linear(ModelNN):
         self.weight = torch.rand(in_features, out_features).type(default_tensor_type())
         self.bias = torch.zeros(1, out_features).type(default_tensor_type())
 
-    def forward(self, inputs, target=None):
+    def forward(self, inputs):
         # Fprop the linear layer
         output = torch.mm(inputs, self.weight) + self.bias
         return output
@@ -383,9 +383,9 @@ class Activation(ModelNN):
 
     @staticmethod
     def relu(inputs):
-        # print ipt
+        # print(inputs)
         activations_relu = torch.clamp(inputs, min=0)
-        # print activation_relu
+        # print(activations_relu)
         return activations_relu
 
     @staticmethod
@@ -417,12 +417,12 @@ class CeCriterion(ModelNN):
         pass
 
     @staticmethod
-    def backward_softmax(softmax, target):
+    def backward_softmax(softmax, labels):
         # computes and returns the gradient of the Loss with
         # respect to the input to this layer.
         d_probs = softmax
         # Gradient of loss
-        d_probs[range(dset.CIFAR10.batch_size), target] -= 1
+        d_probs[range(dset.CIFAR10.batch_size), labels] -= 1
         d_probs /= dset.CIFAR10.batch_size
         return d_probs
 
@@ -459,7 +459,7 @@ class Optimize:
             print("Best accuracy: %.2f%%"
                   "\nOptimum Training-loss & "
                   "Testing-loss in %d epochs is: %f & %f resp." %
-                  (self.m_alias.optimum['Testing-accuracy'], self.m_alias.epochs,
+                  (self.m_alias.optimum['Testing-accuracy'], self.m_alias.max_epochs,
                    self.m_alias.optimum['Training-loss'],
                    self.m_alias.optimum['Testing-loss']))
 
