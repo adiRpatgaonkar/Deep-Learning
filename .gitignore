@@ -27,3 +27,9 @@
 
 # ignore buffer files
 **/*_buffer.py
+
+# ignore code editor hidden folders
+**/.vscode/
+
+# ignore output models, plots.
+**/outputs/
