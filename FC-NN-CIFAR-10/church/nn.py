@@ -1,3 +1,4 @@
+#!~/anaconda2/envs/bin/python
 """
 Custom sequential neural network framework
 

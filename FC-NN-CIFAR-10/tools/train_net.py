@@ -17,7 +17,7 @@ from vision.transforms import Transforms
 
 
 # Training
-def train(model=None):
+def train_model(model=None):
     global images, ground_truths
 
     args = arguments()

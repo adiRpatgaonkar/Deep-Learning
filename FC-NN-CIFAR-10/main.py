@@ -1,3 +1,5 @@
+#!~/anaconda2/envs/deep_learning/bin/python
+
 """ Starts the drama """
 
 # System imports
@@ -9,7 +11,7 @@ from libs.setup import setup_hardware
 
 from tools.model_store import load_model
 from tools.fit_net import fit
-from tools.train_net import train
+from tools.train_net import train_model
 from tools.test_net import test
 from tools.infer import inferences
 from tools.best_model import best_model_selection
@@ -43,7 +45,7 @@ def main():
         elif args.TRAIN:
             model = load_model(args.LOAD)
             print('Training net for loaded model')
-            model = train(model)
+            model = train_model(model)
             if args.TEST:
                 print('Testing trained model:')
                 test(model)
@@ -74,7 +76,7 @@ def main():
             args.FIT = False
         elif args.TRAIN:
             print('Training net for new model')
-            model = train()
+            model = train_model()
             if args.TEST:
                 print('Testing trained model:')
                 test(model)
