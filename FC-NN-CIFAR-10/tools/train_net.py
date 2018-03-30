@@ -50,8 +50,6 @@ def train_model(model=None):
 
     # +++++ Epoch start +++++ #
     for model.curr_epoch in range(model.max_epochs):
-        print('Epoch: [%d/%d]' % (model.curr_epoch + 1, model.max_epochs), end=" ")
-        print("@ [L.R: %.4f]" % model.lr)
         # Prepare batches from whole dataset
         train_loader = dset.data_loader(data=train_dataset.data,
                                         batch_size=dset.CIFAR10.batch_size,
@@ -70,10 +68,13 @@ def train_model(model=None):
             if using_gpu():
                 torch.cuda.empty_cache()
 
+        print('Epoch: [%d/%d]' % (model.curr_epoch + 1, model.max_epochs), end=" ")
+        print("@ [L.R: %.4f]" % model.lr)
         # Print training loss after every epoch
         print(colored('# Training loss:', 'red'), end=" ")
         print('[%.4f]' % model.train_loss)
         model.train_loss_history.append(model.train_loss)
+        
         # +++++ Cross validation over a portion of train set +++++ #
         for images, ground_truths in train_loader[-2:-1]:
             if using_gpu():
@@ -120,6 +121,7 @@ def train_model(model=None):
             print("%s:%.1f%% |" % (c, 100 * (class_performance[i] / dset.CIFAR10.imgs_per_class)), end=" ")
         print("\n")
     # +++++ Epoch end +++++ #
+
     # Model status
     model.trained = True
     # Plot training & validation, show & set logs.

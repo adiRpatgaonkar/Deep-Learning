@@ -17,7 +17,7 @@ TRAIN:
   BASE_LR: 0.08
   LR_POLICY: 'time_decay'
   DECAY_RATE: 0.008
-  EPOCHS: 3
+  EPOCHS: 30
 
 TEST:
   DATASET: 'cifar10'

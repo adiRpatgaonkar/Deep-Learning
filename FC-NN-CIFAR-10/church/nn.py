@@ -115,8 +115,8 @@ class ModelNN(object):
         """
         [self.optimum['Fitted'], self.optimum['Trained'], self.optimum['Tested'],
          self.optimum['Inferenced']] = self.status()
-        [self.optimum['Type'], self.optimum['Num-layers'], self.optimum['Arch'],
-         self.optimum['Layers']] = self.net_architecture()
+        [self.optimum['Type'], self.optimum['Arch'], self.optimum['Layers'], 
+        self.optimum['Num-layers']] = self.net_architecture()
         [self.optimum['Max-epochs'], self.optimum['Current-epoch'], self.optimum['Start-epoch'],
          self.optimum['L.R'], self.optimum['L.R-policy'], self.optimum['L.R-decay'],
          self.optimum['Weights-decay'], self.optimum['Reg']] = self.hyper_parameters()
