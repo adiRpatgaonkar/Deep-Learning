@@ -5,7 +5,7 @@ from __future__ import print_function
 
 # Custom imports
 from configs.config_model import set_hyper_parameters
-from church import nn
+from torch_custom import nn
 from libs.check_args import arguments
 
 
@@ -19,13 +19,14 @@ def create_model():
 
     set_hyper_parameters(args.CFG, model)
 
-    model.add(nn.Linear(32 * 32 * 3, 2048))
-    model.add(nn.Activation('ReLU'))
-    model.add(nn.Linear(2048, 512))
-    model.add(nn.Activation('ReLU'))
-    model.add(nn.Linear(512, 128))
-    model.add(nn.Activation('ReLU'))
-    model.add(nn.Linear(128, 10))
-    model.add(nn.CeCriterion('Softmax'))
+    if model.type == 'fcl_1':
+    	model.add(nn.Linear(32 * 32 * 3, 2048))
+    	model.add(nn.Activation('ReLU'))
+    	model.add(nn.Linear(2048, 512))
+    	model.add(nn.Activation('ReLU'))
+    	model.add(nn.Linear(512, 128))
+    	model.add(nn.Activation('ReLU'))
+    	model.add(nn.Linear(128, 10))
+    	model.add(nn.CeCriterion('Softmax'))
 
     return model

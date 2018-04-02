@@ -8,7 +8,7 @@ import torch
 from termcolor import colored
 
 # Custom imports
-from church import nn
+from torch_custom import nn
 from libs.check_args import arguments, using_gpu
 from data import dataset as dset
 from model_store import save_model

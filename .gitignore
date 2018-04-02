@@ -27,6 +27,7 @@
 
 # ignore buffer files
 **/*_buffer.py
+**/*.py~
 
 # ignore code editor hidden folders
 **/.vscode/
