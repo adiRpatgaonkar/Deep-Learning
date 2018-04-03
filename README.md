@@ -5,9 +5,9 @@ Personal projects
 Packages required:
 
 Anaconda
-python 2.7
-pytorch 0.3.1
+python=2.7
+pytorch=0.3.1
 bokeh
 pyyaml
 matplotlib
-numpy
+numpy>=1.14
