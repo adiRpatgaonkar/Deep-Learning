@@ -356,17 +356,23 @@ class Conv2D(ModelNN):
         self.output_dim[0] = self.filters
         self.output_dim[1] = ((self.width - filter_dim + 2 * pad) / stride) + 1
         self.output_dim[2] = ((self.height - filter_dim + 2 * pad) / stride) + 1
-        self.feature_volume = torch.zeros(0, 0)
+        self.feature_map_volume = torch.zeros(0, 0)
         self.kernels = 0.01 * torch.randn(self.filters, self.depth, filter_dim, filter_dim)  # print(self.kernels)
         self.biases = torch.ones(self.filters, 1, 1, 1)  # print(self.biases)
-        # print(self.output_dim, self.feature_volume.size(), self.kernels.size())
+        # print(self.output_dim, self.feature_map_volume.size(), self.kernels.size())
 
     def convolve(self, images):
-
+        """ Convolution op (Auto-correlation i.e. no flipping of kernels)"""
         if torch.is_tensor(images):
             images = images.numpy()
-        images = np.pad(images, pad_width=((0, 0), (0, 0), (self.padding, self.padding), (self.padding, self.padding)),
-                        mode='constant', constant_values=0)
+
+        images = np.pad(images,
+                        mode='constant', constant_values=0
+                        pad_width=((0, 0), (0, 0), 
+                                    (self.padding, self.padding), 
+                                    (self.padding, self.padding))
+                        )
+
         images = torch.from_numpy(images).type(torch.FloatTensor) # TODO: Enable cuda compatibilty
         fh = fw = self.kernels.size(2)
         for image in images:
@@ -383,13 +389,13 @@ class Conv2D(ModelNN):
                 temp = torch.from_numpy(np.asarray(temp, dtype='float32'))
                 o1 = temp.clone()
                 o1.resize_(self.output_dim[1], self.output_dim[2])
-                self.feature_volume = torch.cat((self.feature_volume, o1), dim=0)
-        self.feature_volume.resize_(self.output_dim[0], self.output_dim[1], self.output_dim[2])
-        return self.feature_volume
+                self.feature_map_volume = torch.cat((self.feature_map_volume, o1), dim=0)
+        self.feature_map_volume.resize_(self.output_dim[0], self.output_dim[1], self.output_dim[2])
+        return self.feature_map_volume
 
 
 class SpatialPool2D(ModelNN):
-    """Max/Mean pooling class"""
+    """Max/Mean pooling layer class"""
     LayerName = 'Pooling 2D'
 
     def __init__(self, input_dim, f, stride, pool='max'):
