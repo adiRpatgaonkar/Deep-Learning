@@ -167,9 +167,9 @@ class ModelNN(object):
         if arch:
             self.show_arch()
         if fit:
-            print('FIT {', end="\n ")
+            print('FIT {', end="\n")
         elif train:
-            print('TRAIN {', end="\n ")
+            print('TRAIN {', end="\n")
         elif test:
             print('TEST', end=" ")
             print('( DATASET: %s )' % self.data_set)
@@ -339,6 +339,92 @@ class ModelNN(object):
                 self.grad_weights[0], self.grad_biases[0] = \
                     (self.layers[0].backward(inputs, self.grad_output[1]))
         self.update_parameters()
+
+
+
+class Conv2D(ModelNN):
+    """2D Conv layer class"""
+
+    LayerName = 'Convolution 2D'
+
+    def __init__(self, input_dim, filter_dim, num_kernels, pad=0, stride=1):
+        super(Conv2D, self).__init__()
+        self.filter_dim = filter_dim
+        self.filters, self.padding, self.strides = num_kernels, pad, stride
+        self.depth, self.height, self.width = input_dim[0:]
+        self.output_dim = [0, 0, 0]
+        self.output_dim[0] = self.filters
+        self.output_dim[1] = ((self.width - filter_dim + 2 * pad) / stride) + 1
+        self.output_dim[2] = ((self.height - filter_dim + 2 * pad) / stride) + 1
+        self.feature_volume = torch.zeros(0, 0)
+        self.kernels = 0.01 * torch.randn(self.filters, self.depth, filter_dim, filter_dim)  # print(self.kernels)
+        self.biases = torch.ones(self.filters, 1, 1, 1)  # print(self.biases)
+        # print(self.output_dim, self.feature_volume.size(), self.kernels.size())
+
+    def convolve(self, images):
+
+        if torch.is_tensor(images):
+            images = images.numpy()
+        images = np.pad(images, pad_width=((0, 0), (0, 0), (self.padding, self.padding), (self.padding, self.padding)),
+                        mode='constant', constant_values=0)
+        images = torch.from_numpy(images).type(torch.FloatTensor) # TODO: Enable cuda compatibilty
+        fh = fw = self.kernels.size(2)
+        for image in images:
+            for bias, kernel in zip(self.biases, self.kernels):  # print(kernel, bias)
+                temp = []
+                for i in range(0, image.size(1) - kernel.size(1) + 1, self.strides):
+                    for j in range(0, image.size(1) - kernel.size(2) + 1, self.strides):
+                        # print(torch.sum(image[:, i:fh, j:fw] * kernel + bias))
+                        temp.append(torch.sum(image[:, i:fh, j:fw] * kernel) + bias)
+                        fw += self.strides
+                    fh += self.strides
+                    fw = self.kernels.size(2)
+                fh = self.kernels.size(2)
+                temp = torch.from_numpy(np.asarray(temp, dtype='float32'))
+                o1 = temp.clone()
+                o1.resize_(self.output_dim[1], self.output_dim[2])
+                self.feature_volume = torch.cat((self.feature_volume, o1), dim=0)
+        self.feature_volume.resize_(self.output_dim[0], self.output_dim[1], self.output_dim[2])
+        return self.feature_volume
+
+
+class SpatialPool2D(ModelNN):
+    """Max/Mean pooling class"""
+    LayerName = 'Pooling 2D'
+
+    def __init__(self, input_dim, f, stride, pool='max'):
+        super(SpatialPool2D, self).__init__()
+        self.pool_type = pool
+        self.strides = stride
+        self.spatial_extent = f
+        self.height, self.width = input_dim[1:]
+        self.output_dim = [0, 0, 0]
+        self.output_dim[0] = input_dim[0]
+        self.output_dim[1] = ((self.width - f) / stride) + 1
+        self.output_dim[2] = ((self.height - f) / stride) + 1
+        self.pooled_volume = torch.zeros(0, 0)
+
+    def pooling(self, feature_maps=None):
+
+        fh = fw = self.spatial_extent
+        for a_map in feature_maps:
+            temp = []
+            for i in range(0, a_map.size(1) - self.spatial_extent + 1, self.strides):
+                for j in range(0, a_map.size(1) - self.spatial_extent + 1, self.strides):
+                    if self.pool_type == 'max':
+                        temp.append(torch.max(a_map[i:fh, j:fw]))
+                    elif self.pool_type == 'mean':
+                        temp.append(torch.mean(a_map[i:fh, j:fw]))
+                    fw += self.strides
+                fh += self.strides
+                fw = self.spatial_extent
+            fh = self.spatial_extent
+            temp = torch.from_numpy(np.asarray(temp, dtype='float32'))
+            o1 = temp.clone()
+            o1.resize_(self.output_dim[1], self.output_dim[2])
+            self.pooled_volume = torch.cat((self.pooled_volume, o1), dim=0)
+        self.pooled_volume.resize_(self.output_dim[0], self.output_dim[1], self.output_dim[2])
+        return self.pooled_volume
 
 
 class Linear(ModelNN):

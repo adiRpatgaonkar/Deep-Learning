@@ -1,5 +1,5 @@
 MODEL:
-  TYPE: 'fully_connected_layer'
+  TYPE: 'fcl_1'
 
 SOLVER:
   WEIGHT_DECAY: 0.01
@@ -17,7 +17,7 @@ TRAIN:
   BASE_LR: 0.08
   LR_POLICY: 'time_decay'
   DECAY_RATE: 0.008
-  EPOCHS: 30
+  EPOCHS: 100
 
 TEST:
   DATASET: 'cifar10'

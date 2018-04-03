@@ -7,7 +7,7 @@ import torch
 # Custom imports
 from data.dataset import CIFAR10, data_loader
 from libs.check_args import arguments, using_gpu
-from libs.nn import Optimize
+from torch_custom.nn import Optimize
 from model_store import save_model
 import create
 

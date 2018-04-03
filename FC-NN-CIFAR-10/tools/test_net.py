@@ -49,7 +49,7 @@ def test(model, data_loader=None):
 
     # Print testing loss & accuracy
     print(colored('\n# Testing Loss:', 'red'), end="")
-    print('[%.4f]' % model.val_loss)
+    print('[%.4f]' % model.test_loss)
     model.test_acc = model.optimum['TestAcc'] = \
         (torch.mean((model.predictions == ground_truths).float()) * 100)  # Testing accuracy
     print(colored('\nTesting accuracy:', 'green'), end="")
