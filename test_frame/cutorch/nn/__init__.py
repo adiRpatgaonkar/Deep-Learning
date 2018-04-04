@@ -1,3 +1,3 @@
-from .modules import *
+__all__ = ['module', 'container', 'activations', 'linear']
 
-from .parameter import Parameter
+from .modules import *

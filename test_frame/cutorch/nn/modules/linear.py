@@ -2,16 +2,12 @@
 
 from __future__ import print_function
 
-from collections import OrderedDict
-
 import torch
 
-from .module import Module
 from cutorch.nn.parameter import Parameter
+from .module import Module
 from .. import functionals as f
 
-global DEBUG
-DEBUG = False
 
 class Linear(Module):
     """Linear Layer class"""
@@ -23,19 +19,19 @@ class Linear(Module):
         self.in_features = in_features
         self.out_features = out_features
         self.parameters = []
-        self.weight = Parameter(weight=torch.randn(self.in_features, 
-                                            self.out_features))
+        self.weight = Parameter(weight=torch.randn(self.in_features,
+                                                   self.out_features))
         self.parameters.append(self.weight)
         if bias:
-            self.bias = Parameter(bias=torch.Tensor(1, 
-                                           out_features).fill_(0))
+            self.bias = Parameter(bias=torch.Tensor(1,
+                                                    out_features).fill_(0))
             self.parameters.append(self.bias)
-        if DEBUG:
+        if __debug__:
             print(self.weight.tag, self.weight.data)
             print(self.bias.tag, self.bias.data)
-    
+
     def forward(self, in_features):
-        if DEBUG:
+        if __debug__:
             print(type(self).__name__)
             print(f.linear(in_features, self.weight.data, self.bias.data))
         return f.linear(in_features, self.weight.data, self.bias.data)

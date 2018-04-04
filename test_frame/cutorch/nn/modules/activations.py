@@ -1,6 +1,6 @@
-""" Activations class 
-	1. ReLU
-
+"""
+Activations class
+1. ReLU
 """
 
 from __future__ import print_function
@@ -8,8 +8,6 @@ from __future__ import print_function
 from .module import Module
 from .. import functionals as f
 
-global DEBUG
-DEBUG = False
 
 class ReLU(Module):
     """ReLU Activation layer class"""
@@ -19,9 +17,9 @@ class ReLU(Module):
         super(ReLU, self).__init__()
 
     def forward(self, in_features):
-    	if DEBUG:
-    		print(f.relu(in_features))
-    	return f.relu(in_features)
+        if __debug__:
+            print(f.relu(in_features))
+        return f.relu(in_features)
 
     # @staticmethod
     # def backward_relu(inputs, grad_outputs):
