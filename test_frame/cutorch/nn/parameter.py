@@ -1,6 +1,10 @@
+""" Paramters class for the model """
 
 class Parameter:
 
-    def __new__(cls, layer, data=None, grad=True):
+    def __init__(self, **kwargs):
+		for key, value in kwargs.items():
+			self.tag = key
+			self.data = value
     
         
