@@ -2,11 +2,12 @@ from __future__ import print_function
 
 import torch
 import cutorch.nn as nn
+import cutorch.nn.functionals as f
 
 
-class CNN(nn.Module):
+class FCL(nn.Module):
     def __init__(self):
-        super(CNN, self).__init__()
+        super(FCL, self).__init__()
 
         self.l1 = nn.Sequential(
             nn.Linear(32 * 32 * 3, 1541),
@@ -18,19 +19,20 @@ class CNN(nn.Module):
         self.l1.see_modules()
 
     def forward(self, inputs):
+        inputs = f.standardize(inputs)
         out = self.l1.forward(inputs)
-        if __debug__:
-            print(out)
+        print(out)
 
 
 def main():
-    cnn = CNN()
+    fcl = FCL()
 
-    image = torch.rand(1, 3072)
-    cnn.forward(image)
+    image = torch.rand(10000, 3, 32, 32)
 
-    if __debug__:
-        for module, param in cnn.l1.parameters().items():
+    fcl.forward(image)
+
+    if __debug__: # Check module(s) parameters
+        for module, param in fcl.l1.parameters().items():
             print('Module:', module)
             print('Parameters:', param)
             for p in param:

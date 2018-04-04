@@ -21,6 +21,7 @@ class Linear(Module):
         self.parameters = []
         self.weight = Parameter(weight=torch.randn(self.in_features,
                                                    self.out_features))
+        self.weight.data *= 0.01 # Conditionalize this
         self.parameters.append(self.weight)
         if bias:
             self.bias = Parameter(bias=torch.Tensor(1,
