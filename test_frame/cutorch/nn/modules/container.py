@@ -2,6 +2,8 @@
 
 from .module import Module
 
+__dlevel__ = 0
+
 
 class Sequential(Module):
 
@@ -19,12 +21,11 @@ class Sequential(Module):
             return self._parameters.items()[idx]
 
     def forward(self, inputs):
-        print(self._modules)
-        #print(inputs)
         for module in self._modules.values():
             if __debug__:
-                #print(inputs)
-                print(type(module).__name__)
+                if __dlevel__ == 2:
+                    print(inputs)
+                    print(type(module).__name__)
             inputs = module(inputs)
         return inputs
 

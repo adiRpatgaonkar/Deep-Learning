@@ -23,19 +23,26 @@ class Linear(Module):
         self.out_features = out_features
         self.weight = Parameter(weight=torch.randn(self.in_features,
                                                    self.out_features))
-        self.weight.data *= 0.01 # Conditionalize this
-        self._parameters[self] = [self.weight]
         if bias is True:
             self.bias = Parameter(bias=torch.Tensor(1, out_features).fill_(0))
-            self._parameters[self].append(self.bias)
-
+        self.init_param_setup()
         if __debug__:
             if __dlevel__ == 4:
                 print(self.weight.tag, self.weight.data)
                 print(self.bias.tag, self.bias.data)
 
+    def add2module(self):
+        self._parameters[self] = [self.weight]
+        if 'bias' in self.__dict__:
+            self._parameters[self].append(self.bias)
+
+    def init_param_setup(self):
+        self.weight.data = f.decay_weight(self.weight.data)
+        self.add2module()
+
     def forward(self, in_features):
         if __debug__:
-            print(type(self).__name__)
-            #print(f.linear(in_features, self.weight.data, self.bias.data))
+            if __dlevel__ == 4:
+                print(type(self).__name__)
+                print(f.linear(in_features, self.weight.data, self.bias.data))
         return f.linear(in_features, self.weight.data, self.bias.data)

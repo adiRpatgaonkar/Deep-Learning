@@ -8,6 +8,8 @@ from __future__ import print_function
 from .module import Module
 from .. import functionals as f
 
+__dlevel__ = 0
+
 
 class ReLU(Module):
     """ReLU Activation layer class"""
@@ -18,7 +20,8 @@ class ReLU(Module):
 
     def forward(self, in_features):
         if __debug__:
-            print(f.relu(in_features))
+            if __dlevel__ == 4:
+                print(f.relu(in_features))
         return f.relu(in_features)
 
     # @staticmethod

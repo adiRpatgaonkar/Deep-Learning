@@ -1,11 +1,12 @@
 import torch
 
+__dlevel__ = 0
+
 
 def flatten(data):
     """
     Flatten data Tensor
     :param data: 2D Tensor
-    :param num_examples: Num of data points
     :return: flattened Tensor(1D Tensor)
     """
     num_examples = 1
@@ -47,6 +48,16 @@ def linear(inputs, weight, bias=None):
         return torch.addmm(bias, inputs, weight)
 
 
+def decay_weight(weight_data):
+    """
+    Decay weights for nn layers
+    :param weight_data: Tensor
+    :return: Decayed weight Tensor
+    """
+    # TODO: Get decay rate from config
+    return weight_data * 0.01
+
+
 def relu(inputs):
     """
     Relu activation for input features
@@ -55,6 +66,7 @@ def relu(inputs):
     """
     relu_activations = torch.clamp(inputs, min=0)
     if __debug__:
-        print(inputs)
-        print(relu_activations)
+        if __dlevel__ is 2:
+            print(inputs)
+            print(relu_activations)
     return relu_activations
