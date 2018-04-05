@@ -11,7 +11,10 @@ class Sequential(Module):
         for idx, module in enumerate(modules):
             self.add_module(str(idx), module)
 
-    def forward(self, inputs):
+    def __call__(self, inputs):
+        return self._forward(inputs)
+
+    def _forward(self, inputs):
         for module in self._modules.values():
             if __debug__:
                 print(inputs)

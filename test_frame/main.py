@@ -4,24 +4,34 @@ import torch
 import cutorch.nn as nn
 import cutorch.nn.functionals as f
 
+__dlevel__ = 1
 
 class FCL(nn.Module):
     def __init__(self):
         super(FCL, self).__init__()
 
-        self.l1 = nn.Sequential(
-            nn.Linear(32 * 32 * 3, 1541),
+        self.layer1 = nn.Sequential(
+            nn.Linear(32*32*3, 1541),
             nn.ReLU(),
-            nn.Linear(1541, 10),
-            nn.ReLU()
+            nn.Linear(1541, 10)
         )
 
-        self.l1.see_modules()
+        self.layer1.see_modules()
 
     def forward(self, inputs):
-        inputs = f.standardize(inputs)
-        out = self.l1.forward(inputs)
-        print(out)
+    	if __debug__ and __dlevel__ == 2:
+    		print("Input:{}".format(inputs))
+
+       	inputs = f.standardize(inputs)
+        
+        # Fprop
+        out = self.layer1(inputs)
+
+    	if __debug__:
+    		if __dlevel__ == 3:
+    			print("Stdized input:{}".format(inputs))
+    		if __dlevel__ == 1: 
+        		print("Output:{}".format(outs))
 
 
 def main():
@@ -32,6 +42,7 @@ def main():
     fcl.forward(image)
 
     if __debug__: # Check module(s) parameters
+    	if __dlevel__ == 4:
         for module, param in fcl.l1.parameters().items():
             print('Module:', module)
             print('Parameters:', param)
