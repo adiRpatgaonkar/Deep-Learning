@@ -9,6 +9,9 @@ from .module import Module
 from .. import functionals as f
 
 
+__dlevel__ = 0
+
+
 class Linear(Module):
     """Linear Layer class"""
 
@@ -18,18 +21,18 @@ class Linear(Module):
         super(Linear, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
-        self.parameters = []
         self.weight = Parameter(weight=torch.randn(self.in_features,
                                                    self.out_features))
         self.weight.data *= 0.01 # Conditionalize this
-        self.parameters.append(self.weight)
-        if bias:
-            self.bias = Parameter(bias=torch.Tensor(1,
-                                                    out_features).fill_(0))
-            self.parameters.append(self.bias)
+        self._parameters[self] = [self.weight]
+        if bias is True:
+            self.bias = Parameter(bias=torch.Tensor(1, out_features).fill_(0))
+            self._parameters[self].append(self.bias)
+
         if __debug__:
-            print(self.weight.tag, self.weight.data)
-            print(self.bias.tag, self.bias.data)
+            if __dlevel__ == 4:
+                print(self.weight.tag, self.weight.data)
+                print(self.bias.tag, self.bias.data)
 
     def forward(self, in_features):
         if __debug__:

@@ -4,7 +4,7 @@ import torch
 import cutorch.nn as nn
 import cutorch.nn.functionals as f
 
-__dlevel__ = 1
+__dlevel__ = 0
 
 class FCL(nn.Module):
     def __init__(self):
@@ -28,27 +28,26 @@ class FCL(nn.Module):
         out = self.layer1(inputs)
 
     	if __debug__:
+    		if __dlevel__ == 1: 
+        		print("Output:{}".format(out))
+        	if __dlevel__ == 1:
+        		pass
     		if __dlevel__ == 3:
     			print("Stdized input:{}".format(inputs))
-    		if __dlevel__ == 1: 
-        		print("Output:{}".format(outs))
+    		if __dlevel__ == 4:
+        		print(self.layer1['module', 0])
+        		print(self.layer1['parameters', 0])
 
 
 def main():
+	
+	# Fully connected layer model
     fcl = FCL()
 
+    # Input image
     image = torch.rand(10000, 3, 32, 32)
 
     fcl.forward(image)
-
-    if __debug__: # Check module(s) parameters
-    	if __dlevel__ == 4:
-        for module, param in fcl.l1.parameters().items():
-            print('Module:', module)
-            print('Parameters:', param)
-            for p in param:
-                print(p.tag, p.data)
-
 
 if __name__ == '__main__':
     main()

@@ -8,22 +8,17 @@ from collections import OrderedDict
 class Module(object):
     """ Base class for all nn modules """
     def __init__(self):
-        self.x = 0
         self._modules = OrderedDict()
         self._parameters = OrderedDict()
 
-    def forward(self, *inputs):
-        """
-        Should be overridden by every module
-        """
+    def __call__(self, inputs):
+        return self._forward(inputs)
 
-    def add_module(self, name, module):
-        self._modules[name] = module
-        if 'weight' in module.__dict__:
-            self._parameters[module] = module.parameters
-
-    def parameters(self):
-        return self._parameters
+    def _add_module(self, idx, module):
+        self._modules[idx] = module
+    
+    def _add_parameters(self, idx, module):
+    	self._parameters[idx] = module._parameters
 
     def see_modules(self):
         print("{")
@@ -33,3 +28,8 @@ class Module(object):
                 print("({}x{})".format(module.in_features, module.out_features), end="")
             print("")
         print("}")
+
+    def _forward(self, *inputs):
+        """
+        Should be overridden by every subclass module
+        """

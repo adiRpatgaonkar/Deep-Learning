@@ -9,15 +9,23 @@ class Sequential(Module):
         super(Sequential, self).__init__()
 
         for idx, module in enumerate(modules):
-            self.add_module(str(idx), module)
+            self._add_module(str(idx), module)
+            self._add_parameters(str(idx), module)
 
-    def __call__(self, inputs):
-        return self._forward(inputs)
+    def __getitem__(self, x):
+        item, idx = x
+        if item == 'module':
+            return self._modules.items()[idx]
+        if item == 'parameters':
+            return self._parameters.items()[idx]
 
-    def _forward(self, inputs):
+    def forward(self, inputs):
         for module in self._modules.values():
             if __debug__:
                 print(inputs)
                 print(type(module).__name__)
-            inputs = module.forward(inputs)
+            inputs = module(inputs)
         return inputs
+
+    def parameters(self):
+        return self._parameters
