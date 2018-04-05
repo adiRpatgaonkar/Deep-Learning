@@ -7,7 +7,6 @@ class Sequential(Module):
 
     def __init__(self, *modules):
         super(Sequential, self).__init__()
-
         for idx, module in enumerate(modules):
             self._add_module(str(idx), module)
             self._add_parameters(str(idx), module)
@@ -20,9 +19,11 @@ class Sequential(Module):
             return self._parameters.items()[idx]
 
     def forward(self, inputs):
+        print(self._modules)
+        #print(inputs)
         for module in self._modules.values():
             if __debug__:
-                print(inputs)
+                #print(inputs)
                 print(type(module).__name__)
             inputs = module(inputs)
         return inputs

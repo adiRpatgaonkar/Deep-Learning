@@ -37,5 +37,5 @@ class Linear(Module):
     def forward(self, in_features):
         if __debug__:
             print(type(self).__name__)
-            print(f.linear(in_features, self.weight.data, self.bias.data))
+            #print(f.linear(in_features, self.weight.data, self.bias.data))
         return f.linear(in_features, self.weight.data, self.bias.data)
