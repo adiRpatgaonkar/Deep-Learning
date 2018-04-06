@@ -12,7 +12,7 @@ def flatten(data):
     num_examples = 1
     if data.dim() == 3:
         num_examples = 1
-        data.resize(1, data.size())
+        data = data.unsqueeze(0)
     elif data.dim() == 4:
         num_examples = data.size(0)
 
@@ -42,6 +42,9 @@ def linear(inputs, weight, bias=None):
     :param bias: Bias Tensor
     :return: out = Ax [+ b]
     """
+    #print("Input:{}".format(type(inputs)))
+    #print("W:{}".format(type(weight)))
+    #print("Bias:{}".format(type(bias)))
     if bias is None:
         return torch.mm(inputs, weight)
     else:
@@ -61,8 +64,8 @@ def decay_weight(weight_data):
 def relu(inputs):
     """
     Relu activation for input features
-    :param inputs: Input features Tensor
-    :return: ReLU activated Tensor
+    :param inputs: Input features Tensor [2D]
+    :return: ReLU activated Tensor [2D]
     """
     relu_activations = torch.clamp(inputs, min=0)
     if __debug__:
@@ -70,3 +73,50 @@ def relu(inputs):
             print(inputs)
             print(relu_activations)
     return relu_activations
+
+
+def softmax(inputs):
+    softmaxed = torch.exp(inputs) / torch.sum(inputs, dim=1, keepdim=True)
+    return softmaxed
+
+def cross_entropy(inputs, targets):
+    """
+    :param inputs: softmaxed probabs
+    :param targets: target indices list
+    :return correct_log_probs: 
+        (correct) negative log probabs 
+        of targets only (list)
+    """
+    probs = correct_probs(inputs, targets)
+    correct_log_probs =  neg_log_probs(probs)
+    return correct_log_probs
+
+def correct_probs(inputs, targets):
+    """
+    :param inputs: softmaxed probabs
+    :param targets: target indices list
+    :return probabs of targets only (list) 
+    """
+    print(range(len(inputs)))
+    return inputs[range(len(inputs)), targets]
+
+def neg_log_probs(inputs):
+    """
+    :param inputs: correct probabs
+    :return negative log(base10) probabs
+    """
+    return (-(log10(inputs)))
+
+def log10(inputs):
+    """
+    :param inputs: correct probabs
+    :return log(base10) probabs
+    """
+    return (torch.log(inputs) / torch.log(torch.Tensor([10])))
+
+def average_loss(inputs):
+    """
+    :param inputs: losses list
+    :param loss averaged over the list
+    """
+    return torch.sum(inputs) / len(inputs) 

@@ -41,8 +41,9 @@ class Linear(Module):
         self.add2module()
 
     def forward(self, in_features):
+        self.out_tensor = f.linear(in_features, self.weight.data, self.bias.data)
         if __debug__:
             if __dlevel__ == 4:
                 print(type(self).__name__)
-                print(f.linear(in_features, self.weight.data, self.bias.data))
-        return f.linear(in_features, self.weight.data, self.bias.data)
+                print(self.out_tensor)
+        return self.out_tensor

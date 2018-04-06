@@ -21,13 +21,11 @@ class Sequential(Module):
             return self._parameters.items()[idx]
 
     def forward(self, inputs):
+        print("Input:{}".format(inputs))
         for module in self._modules.values():
-            if __debug__:
-                if __dlevel__ == 2:
-                    print(inputs)
-                    print(type(module).__name__)
             inputs = module(inputs)
         return inputs
 
     def parameters(self):
+        # Parameter modules of a container
         return self._parameters

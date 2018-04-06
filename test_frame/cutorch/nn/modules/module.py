@@ -4,7 +4,7 @@ from __future__ import print_function
 
 from collections import OrderedDict
 
-__dlevel = 0
+__dlevel__ = 0
 
 
 class Module(object):
@@ -12,11 +12,20 @@ class Module(object):
     def __init__(self):
         self._modules = OrderedDict()
         self._parameters = OrderedDict()
-        # TODO.
         self._forward_hooks = OrderedDict()
+        self._backward_hooks = OrderedDict()
 
-    def __call__(self, inputs):
-        return self.forward(inputs)
+    def forward(self, *inputs):
+        """
+        Should be overridden by every subclass module
+        """
+        raise NotImplementedError
+
+    def __call__(self, *inputs):
+        for mem in self.__dict__.values():
+            if 'Sequential' in self.__dict__:
+                self._add_forward_hooks(mem)
+        return self.forward(*inputs)
 
     def _add_module(self, idx, module):
         self._modules[idx] = module
@@ -24,16 +33,9 @@ class Module(object):
     def _add_parameters(self, idx, module):
         self._parameters[idx] = module._parameters
 
-    def _add_forward_hooks(self):
-        for value in self.__dict__.values():
-            if type(value).__name__ == 'Sequential':
-                self._forward_hooks[value] = value._modules
-
-    def forward(self, *inputs):
-        """
-        Should be overridden by every subclass module
-        """
-        raise NotImplementedError
+    def _add_forward_hooks(self, container):
+        if not container in self._forward_hooks.values():
+            self._forward_hooks[str(len(self._forward_hooks.keys()))] = container
 
     def see_modules(self):
         print("{")

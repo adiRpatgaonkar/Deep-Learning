@@ -15,16 +15,30 @@ class ReLU(Module):
     """ReLU Activation layer class"""
 
     def __init__(self):
-        # Different activation function
         super(ReLU, self).__init__()
 
     def forward(self, in_features):
+        self.activ_tensor = f.relu(in_features) 
         if __debug__:
             if __dlevel__ == 4:
-                print(f.relu(in_features))
-        return f.relu(in_features)
+                print(self.activ_tensor)
+        return self.activ_tensor
 
     # @staticmethod
     # def backward_relu(inputs, grad_outputs):
     #     grad_outputs[inputs <= 0] = 0
     #     return grad_outputs
+
+class Softmax(Module):
+    """ Softmax class """
+
+    def __init__(self):
+        super(Softmax, self).__init__()
+
+    def forward(self, in_tensor):
+        self.softmaxed_tensor = f.softmax(in_tensor)
+        return self.softmaxed_tensor
+
+    def predict(softmaxed_in):
+        self.value, self.index = torch.max(self.softmaxed_tensor, 1)
+        return value, index
