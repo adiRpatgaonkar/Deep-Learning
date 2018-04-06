@@ -22,7 +22,7 @@ train_dataset = dsets.CIFAR10(root='./data/',
     train=True, transform=transforms.ToTensor(),
     download=True)
 
-test_dataset = dsets.CIFRA10(root='./data/',
+test_dataset = dsets.CIFAR10(root='./data/',
     train=False, transform=transforms.ToTensor())
 
 # Data loader (Input pipeline)
@@ -77,6 +77,7 @@ for epoch in range(epochs):
         optimizer.zero_grad()
         outputs = cnn(images)
         loss = criterion(outputs, labels)
+        print(type(loss))
         loss.backward()
         optimizer.step()
         if (i+1) % 100 == 0:

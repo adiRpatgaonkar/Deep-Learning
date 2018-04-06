@@ -97,7 +97,6 @@ def correct_probs(inputs, targets):
     :param targets: target indices list
     :return probabs of targets only (list) 
     """
-    print(range(len(inputs)))
     return inputs[range(len(inputs)), targets]
 
 def neg_log_probs(inputs):

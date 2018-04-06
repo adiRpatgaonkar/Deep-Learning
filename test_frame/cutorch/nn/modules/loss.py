@@ -18,7 +18,7 @@ class CrossEntropyLoss(Module):
 
     def forward(self, inputs, targets):
         """
-        :param inputs: Softmaxed Tensor
+        :param inputs: Softmax probabs Tensor
         :targets targets: Targets List
         :return loss: Loss: Scalar
         """

@@ -511,8 +511,10 @@ class CeCriterion(ModelNN):
 
     @staticmethod
     def backward_softmax(softmax, labels):
-        # computes and returns the gradient of the Loss with
-        # respect to the input to this layer.
+        # computes and returns the 
+        # gradient of the 
+        # softmaxed probs w.r.t to the 
+        # input to this layer.
         d_probs = softmax
         # Gradient of loss
         d_probs[range(dset.CIFAR10.batch_size), labels] -= 1

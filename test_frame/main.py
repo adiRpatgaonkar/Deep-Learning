@@ -1,18 +1,22 @@
 from __future__ import print_function
 
 import torch
+
 import cutorch.nn as nn
 import cutorch.nn.functionals as f
+import cutorch.datasets as dsets
+import cutorch.vision.transforms as vision
+
 
 __dlevel__ = 0
 
 
-class FCL(nn.Module):
+class FCM(nn.Module):
 
     def __init__(self):
-        super(FCL, self).__init__()
+        super(FCM, self).__init__()
 
-        self.layer1 = nn.Sequential(
+        self.fc = nn.Sequential(
             nn.Linear(32 * 32 * 3, 2048),
             nn.ReLU(),
             nn.Linear(2048, 1024),
@@ -23,7 +27,7 @@ class FCL(nn.Module):
             nn.Softmax()
         )
 
-        self.layer1.see_modules()
+        self.fc.see_modules()
 
     def forward(self, inputs):
         if __debug__:
@@ -34,7 +38,7 @@ class FCL(nn.Module):
         inputs = f.standardize(inputs)
 
         # Fprop
-        out = self.layer1(inputs)
+        out = self.fc(inputs)
         #out = self.layer2(out)
 
         if __debug__:
@@ -45,23 +49,39 @@ class FCL(nn.Module):
             if __dlevel__ == 3:
                 print("Stdized input:{}".format(inputs))
             if __dlevel__ == 4:
-                print(self.layer1['module', 0])
-                print(self.layer1['parameters', 0])
+                print(self.fc['module', 0])
+                print(self.fc['parameters', 0])
         return out
 
 
 def main():
+
+    # Get train data for training and cross validation
+    train_dataset = dsets.CIFAR10(directory='cutorch/data',
+                                 download=True,
+                                 train=True)
+    # Data augmentation
+    # train_dataset = vision.Transforms(dataset=train_dataset,
+    #                           lr_flip=True)
+
+    # Get validation data
+    # val_dataset = dsets.CIFAR10(directory='cutorch/data',
+    #                            download=True,
+    #                            test=True)
+
+    train_loader = dsets.data_loader(data=train_dataset.data,
+                                    batch_size=1,
+                                    shuffled=True)
+
     # Fully connected layer model
-    fcl = FCL()
+    model = FCM()
     criterion = nn.CrossEntropyLoss()
 
-    # Input image
-    image = torch.rand(1, 3, 32, 32)
-
-    # Apply the n/w on the image
-    outputs = fcl(image)
-    loss = criterion(outputs, [1])
-    print(loss)
+    for images, ground_truths in train_loader[0:1]:
+        # Apply the n/w on the image
+        outputs = model(images)
+        loss = criterion(outputs, ground_truths)
+        print(loss)
 
 if __name__ == '__main__':
     main()
