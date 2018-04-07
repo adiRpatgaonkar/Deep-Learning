@@ -21,11 +21,19 @@ class Module(object):
         """
         raise NotImplementedError
 
+    def backward(self, *inputs):
+        """
+        Should be overridden by every subclass module
+        """
+        raise NotImplementedError
+
     def __call__(self, *inputs):
         for mem in self.__dict__.values():
             if 'Sequential' in self.__dict__:
                 self._add_forward_hooks(mem)
-        return self.forward(*inputs)
+        result = self.forward(*inputs)
+        self._add_backward_hooks()
+        return result
 
     def _add_module(self, idx, module):
         self._modules[idx] = module
@@ -36,6 +44,9 @@ class Module(object):
     def _add_forward_hooks(self, container):
         if not container in self._forward_hooks.values():
             self._forward_hooks[str(len(self._forward_hooks.keys()))] = container
+
+    def _add_backward_hooks(self):
+        pass
 
     def see_modules(self):
         print("{")

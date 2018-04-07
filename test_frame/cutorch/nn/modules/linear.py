@@ -15,6 +15,9 @@ __dlevel__ = 0
 class Linear(Module):
     """Linear Layer class"""
 
+    def backward(self, *inputs):
+        pass
+
     def __init__(self, in_features, out_features, bias=True):
         # print('Linear layer created')
         # allocate size for the state variables appropriately
@@ -22,10 +25,15 @@ class Linear(Module):
         self.in_features = in_features
         self.out_features = out_features
         self.weight = Parameter(weight=torch.randn(self.in_features,
-                                                   self.out_features))
+                                                   self.out_features),
+                                require_gradient=True)
         if bias is True:
-            self.bias = Parameter(bias=torch.Tensor(1, out_features).fill_(0))
+            self.bias = Parameter(bias=torch.Tensor(1, out_features).fill_(0),
+                                  require_gradient=False)
         self.init_param_setup()
+        self.output = 0
+        self.grad = 0
+
         if __debug__:
             if __dlevel__ == 4:
                 print(self.weight.tag, self.weight.data)
@@ -41,9 +49,9 @@ class Linear(Module):
         self.add2module()
 
     def forward(self, in_features):
-        self.out_tensor = f.linear(in_features, self.weight.data, self.bias.data)
+        self.output = f.linear(in_features, self.weight.data, self.bias.data)
         if __debug__:
             if __dlevel__ == 4:
                 print(type(self).__name__)
-                print(self.out_tensor)
-        return self.out_tensor
+                print(self.output)
+        return self.output

@@ -2,8 +2,6 @@
 
 from __future__ import print_function
 
-import torch
-
 from .module import Module
 from .. import functionals as f
 
@@ -15,14 +13,18 @@ class CrossEntropyLoss(Module):
 
     def __init__(self):
         super(CrossEntropyLoss, self).__init__()
+        self.n_log_loss = 0
+        self.data = 0
 
     def forward(self, inputs, targets):
         """
         :param inputs: Softmax probabs Tensor
-        :targets targets: Targets List
+        :param targets: Targets List
         :return loss: Loss: Scalar
         """
         self.n_log_loss = f.cross_entropy(inputs, targets)
-        self.loss = f.average_loss(self.n_log_loss)
-        return self.loss
+        self.data = f.average_loss(self.n_log_loss)
+        return self
 
+    def backward(self):
+        pass

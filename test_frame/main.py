@@ -1,12 +1,8 @@
 from __future__ import print_function
 
-import torch
-
+import cutorch
 import cutorch.nn as nn
-import cutorch.nn.functionals as f
-import cutorch.datasets as dsets
-import cutorch.vision.transforms as vision
-
+import cutorchvision.datasets as dsets
 
 __dlevel__ = 0
 
@@ -33,13 +29,13 @@ class FCM(nn.Module):
         if __debug__:
             if __dlevel__ == 2:
                 print("Input:{}".format(inputs))
-                
+
         # Standardize
-        inputs = f.standardize(inputs)
+        inputs = cutorch.standardize(inputs)
 
         # Fprop
         out = self.fc(inputs)
-        #out = self.layer2(out)
+        # out = self.layer2(out)
 
         if __debug__:
             if __dlevel__ == 1:
@@ -55,23 +51,15 @@ class FCM(nn.Module):
 
 
 def main():
-
     # Get train data for training and cross validation
-    train_dataset = dsets.CIFAR10(directory='cutorch/data',
-                                 download=True,
-                                 train=True)
-    # Data augmentation
-    # train_dataset = vision.Transforms(dataset=train_dataset,
-    #                           lr_flip=True)
+    train_dataset = dsets.CIFAR10(directory='cutorchvision/data',
+                                  download=True,
+                                  train=True)
 
-    # Get validation data
-    # val_dataset = dsets.CIFAR10(directory='cutorch/data',
-    #                            download=True,
-    #                            test=True)
-
-    train_loader = dsets.data_loader(data=train_dataset.data,
-                                    batch_size=1,
-                                    shuffled=True)
+    train_loader = (
+        cutorch.utils.data.DataLoader(data=train_dataset.data,
+                                      batch_size=1,
+                                      shuffled=True))
 
     # Fully connected layer model
     model = FCM()
@@ -81,7 +69,8 @@ def main():
         # Apply the n/w on the image
         outputs = model(images)
         loss = criterion(outputs, ground_truths)
-        print(loss)
+        print(loss, loss.data)
+
 
 if __name__ == '__main__':
     main()

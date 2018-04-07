@@ -12,6 +12,7 @@ class Sequential(Module):
         for idx, module in enumerate(modules):
             self._add_module(str(idx), module)
             self._add_parameters(str(idx), module)
+            self._add_forward_hooks(module)
 
     def __getitem__(self, x):
         item, idx = x
@@ -21,10 +22,13 @@ class Sequential(Module):
             return self._parameters.items()[idx]
 
     def forward(self, inputs):
-        print("Input:{}".format(inputs))
+        # print("Input:{}".format(inputs))
         for module in self._modules.values():
             inputs = module(inputs)
         return inputs
+
+    def backward(self, inputs):
+        for module in 
 
     def parameters(self):
         # Parameter modules of a container

@@ -1,1 +1,1 @@
-
+from mathstats import standardize
