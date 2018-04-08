@@ -13,6 +13,8 @@ class CrossEntropyLoss(Module):
 
     def __init__(self):
         super(CrossEntropyLoss, self).__init__()
+        self.inputs = 0
+        self.targets = 0
         self.n_log_loss = 0
         self.data = 0
 
@@ -22,9 +24,11 @@ class CrossEntropyLoss(Module):
         :param targets: Targets List
         :return loss: Loss: Scalar
         """
+        self.inputs = inputs
+        self.targets = targets
         self.n_log_loss = f.cross_entropy(inputs, targets)
         self.data = f.average_loss(self.n_log_loss)
         return self
 
-    def backward(self):
+    def backward(self, inputs):
         pass

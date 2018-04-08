@@ -55,7 +55,7 @@ def train_model(model=None):
                                         batch_size=dset.CIFAR10.batch_size,
                                         shuffled=True)
         # Iterate over batches
-        for i, (images, ground_truths) in enumerate(train_loader[:-1]):
+        for i, (images, ground_truths) in enumerate(train_loader[0:1]):
             if using_gpu():
                 images = images.cuda()
             # Training round

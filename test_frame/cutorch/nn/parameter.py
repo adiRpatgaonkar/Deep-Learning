@@ -7,7 +7,9 @@ class Parameter:
         for key, value in kwargs.items():
             if key == 'require_gradient':
                 if isinstance(value, bool):
-                    self.req_gradient = value
+                    self.require_gradient = value
+                    if self.require_gradient:
+                        self.gradient = 0
                 continue
             self.tag = key
             self.data = value

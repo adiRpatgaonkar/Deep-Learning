@@ -43,7 +43,6 @@ class CIFAR10:
             self.download_cifar10()
         self.get_dataset(train, test)
 
-    @property
     def verify_setup(self):
         if (os.path.isfile("data_batch_1")) \
                 and (os.path.isfile("data_batch_2")) \
@@ -70,15 +69,15 @@ class CIFAR10:
         if __debug__:
             if __dlevel__ == 1:
                 print(os.getcwd())
-
+                
         # Download dataset
-        if not os.path.isfile("cifar-10-python.tar.gz"):
+        if not self.verify_setup() and not os.path.isfile("cifar-10-python.tar.gz"):
             print('\n' + '-' * 20, '\nDownloading data ...\n' + '-' * 20)
             call("wget " + self.url, shell=True)
         else:
             print('\nDataset already downloaded.')
         # Extract dataset
-        if not self.verify_setup:
+        if not self.verify_setup():
             print('\n' + '-' * 22, '\nExtracting dataset ...\n' + '-' * 22)
             call("tar -xzf cifar-10-python.tar.gz", shell=True)
             call("mv cifar-10-batches-py/* .", shell=True)

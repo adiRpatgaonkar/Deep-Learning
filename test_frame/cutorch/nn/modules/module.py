@@ -25,28 +25,31 @@ class Module(object):
         """
         Should be overridden by every subclass module
         """
-        raise NotImplementedError
+        return self.backward(*inputs)
 
     def __call__(self, *inputs):
-        for mem in self.__dict__.values():
-            if 'Sequential' in self.__dict__:
-                self._add_forward_hooks(mem)
         result = self.forward(*inputs)
-        self._add_backward_hooks()
         return result
+
+    def update_parameters(self):
+        return self.update_parameters()
 
     def _add_module(self, idx, module):
         self._modules[idx] = module
+        module.idx = idx
     
     def _add_parameters(self, idx, module):
         self._parameters[idx] = module._parameters
 
-    def _add_forward_hooks(self, container):
-        if not container in self._forward_hooks.values():
-            self._forward_hooks[str(len(self._forward_hooks.keys()))] = container
+    def _add_forward_hooks(self, module):
+        if module not in self._forward_hooks.values():
+            self._forward_hooks[str(len(self._forward_hooks.keys()))] = module
 
     def _add_backward_hooks(self):
-        pass
+        """
+        Not required by the Sequential Container
+        """
+        raise NotImplementedError
 
     def see_modules(self):
         print("{")

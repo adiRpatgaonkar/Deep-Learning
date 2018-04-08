@@ -12,6 +12,7 @@ import math
 import sys
 
 import torch
+import numpy as np
 from bokeh.plotting import figure, output_file, show
 
 # Custom imports
@@ -367,7 +368,7 @@ class Conv2D(ModelNN):
             images = images.numpy()
 
         images = np.pad(images,
-                        mode='constant', constant_values=0
+                        mode='constant', constant_values=0,
                         pad_width=((0, 0), (0, 0), 
                                     (self.padding, self.padding), 
                                     (self.padding, self.padding))

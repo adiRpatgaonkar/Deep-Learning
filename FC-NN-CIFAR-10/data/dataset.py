@@ -42,7 +42,7 @@ class CIFAR10:
 
     data_size = 60000
     train_size = 50000
-    batch_size = 100
+    batch_size = 1
     test_size = 10000
     imgs_per_class = 1000
     classes = ['airplane', 'automobile',

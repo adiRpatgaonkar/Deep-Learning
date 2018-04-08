@@ -1,3 +1,7 @@
+from __future__ import print_function
+
+import random
+
 import torch
 
 __dlevel__ = 0
@@ -61,7 +65,8 @@ def relu(inputs):
 
 
 def softmax(inputs):
-    softmaxed = torch.exp(inputs) / torch.sum(inputs, dim=1, keepdim=True)
+    exp_inputs = torch.exp(inputs)
+    softmaxed = exp_inputs / torch.sum(exp_inputs, dim=1, keepdim=True)
     return softmaxed
 
 
@@ -109,3 +114,29 @@ def average_loss(inputs):
     :return loss averaged over the list
     """
     return torch.sum(inputs) / len(inputs)
+
+
+def gradient_softmax(inputs, targets):
+    d_probs = inputs
+    d_probs[range(len(inputs)), targets] -= 1
+    d_probs /= len(inputs)
+    return d_probs
+
+
+def gradient_relu(activations):
+    d_activations = activations
+    d_activations[activations <= 0] = 0
+    d_activations[activations == 0] = random.randint(1, 10) / 10.0
+    return d_activations
+
+
+def gradient_linear(gradients_output, weight):
+    return torch.mm(gradients_output, weight.t())
+
+
+def gradient_weight(inputs, gradient_output):
+    return torch.mm(inputs.t(), gradient_output)
+
+
+def gradient_bias(gradient_output):
+    return torch.sum(gradient_output, dim=1, keepdim=True)
