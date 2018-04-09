@@ -2,6 +2,8 @@ from __future__ import print_function
 
 import random
 
+import math
+
 import torch
 
 __dlevel__ = 0
@@ -23,6 +25,23 @@ def flatten(data):
     return data.view(num_examples, -1)
 
 
+def decay_weight(weight_data):
+    """
+    Decay weights for nn layers
+    :param weight_data: Tensor
+    :return: Decayed weight Tensor
+    """
+    # TODO: Get decay rate from config
+    return weight_data * 0.01
+
+
+#################################################
+#                                               #
+#                   FORWARD                     #
+#                                               #
+#################################################
+
+
 def linear(inputs, weight, bias=None):
     """
     out = Ax + b
@@ -38,16 +57,6 @@ def linear(inputs, weight, bias=None):
         return torch.mm(inputs, weight)
     else:
         return (torch.mm(inputs, weight) + bias)
-
-
-def decay_weight(weight_data):
-    """
-    Decay weights for nn layers
-    :param weight_data: Tensor
-    :return: Decayed weight Tensor
-    """
-    # TODO: Get decay rate from config
-    return weight_data * 0.01
 
 
 def relu(inputs):
@@ -72,42 +81,15 @@ def softmax(inputs):
 
 def cross_entropy(inputs, targets):
     """
-    :param inputs: softmaxed probabs
+    :param inputs: softmaxed probs
     :param targets: target indices list
     :return correct_log_probs: 
-        (correct) negative log probabs 
+        (correct) negative log probs
         of targets only (list)
     """
-    correct_log_probs = -((torch.log(inputs[range(len(inputs)), targets]))
-                                   / torch.log(torch.Tensor([10])))
-    #probs = inputs[range(len(inputs)), targets]
-    #negative_log_probs = neg_log_probs(probs)
-    return correct_log_probs
-
-
-def correct_probs(inputs, targets):
-    """
-    :param inputs: softmaxed probabs
-    :param targets: target indices list
-    :return probabs of targets only (list) 
-    """
-    return inputs[range(len(inputs)), targets]
-
-
-def neg_log_probs(inputs):
-    """
-    :param inputs: correct probabs
-    :return negative log(base10) probabs
-    """
-    return -(log10(inputs))
-
-
-def log10(inputs):
-    """
-    :param inputs: correct probabs
-    :return log(base10) probabs
-    """
-    return torch.log(inputs) / torch.log(torch.Tensor([10]))
+    probs = correct_probs(inputs, targets)
+    negative_log_probs = neg_log_probs(probs)
+    return negative_log_probs
 
 
 def average_loss(inputs):
@@ -118,18 +100,41 @@ def average_loss(inputs):
     return torch.sum(inputs) / len(inputs)
 
 
-def gradient_softmax(inputs, targets):
-    d_probs = inputs
-    d_probs[range(len(inputs)), targets] -= 1
-    d_probs /= len(inputs)
-    return d_probs
+def correct_probs(inputs, targets):
+    """
+    :param inputs: softmaxed probs
+    :param targets: target indices list
+    :return probs of targets only (list)
+    """
+    return inputs[range(len(inputs)), targets]
 
 
-def gradient_relu(activations, gradients):
-    d_activations = gradients
-    d_activations[activations <= 0] = 0
-    #d_activations[activations == 0] = random.randint(1, 10) / 10.0
-    return d_activations
+def neg_log_probs(inputs):
+    """
+    :param inputs: correct probs
+    :return negative log(base10) probs
+    """
+    return -(log10(inputs))
+
+
+def log10(inputs):
+    """
+    :param inputs: correct probs
+    :return log(base10) probs
+    """
+    return torch.log(inputs) / torch.log(torch.Tensor([10]))
+
+
+def nan_check(data):
+    if math.isnan(data):
+        return True
+
+
+#################################################
+#                                               #
+#                   GRADIENTS                   #
+#                                               #
+#################################################
 
 
 def gradient_linear(weight, gradient_output):
@@ -142,4 +147,18 @@ def gradient_weight(inputs, gradient_output):
 
 def gradient_bias(gradient_output):
     # TODO
-    return torch.sum(gradient_output, dim=0, keepdim=True)
+    return torch.sum(gradient_output, dim=1, keepdim=True)
+
+
+def gradient_relu(activations, gradients):
+    # Commented out. Leading to a nan loss
+    # gradients[activations == 0] = random.randint(1, 10) / 10.0
+    gradients[activations <= 0] = 0
+    return gradients
+
+
+def gradient_softmax(inputs, targets):
+    d_probs = inputs
+    d_probs[range(len(inputs)), targets] -= 1
+    d_probs /= len(inputs)
+    return d_probs

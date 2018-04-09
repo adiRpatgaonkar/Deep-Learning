@@ -28,7 +28,7 @@ class Module(object):
 
     def backward(self, *inputs):
         """
-        Should be overridden by every subclass module
+        Maybe be overridden by subclass modules
         """
         return self.backward(*inputs)
 
@@ -37,7 +37,7 @@ class Module(object):
         return result
 
     def parameters(self):
-        # If paramters are not added to the model,
+        # If parameters are not added to the model,
         # add 'em right away.
         if not self._parameters:
             for member in self.__dict__.values():

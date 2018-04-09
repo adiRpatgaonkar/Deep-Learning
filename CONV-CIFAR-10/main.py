@@ -29,7 +29,7 @@ if do.using_gpu and torch.cuda.is_available():
 else:
     print('\nUsing CPU.')
 
-global train_dataset, test_dataset, images, labels, trainloader, testloader, optimizer # Global variables
+global train_dataset, test_dataset, images, labels, train_loader, test_loader, optimizer # Global variables
 filename = 'optimum.pkl'
 
 

@@ -17,6 +17,9 @@ __dlevel__ = 0
 class Linear(Module):
     """Linear Layer class"""
 
+    def _add_backward_hooks(self):
+        pass
+
     def __init__(self, in_features, out_features, bias=True):
         # print('Linear layer created')
         # allocate size for the state variables appropriately
@@ -74,15 +77,11 @@ class Linear(Module):
             gradients['output'] = gradients['output'].unsqueeze(0)
 
         if self.weight.require_gradient:
-            #print("Grad in:", gradients['output'].size())
             self.grad['weight'] = f.gradient_weight(self.inputs, gradients['output'])
-            #print("Grad weight:", self.grad['weight'].size())
             self.weight.gradient = self.grad['weight']
 
         if self.bias.require_gradient:
-            #print("Grad in:", gradients['output'])
             self.grad['bias'] = f.gradient_bias(gradients['output'])
-            #print("Grad bias:", self.grad['bias'])
             self.bias.gradient = self.grad['bias']
         if self.idx == '0':
             # No gradients required for input layer (idx == 0)

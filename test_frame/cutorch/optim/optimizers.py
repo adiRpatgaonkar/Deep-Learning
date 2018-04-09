@@ -12,9 +12,9 @@ class Optimize:
             self.lr0 = config['lr']
             self.max_epochs = config['max_epochs']
             self.curr_epoch = config['start_epoch']
-        elif (max_epochs is not None and 
-            lr is not None and 
-            lr_decay is not None):
+        elif (max_epochs is not None and
+              lr is not None and
+              lr_decay is not None):
             self.max_epochs = max_epochs
             self.curr_iter = 0
             self.lr0 = lr
@@ -39,7 +39,7 @@ class Optimize:
         pass
 
     def exp_decay(self):
-    #    self.lr = (self.lr0 * math.exp(-self.lr_decay * self.curr_epoch))
+        #  self.lr = (self.lr0 * math.exp(-self.lr_decay * self.curr_epoch))
         pass
 
     def set_optim_param(self):

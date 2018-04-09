@@ -37,7 +37,7 @@ class ReLU(Module):
     def backward(self, gradients):
         """
         :param gradients: gradients from the last 
-                          back-proped layer
+                          back-propagated layer
         """
         self.grad['output'] = f.gradient_relu(self.output, gradients['output'])
         return self.grad

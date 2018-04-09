@@ -10,12 +10,12 @@ from cutorchvision.transforms import Transforms
 __dlevel__ = 0
 
 # Get train data for training and cross validation
-train_dataset = dsets.CIFAR10(directory='cutorchvision/data',
+train_dataset = dsets.CIFAR10(directory="cutorchvision/data",
                               download=True,
                               train=True)
 # Data augmentation
 train_dataset = Transforms(dataset=train_dataset,
-                               lr_flip=True)
+                           lr_flip=True)
 
 
 class FCM(nn.Module):
@@ -33,9 +33,6 @@ class FCM(nn.Module):
         out = self.fc(out)
         return out
 
-    def backward(self, targets):
-        self.fc.backward(targets)
-
 
 def main():
     # Fully connected layer model
@@ -43,20 +40,20 @@ def main():
     criterion = nn.CrossEntropyLoss()
 
     max_epochs = 100
-    learning_rate = 0.05 # To be used with optimizer
+    learning_rate = 0.05  # To be used with optimizer
     lr_decay = 0.00005
-    optimizer = cutorch.optim.Optimize(fcm.parameters, 
-                                        lr=learning_rate, 
-                                        max_epochs=max_epochs, 
-                                        lr_decay=lr_decay)
+    optimizer = cutorch.optim.Optimize(fcm.parameters,
+                                       lr=learning_rate,
+                                       max_epochs=max_epochs,
+                                       lr_decay=lr_decay)
     time_start = time.time()
     for epoch in range(max_epochs):
+        print("\nEpoch:[{}/{}]".format(epoch + 1, max_epochs))
         # Shuffle data before the training round
-        print("\nEpoch:[{}/{}]".format(epoch+1, max_epochs))
         train_loader = (cutorch.utils.data.DataLoader(
-                        data=train_dataset.data,
-                        batch_size=dsets.CIFAR10.batch_size,
-                        shuffled=True))
+            data=train_dataset.data,
+            batch_size=dsets.CIFAR10.batch_size,
+            shuffled=True))
         for i, (images, ground_truths) in enumerate(train_loader):
             outputs = fcm(images)
             loss = criterion(outputs, ground_truths)
@@ -64,10 +61,10 @@ def main():
             optimizer.step()
             if (i + 1) % 50 == 0:
                 print("Iter[{}/{}]".format(i + 1, len(train_loader)), end=" ")
-                print('error:[{}]'. format(loss.data))        
+                print("error:[{}]".format(loss.data))
 
-    print("Time taken to train is {:.2f} seconds".format(time.time()-time_start))            
+    print("Time taken to train is {:.2f} seconds".format(time.time() - time_start))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

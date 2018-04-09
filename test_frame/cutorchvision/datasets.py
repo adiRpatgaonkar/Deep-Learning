@@ -43,7 +43,8 @@ class CIFAR10:
             self.download_cifar10()
         self.get_dataset(train, test)
 
-    def verify_setup(self):
+    @staticmethod
+    def verify_setup():
         if (os.path.isfile("data_batch_1")) \
                 and (os.path.isfile("data_batch_2")) \
                 and (os.path.isfile("data_batch_3")) \

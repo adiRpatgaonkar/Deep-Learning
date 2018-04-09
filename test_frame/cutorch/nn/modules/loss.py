@@ -2,6 +2,8 @@
 
 from __future__ import print_function
 
+import sys
+
 from .module import Module
 from .. import functionals as f
 
@@ -21,16 +23,20 @@ class CrossEntropyLoss(Module):
 
     def forward(self, model, targets):
         """
-        :param inputs: Softmax probabs Tensor
+        :param model: model object
         :param targets: Targets List
         :return loss: Loss: Scalar
         """
         self.out_model = model
-        #print(type(self.out_model))
+        # print(type(self.out_model))
         self.inputs = model.output
         self.targets = targets
         self.n_log_loss = f.cross_entropy(model.output, targets)
         self.data = f.average_loss(self.n_log_loss)
+        if f.nan_check(self.data):
+            # Quit if loss is NaN.
+            print('Loss is NaN\nExiting ...\n')
+            sys.exit(1)
         return self
 
     def backward(self):
