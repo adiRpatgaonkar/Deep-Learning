@@ -19,22 +19,18 @@ train_dataset = Transforms(dataset=train_dataset,
 
 
 class FCM(nn.Module):
-
     def __init__(self):
         super(FCM, self).__init__()
-
-        self.fc_layer = nn.Sequential(
+        self.fc = nn.Sequential(
             nn.Linear(32 * 32 * 3, 1024),
             nn.ReLU(),
             nn.Linear(1024, 10),
-            nn.Softmax()
-        )
+            nn.Softmax())
         self.fc.see_modules()
 
-    def forward(self, inputs):
-        # Standardize and flatten data for FC
-        inputs = cutorch.standardize(inputs)
-        out = self.fc_layer(inputs)
+    def forward(self, x):
+        out = cutorch.standardize(x)
+        out = self.fc(out)
         return out
 
     def backward(self, targets):
