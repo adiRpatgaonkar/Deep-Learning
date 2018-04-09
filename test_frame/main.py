@@ -42,7 +42,7 @@ def main():
     max_epochs = 100
     learning_rate = 0.05  # To be used with optimizer
     lr_decay = 0.00005
-    optimizer = cutorch.optim.Optimize(fcm.parameters,
+    optimizer = cutorch.optim.SGD(fcm.parameters,
                                        lr=learning_rate,
                                        max_epochs=max_epochs,
                                        lr_decay=lr_decay)

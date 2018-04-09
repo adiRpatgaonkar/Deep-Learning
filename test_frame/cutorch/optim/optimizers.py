@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 
-class Optimize:
+class SGD:
     """Schedules L.R and saves the optimum parameters"""
 
     def __init__(self, parameters, config=None, max_epochs=None, lr=None, lr_decay=None):
