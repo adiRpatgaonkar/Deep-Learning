@@ -28,12 +28,10 @@ class ReLU(Module):
 
     def forward(self, in_features):
         self.inputs = in_features
-        print(self.inputs)
         self.output = f.relu(in_features)
         if __debug__:
             if __dlevel__ == 4:
                 print(self.output)
-        print(self.output)
         return self.output
 
     def backward(self, gradients):
@@ -41,12 +39,15 @@ class ReLU(Module):
         :param gradients: gradients from the last 
                           back-proped layer
         """
-        self.grad['output'] = f.gradient_relu(self.output)
+        self.grad['output'] = f.gradient_relu(self.output, gradients['output'])
         return self.grad
 
 
 class Softmax(Module):
-    """ Softmax class """
+    """
+    Classifier
+    Softmax class
+    """
 
     def __init__(self):
         super(Softmax, self).__init__()
@@ -59,6 +60,7 @@ class Softmax(Module):
 
     def forward(self, in_features):
         self.inputs = in_features
+        # print("SoftmaxIn", self.inputs)
         self.output = f.softmax(in_features)
         return self.output
 

@@ -77,7 +77,6 @@ for epoch in range(epochs):
         optimizer.zero_grad()
         outputs = cnn(images)
         loss = criterion(outputs, labels)
-        print(type(loss))
         loss.backward()
         optimizer.step()
         if (i+1) % 100 == 0:

@@ -17,18 +17,21 @@ class CrossEntropyLoss(Module):
         self.targets = 0
         self.n_log_loss = 0
         self.data = 0
+        self.out_model = None
 
-    def forward(self, inputs, targets):
+    def forward(self, model, targets):
         """
         :param inputs: Softmax probabs Tensor
         :param targets: Targets List
         :return loss: Loss: Scalar
         """
-        self.inputs = inputs
+        self.out_model = model
+        #print(type(self.out_model))
+        self.inputs = model.output
         self.targets = targets
-        self.n_log_loss = f.cross_entropy(inputs, targets)
+        self.n_log_loss = f.cross_entropy(model.output, targets)
         self.data = f.average_loss(self.n_log_loss)
         return self
 
-    def backward(self, inputs):
-        pass
+    def backward(self):
+        return self.out_model.backward(self.targets)

@@ -14,10 +14,15 @@ class Module(object):
         self._parameters = OrderedDict()
         self._forward_hooks = OrderedDict()
         self._backward_hooks = OrderedDict()
+        self.output = 0
 
     def forward(self, *inputs):
         """
         Should be overridden by every subclass module
+
+        Usually:
+        :param inputs: Input data/batch
+        :return model: Post fprop
         """
         raise NotImplementedError
 
@@ -30,6 +35,17 @@ class Module(object):
     def __call__(self, *inputs):
         result = self.forward(*inputs)
         return result
+
+    def parameters(self):
+        # If paramters are not added to the model,
+        # add 'em right away.
+        if not self._parameters:
+            for member in self.__dict__.values():
+                print(type(member))
+                if type(member).__name__ == 'Sequential':
+                    if member not in self._parameters:
+                        self._parameters[member] = member.parameters()
+        return self._parameters
 
     def update_parameters(self):
         return self.update_parameters()
@@ -52,10 +68,11 @@ class Module(object):
         raise NotImplementedError
 
     def see_modules(self):
-        print("{")
+        print("\n" + type(self).__name__, end=" ")
+        print("(")
         for idx, module in self._modules.items():
             print(" {}. {} ".format(idx, type(module).__name__), end="")
             if 'in_features' in module.__dict__ and 'out_features' in module.__dict__:
                 print("({}x{})".format(module.in_features, module.out_features), end="")
             print("")
-        print("}")
+        print(")\n")

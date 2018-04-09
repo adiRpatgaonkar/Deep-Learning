@@ -37,7 +37,7 @@ def linear(inputs, weight, bias=None):
     if bias is None:
         return torch.mm(inputs, weight)
     else:
-        return torch.addmm(bias, inputs, weight)
+        return (torch.mm(inputs, weight) + bias)
 
 
 def decay_weight(weight_data):
@@ -78,8 +78,10 @@ def cross_entropy(inputs, targets):
         (correct) negative log probabs 
         of targets only (list)
     """
-    probs = correct_probs(inputs, targets)
-    correct_log_probs = neg_log_probs(probs)
+    correct_log_probs = -((torch.log(inputs[range(len(inputs)), targets]))
+                                   / torch.log(torch.Tensor([10])))
+    #probs = inputs[range(len(inputs)), targets]
+    #negative_log_probs = neg_log_probs(probs)
     return correct_log_probs
 
 
@@ -123,15 +125,15 @@ def gradient_softmax(inputs, targets):
     return d_probs
 
 
-def gradient_relu(activations):
-    d_activations = activations
+def gradient_relu(activations, gradients):
+    d_activations = gradients
     d_activations[activations <= 0] = 0
-    d_activations[activations == 0] = random.randint(1, 10) / 10.0
+    #d_activations[activations == 0] = random.randint(1, 10) / 10.0
     return d_activations
 
 
-def gradient_linear(gradients_output, weight):
-    return torch.mm(gradients_output, weight.t())
+def gradient_linear(weight, gradient_output):
+    return torch.mm(gradient_output, weight.t())
 
 
 def gradient_weight(inputs, gradient_output):
@@ -139,4 +141,5 @@ def gradient_weight(inputs, gradient_output):
 
 
 def gradient_bias(gradient_output):
-    return torch.sum(gradient_output, dim=1, keepdim=True)
+    # TODO
+    return torch.sum(gradient_output, dim=0, keepdim=True)

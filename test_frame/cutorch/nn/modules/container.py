@@ -1,5 +1,8 @@
 """Container class to hold nn model layers"""
 
+from __future__ import print_function
+
+import cutorch
 from .module import Module
 from collections import OrderedDict
 
@@ -14,6 +17,10 @@ class Sequential(Module):
         for idx, module in enumerate(modules):
             self._add_module(str(idx), module)
             self._add_parameters(str(idx), module)
+            self._add_forward_hooks(module)
+        self._backward_hooks = OrderedDict(
+                                reversed(self._forward_hooks.items())
+                                )
 
     def __getitem__(self, x):
         item, idx = x
@@ -26,11 +33,8 @@ class Sequential(Module):
         # print("Input:{}".format(inputs))
         for module in self._modules.values():
             inputs = module(inputs)
-            self._add_forward_hooks(module)
-        self._backward_hooks = OrderedDict(
-                                reversed(self._forward_hooks.items())
-                                )
-        return inputs
+        self.output = inputs
+        return self
 
     def backward(self, targets):
         gradients = 0
@@ -41,16 +45,13 @@ class Sequential(Module):
             else:
                 gradients = module.backward(gradients)
             self.gradients[module] = gradients
-        self.update_parameters()
+        # self.update_parameters()
 
     def parameters(self):
         # Parameter modules of a container
         return self._parameters
 
-    def update_parameters(self):
-        print("Updating")
+    def update_parameters(self, lr):
         for module in self._modules.values():
-            # if 'weight' in module.__dict__:
-                # print(module.weight.data)
             for param in module._parameters:
-                param.data += (-0.0005 * param.gradient)
+                param.data = param.data + (-lr * param.gradient)

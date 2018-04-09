@@ -62,7 +62,6 @@ class Linear(Module):
     def forward(self, in_features):
         self.inputs = in_features
         self.output = f.linear(in_features, self.weight.data, self.bias.data)
-        print(list(self.output))
         if __debug__:
             if __dlevel__ == 4:
                 print(type(self).__name__)
@@ -75,15 +74,19 @@ class Linear(Module):
             gradients['output'] = gradients['output'].unsqueeze(0)
 
         if self.weight.require_gradient:
+            #print("Grad in:", gradients['output'].size())
             self.grad['weight'] = f.gradient_weight(self.inputs, gradients['output'])
+            #print("Grad weight:", self.grad['weight'].size())
             self.weight.gradient = self.grad['weight']
 
         if self.bias.require_gradient:
+            #print("Grad in:", gradients['output'])
             self.grad['bias'] = f.gradient_bias(gradients['output'])
+            #print("Grad bias:", self.grad['bias'])
             self.bias.gradient = self.grad['bias']
         if self.idx == '0':
             # No gradients required for input layer (idx == 0)
             self.grad['output'] = torch.Tensor(self.inputs.size())
         else:
-            self.grad['output'] = f.gradient_linear(gradients['output'], self.weight.data)
+            self.grad['output'] = f.gradient_linear(self.weight.data, gradients['output'])
         return self.grad
