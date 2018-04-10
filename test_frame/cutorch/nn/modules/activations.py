@@ -68,7 +68,3 @@ class Softmax(Module):
         # Gradient of softmax outputs @ fprop
         self.grad['output'] = f.gradient_softmax(self.output, targets)
         return self.grad
-
-    def predict(self, softmaxed):
-        self.confidence, self.index = torch.max(softmaxed, 1)
-        return [self.confidence, self.index]

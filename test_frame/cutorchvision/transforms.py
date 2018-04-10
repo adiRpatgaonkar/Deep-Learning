@@ -52,7 +52,7 @@ class Transforms:
         if crop:
             print("Cropping training examples ...", end=" ")
             for image, ground_truth in self.original_dataset.data:
-                image[:, 0] = image[0, :] = image[:, -1] = image[-1, :] = 0
+                image[:, 0:3] = image[0:3, :] = image[:, -3:] = image[-3:, :] = 0
                 self.data.append((image, ground_truth))
             print("done.")
         if rotate90:

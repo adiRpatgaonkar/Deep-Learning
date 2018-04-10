@@ -15,6 +15,20 @@ class Module(object):
         self._forward_hooks = OrderedDict()
         self._backward_hooks = OrderedDict()
         self.output = 0
+        self.is_train = False
+        self.is_eval = False
+
+    def __call__(self, *inputs):
+        result = self.forward(*inputs)
+        return result
+
+    def train(self):
+        self.is_train = True
+        self.is_eval = False
+
+    def eval(self):
+        self.is_train = False
+        self.is_eval = True
 
     def forward(self, *inputs):
         """
@@ -31,10 +45,6 @@ class Module(object):
         Maybe be overridden by subclass modules
         """
         return self.backward(*inputs)
-
-    def __call__(self, *inputs):
-        result = self.forward(*inputs)
-        return result
 
     def parameters(self):
         # If parameters are not added to the model,

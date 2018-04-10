@@ -50,9 +50,9 @@ def linear(inputs, weight, bias=None):
     :param bias: Bias Tensor
     :return: out = Ax [+ b]
     """
-    # print("Input:{}".format(type(inputs)))
-    # print("W:{}".format(type(weight)))
-    # print("Bias:{}".format(type(bias)))
+    # print("Input:{}".format(inputs.size()))
+    # print("W:{}".format(weight.size()))
+    # print("Bias:{}".format(bias.size()))
     if bias is None:
         return torch.mm(inputs, weight)
     else:
@@ -146,8 +146,9 @@ def gradient_weight(inputs, gradient_output):
 
 
 def gradient_bias(gradient_output):
-    # TODO
-    return torch.sum(gradient_output, dim=1, keepdim=True)
+    # TODO: Find out WHY dim = 0 ?
+    #print(gradient_output)
+    return torch.sum(gradient_output, dim=0, keepdim=True)
 
 
 def gradient_relu(activations, gradients):

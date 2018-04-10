@@ -29,9 +29,9 @@ class CrossEntropyLoss(Module):
         """
         self.out_model = model
         # print(type(self.out_model))
-        self.inputs = model.output
+        self.inputs = model.data
         self.targets = targets
-        self.n_log_loss = f.cross_entropy(model.output, targets)
+        self.n_log_loss = f.cross_entropy(model.data, targets)
         self.data = f.average_loss(self.n_log_loss)
         if f.nan_check(self.data):
             # Quit if loss is NaN.
