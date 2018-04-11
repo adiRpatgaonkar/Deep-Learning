@@ -45,13 +45,6 @@ class Sequential(Module):
         # Optimizer does this. So commented out
         # self.update_parameters()
 
-    def eval(self, data):
-        """
-        :param data: testing data
-        :return accuracy: testing accuracy
-        """
-        pass
-
     def parameters(self):
         # Parameter modules of a container
         return self._parameters

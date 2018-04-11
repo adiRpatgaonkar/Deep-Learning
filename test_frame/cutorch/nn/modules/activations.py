@@ -55,16 +55,24 @@ class Softmax(Module):
         self.inputs = 0
         self.output = 0
         self.confidence = 0
-        self.index = 0
+        self.prediction = 0
         self.grad = OrderedDict()
 
     def forward(self, in_features):
+        # Compute softmax probabilities
         self.inputs = in_features
-        # print("SoftmaxIn", self.inputs)
         self.output = f.softmax(in_features)
-        return self.output
+        if self.is_train:
+            return self.output
+        elif self.is_eval:
+            return self.predict()
 
     def backward(self, targets):
         # Gradient of softmax outputs @ fprop
         self.grad['output'] = f.gradient_softmax(self.output, targets)
         return self.grad
+
+    def predict(self):
+        # Return predictions in evaluation mode
+        self.confidence, self.predicted = torch.max(self.output, 1)
+        return (self.confidence, self.predicted)

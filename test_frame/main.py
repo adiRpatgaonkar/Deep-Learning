@@ -17,7 +17,8 @@ if cutorch.gpu_check.available():
 # Get train data for training and cross validation
 train_dataset = dsets.CIFAR10(directory="cutorchvision/data",
                               download=True,
-                              train=True)
+                              train=True,
+                              form="tensor")
 # Data augmentation
 train_dataset = Transforms(dataset=train_dataset,
                            lr_flip=True,
@@ -25,10 +26,11 @@ train_dataset = Transforms(dataset=train_dataset,
 
 test_dataset = dsets.CIFAR10(directory="cutorchvision/data",
                                 download=True,
-                                test=True)
+                                test=True,
+                                form="tensor")
 
 test_loader = cutorch.utils.data.DataLoader(data=test_dataset.data,
-                               batch_size=dsets.CIFAR10.test_size,
+                               batch_size=10000,
                                shuffled=False)
 
 
@@ -53,24 +55,24 @@ def main():
     fcm = FCM()
     criterion = nn.CrossEntropyLoss()
 
-    max_epochs = 1  
+    max_epochs = 1
     learning_rate = 0.05  # To be used with optimizer
     lr_decay = 0.00005
     optimizer = cutorch.optim.SGD(fcm.parameters,
-                                       lr=learning_rate,
-                                       max_epochs=max_epochs,
-                                       lr_decay=lr_decay)
+                                   lr=learning_rate,
+                                   max_epochs=max_epochs,
+                                   lr_decay=lr_decay)
     # Training mode
     fcm.train()
     time_start = time.time()
     for epoch in range(max_epochs):
         print("\nEpoch:[{}/{}]".format(epoch + 1, max_epochs))
-        # Shuffle data before the training round
         train_loader = (cutorch.utils.data.DataLoader(
             data=train_dataset.data,
-            batch_size=dsets.CIFAR10.batch_size,
+            batch_size=100,
             shuffled=True))
-        for i, (images, ground_truths) in enumerate(train_loader):
+        for i, batch in enumerate(train_loader):
+            images, ground_truths = batch
             if using_gpu:
                 images = images.cuda() # Move image batch to GPU
             outputs = fcm(images)
@@ -82,21 +84,25 @@ def main():
                 print("error:[{}]".format(loss.data))
             if using_gpu:
                 torch.cuda.empty_cache()
-    time_end = time.time() - time_start
-    print("\nTime taken to train in:\n{} examples\n{} epochs: {:.2f} minutes".format(len(train_dataset.data), 
-                                                                                max_epochs, time_end/60))
+    time2train = time.time() - time_start
+    time2train = cutorch.time_log(time2train)
+
+    print("\nFinished training:\n{} examples, {} epochs: in {}".format(len(train_dataset.data), 
+                                                                        max_epochs, time2train))
+    # Change to evaluation mode
     fcm.eval()
     correct = 0.0
-    total = 0.0
+    total = 0
     for images, labels in test_loader:
         if using_gpu:
             images = images.cuda()
         labels = torch.LongTensor(labels)
         outputs = fcm(images)
-        confidence, predicted = torch.max(outputs.data, 1)
+        _, predicted = outputs.data
         total += len(labels)
         correct += (predicted.cpu() == labels).sum()
-    print('Test accuracy of the model on {} test images: {} %'.format(len(test_dataset.data), 100 * (correct / total)))
+    print('Test accuracy of the model on {} test images: {} %'.format(int(total), 100*(correct/total)))
+
 
 if __name__ == "__main__":
     main()

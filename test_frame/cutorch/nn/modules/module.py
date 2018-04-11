@@ -23,12 +23,22 @@ class Module(object):
         return result
 
     def train(self):
-        self.is_train = True
-        self.is_eval = False
+        for member in self.__dict__.values():
+            if type(member).__name__ == 'Sequential':
+                member.is_train = True
+                member.is_eval = False
+                for module in member._modules.values():
+                    module.is_train = True
+                    module.is_eval = False
 
     def eval(self):
-        self.is_train = False
-        self.is_eval = True
+        for member in self.__dict__.values():
+            if type(member).__name__ == "Sequential":
+                member.is_train = False
+                member.is_eval = True
+                for module in member._modules.values():
+                    module.is_train = False
+                    module.is_eval = True
 
     def forward(self, *inputs):
         """

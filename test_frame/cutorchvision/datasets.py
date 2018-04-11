@@ -12,16 +12,16 @@ import pickle
 from subprocess import call
 
 import torch
+import numpy as np
 
 __dlevel__ = 0
 
 
 class CIFAR10:
     # +++ Data info found here +++ #
-
+    name = 'cifar10'
     data_size = 60000
     train_size = 50000
-    batch_size = 100
     test_size = 10000
     images_per_class = 1000  # test set
     classes = ['airplane', 'automobile',
@@ -31,17 +31,25 @@ class CIFAR10:
                'ship', 'truck']
     num_classes = len(classes)
 
-    def __init__(self, directory='.', download=False, train=False, test=False):
+    def __init__(self, directory='.', download=False, train=False, test=False, form=None):
         """ Setup necessary variables for Cifar10 dataset """
-        self.name = 'cifar10'
-        self.data = []
-        self.images = []
-        self.labels = []
-        self.dir = directory
-        self.url = "https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"
-        if download:
-            self.download_cifar10()
-        self.get_dataset(train, test)
+        if form == "ndarray" or form == "tensor":
+            self.form = form
+            self.data = []
+            if form == "tensor":
+                self.images = torch.FloatTensor()
+            elif form == "numpy":
+                self.images = np.array([])
+            self.labels = []
+            self.dir = directory
+            self.url = "https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"
+            if download:
+                self.download_cifar10()
+            self.get_dataset(train, test)
+        else:
+            self.data = None
+            print("Specify appropriate data format.")
+            print("Not fetching data.")
 
     @staticmethod
     def verify_setup():
@@ -97,12 +105,11 @@ class CIFAR10:
         print('Fetching', end=" ")
         if train:
             print('training data', end=" ")
-            og_num_batches = 5
-        else:  # test
+            batch_files = 5
+        else:
             print('testing data', end=" ")
-            og_num_batches = 1
+            batch_files = 1
         og_batch_size = 10000
-        self.labels = []
 
         if __debug__:
             if __dlevel__ == 1:
@@ -110,7 +117,7 @@ class CIFAR10:
 
         print("from " + self.dir + " ...", end=" ")
 
-        for batch in range(og_num_batches):
+        for batch in range(batch_files):
             if train:
                 data_file = open('./' + self.dir + '/cifar10/' + 'data_batch_' + str(batch + 1), 'rb')
             elif test:
@@ -119,13 +126,16 @@ class CIFAR10:
             tuples = pickle.load(data_file)
             data_file.close()
 
+            # Originally in numpy ndarray form
             image_data = tuples['data'].reshape(og_batch_size, 3, 32, 32).astype("uint8")
-
-            if batch == 0:
-                self.images = torch.from_numpy(image_data).type(torch.FloatTensor)
-            else:
+            label_data = tuples['labels']
+            
+            if self.form == "tensor":
                 self.images = torch.cat((self.images, torch.from_numpy(image_data).type(torch.FloatTensor)), 0)
-            for label in tuples['labels']:
+            elif self.form == "numpy":
+                self.images = np.vstack([self.images, image_data], axis=0)
+
+            for label in label_data:
                 self.labels.append(label)
 
         for image, label in zip(self.images, self.labels):

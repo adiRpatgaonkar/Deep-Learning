@@ -6,7 +6,7 @@ class SGD:
 
     def __init__(self, parameters, config=None, max_epochs=None, lr=None, lr_decay=None):
         # Store model instance via the parameters method
-        print("Training with SGD:\n")
+        print("Training with Stochastic gradient descent:")
         self.model = parameters.im_self
         if config is not None:
             self.lr0 = config['lr']
