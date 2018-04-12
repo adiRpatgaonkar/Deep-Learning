@@ -4,34 +4,32 @@ from __future__ import print_function
 class SGD:
     """Schedules L.R and saves the optimum parameters"""
 
-    def __init__(self, parameters, config=None, max_epochs=None, lr=None, lr_decay=None):
+    #TODO: Momentum
+    def __init__(self, model, lr, lr_decay=0, reg_strength=0):
         # Store model instance via the parameters method
-        print("Training with Stochastic gradient descent:")
-        self.model = parameters.im_self
-        if config is not None:
-            self.lr0 = config['lr']
-            self.max_epochs = config['max_epochs']
-            self.curr_epoch = config['start_epoch']
-        elif (max_epochs is not None and
-              lr is not None and
-              lr_decay is not None):
-            self.max_epochs = max_epochs
-            self.curr_iter = 0
-            self.lr0 = lr
-            self.lr = self.lr0
-            self.lr_decay = lr_decay
+        print("#Stochastic Gradient Descent:")
+        # Capture model (Alias)
+        self.model = model
+        #TODO : Load from config file 
+        self.curr_iter = 0
+        self.lr0 = lr # Set base L.R.
+        self.lr = self.lr0
+        self.lr_decay = lr_decay
+        self.reg = reg_strength
+        model.set_hyperparameters(lr=self.lr,
+                                  lr_decay=self.lr_decay,
+                                  reg_strength=self.reg)
 
     def step(self):
         for mem in self.model.__dict__.values():
             if type(mem).__name__ == 'Sequential':
-                if self.curr_iter % 50 == 0:
-                    print("L.R:[{:.5f}]".format(self.lr), end=" ")
-                mem.update_parameters(self.lr)
+                mem.update_parameters(self.lr, self.reg)
                 self.curr_iter += 1
-                self.time_decay()
+                self.model._hyperparameters['lr'] = self.time_decay()
 
     def time_decay(self):
         self.lr = self.lr0 / (1 + self.lr_decay * self.curr_iter)
+        return self.lr
 
     def step_decay(self, decay_after=5, drop=0.5):
         if self.curr_epoch % decay_after == 0:

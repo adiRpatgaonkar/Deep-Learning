@@ -7,7 +7,7 @@ Return appended (augmented dataset)
 from __future__ import print_function
 import torch
 import numpy as np
-from matplotlib.pyplot import imshow, show
+#from matplotlib.pyplot import imshow, show
 
 
 class Transforms:
@@ -76,5 +76,5 @@ def see(img):
     """ Use the vision """
     img = img.cpu()
     img = img.numpy().reshape(3, 32, 32).transpose(1, 2, 0).astype("uint8")
-    imshow(img)
-    show()
+    #imshow(img)
+    #show()

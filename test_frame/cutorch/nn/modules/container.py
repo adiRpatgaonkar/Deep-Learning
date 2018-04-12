@@ -2,9 +2,10 @@
 
 from __future__ import print_function
 
+from collections import OrderedDict as OD
+
 import cutorch
 from .module import Module
-from collections import OrderedDict
 
 __dlevel__ = 0
 
@@ -17,9 +18,9 @@ class Sequential(Module):
             self._add_module(str(idx), module)
             self._add_parameters(str(idx), module)
             self._add_forward_hooks(module)
-        self._backward_hooks = OrderedDict(
+        self._backward_hooks = OD(
                                 reversed(self._forward_hooks.items()))
-        self.gradients = OrderedDict()
+        self.gradients = OD()
 
     def __getitem__(self, x):
         item, idx = x
@@ -41,15 +42,17 @@ class Sequential(Module):
             gradients = module.backward(gradients)
             # Store gradients @ current iteration
             # for every module
-            #self.gradients[module] = gradients
-        # Optimizer does this. So commented out
-        # self.update_parameters()
-
+            self.gradients[module] = gradients
+            
     def parameters(self):
         # Parameter modules of a container
         return self._parameters
 
-    def update_parameters(self, lr):
+    def update_parameters(self, lr, reg=None):
         for module in self._modules.values():
             for param in module._parameters:
+                if reg is not None and param.tag == 'weight':
+                    # Add regularization gradient contribution
+                    param.gradient += (reg * param.data)
+                # Parameter update
                 param.data = param.data + (-lr * param.gradient)

@@ -79,6 +79,12 @@ def softmax(inputs):
     return softmaxed
 
 
+#################################################
+#                                               #
+#                     LOSS                      #
+#                                               #
+#################################################
+
 def cross_entropy(inputs, targets):
     """
     :param inputs: softmaxed probs
@@ -98,6 +104,24 @@ def average_loss(inputs):
     :return loss averaged over the list
     """
     return torch.sum(inputs) / len(inputs)
+
+
+def l1_regularization(strength, modules):
+    reg_loss = 0
+    # print(strength, modules.values())
+
+    for module in modules.values():
+        for param in module:
+            if param.tag == 'weight':
+                reg_loss += torch.sum(param.data*param.data)
+    reg_loss *= (strength * 0.5)
+    return reg_loss
+
+#################################################
+#                                               #
+#                     Math                      #
+#                                               #
+#################################################
 
 
 def correct_probs(inputs, targets):

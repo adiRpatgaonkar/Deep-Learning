@@ -28,14 +28,14 @@ class Linear(Module):
         self.in_features = in_features
         self.out_features = out_features
         self.inputs = torch.Tensor([0.0])
-        self.output = 0
+        self.data = 0
 
         self.weight = Parameter(weight=torch.randn(self.in_features, self.out_features),
                                 require_gradient=True)
         if bias is True:
             self.bias = Parameter(bias=torch.Tensor(1, out_features).fill_(0),
                                   require_gradient=True)
-
+        self._parameters = []
         self.grad = OrderedDict()
 
         if self.weight.require_gradient:
@@ -50,10 +50,9 @@ class Linear(Module):
             if __dlevel__ == 4:
                 print(self.weight.tag, self.weight.data)
                 print(self.bias.tag, self.bias.data)
-                print(self.output)
+                print(self.data)
 
     def add2module(self):
-        self._parameters = []
         self._parameters.append(self.weight)
         if 'bias' in self.__dict__:
             self._parameters.append(self.bias)
@@ -63,13 +62,16 @@ class Linear(Module):
         self.add2module()
 
     def forward(self, in_features):
-        self.inputs = in_features
-        self.output = f.linear(in_features, self.weight.data, self.bias.data)
+        if not torch.is_tensor(in_features):
+            self.inputs = in_features.data
+        else:
+            self.inputs = in_features
+        self.data = f.linear(self.inputs, self.weight.data, self.bias.data)
         if __debug__:
             if __dlevel__ == 4:
                 print(type(self).__name__)
-                print(self.output.data)
-        return self.output
+                print(self.data)
+        return self.data
 
     def backward(self, gradients):
         # print(self.inputs.t(), gradients['output'])

@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 
-from collections import OrderedDict
+from collections import OrderedDict as OD
 
 __dlevel__ = 0
 
@@ -10,10 +10,11 @@ __dlevel__ = 0
 class Module(object):
     """ Base class for all nn modules """
     def __init__(self):
-        self._modules = OrderedDict()
-        self._parameters = OrderedDict()
-        self._forward_hooks = OrderedDict()
-        self._backward_hooks = OrderedDict()
+        self._modules = OD()
+        self._parameters = OD()
+        self._hyperparameters = OD()
+        self._forward_hooks = OD()
+        self._backward_hooks = OD()
         self.output = 0
         self.is_train = False
         self.is_eval = False
@@ -25,6 +26,7 @@ class Module(object):
     def train(self):
         for member in self.__dict__.values():
             if type(member).__name__ == 'Sequential':
+                member._hyperparamters = self._hyperparameters
                 member.is_train = True
                 member.is_eval = False
                 for module in member._modules.values():
@@ -55,6 +57,12 @@ class Module(object):
         Maybe be overridden by subclass modules
         """
         return self.backward(*inputs)
+
+    def set_hyperparameters(self, **kwargs):
+        self._hyperparameters = kwargs
+
+    def hyperparameters(self):
+        return self._hyperparameters
 
     def parameters(self):
         # If parameters are not added to the model,

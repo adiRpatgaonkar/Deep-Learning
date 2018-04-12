@@ -1,6 +1,9 @@
-from mathstats import standardize
-import utils
-import optim.optimizers as optim
+__all__ = ['sgd', 'data', 'log_it']
 
 import gpu_check
-from utils.log_it import time_log
+
+from .utils import *
+
+from .optim import *
+
+from mathstats import standardize
