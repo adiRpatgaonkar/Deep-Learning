@@ -17,11 +17,6 @@ class Sequential(Module):
         for idx, module in enumerate(modules):
             self._add_module(str(idx), module)
             self._add_parameters(str(idx), module)
-            #self._add_forward_hooks(module)
-        self._backward_hooks = OD(
-                                reversed(self._forward_hooks.items()))
-        self.gradients = OD()
-        self.parent = None
 
     def __getitem__(self, x):
         item, idx = x
@@ -36,24 +31,7 @@ class Sequential(Module):
             inputs = module(inputs)
         self.data = inputs.data
         return inputs
-
-    def backward(self, targets):
-        gradients = targets # Alias for targets of classifier
-        for module in self._backward_hooks.values():
-            gradients = module.backward(gradients)
-            # Store gradients @ current iteration
-            # for every module
-            self.gradients[module] = gradients
             
     def parameters(self):
         # Parameter modules of a container
         return self._parameters
-
-    def update_parameters(self, lr, reg=None):
-        for module in self._modules.values():
-            for param in module._parameters:
-                if reg is not None and param.tag == 'weight':
-                    # Add regularization gradient contribution
-                    param.gradient += (reg * param.data)
-                # Parameter update
-                param.data = param.data + (-lr * param.gradient)

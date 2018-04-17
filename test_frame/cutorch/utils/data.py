@@ -24,5 +24,4 @@ def DataLoader(data, batch_size, fit_testing=False, shuffled=False):
         b_start = batch * batch_size
         b_end = (batch + 1) * batch_size
         mini_batches.append((images[b_start:b_end], labels[b_start:b_end]))
-
     return mini_batches

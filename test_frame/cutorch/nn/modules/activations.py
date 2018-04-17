@@ -68,9 +68,9 @@ class Softmax(Module):
         else:
             self.inputs = in_features
         self.data = f.softmax(self.inputs)
-        if self.is_train:
+        if Module.is_train:
             return self
-        elif self.is_eval:
+        elif Module.is_eval:
             return self.predict()
 
     def backward(self, targets):
@@ -81,4 +81,5 @@ class Softmax(Module):
     def predict(self):
         # Return predictions in evaluation mode
         self.confidence, self.prediction = torch.max(self.data, 1)
-        return self.confidence, self.prediction
+        self.data = (self.confidence, self.prediction)
+        return self

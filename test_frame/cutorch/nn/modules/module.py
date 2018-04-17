@@ -13,39 +13,31 @@ class Module(object):
     _backward_hooks = OD()
     _containers = {"Sequential"}
     _layers = {"Linear", "ReLU", "Softmax"}
+    is_train = False
+    is_eval = False
+
     def __init__(self):
         self._modules = OD()
         self._parameters = OD()
-        self._hyperparameters = OD()
-        self._gradients = OD()
+        self._hypers = OD()
+        self._forward_graph = None
+        self.gradients = OD()
         self.data = 0
-        self.is_train = False
-        self.is_eval = False
 
     def __call__(self, *inputs):
-        if self not in Module._forward_hooks.values():
-            Module._forward_hooks[str(len(Module._forward_hooks))] = self
+        self._add_forward_hooks()
         result = self.forward(*inputs)
         return result
 
-    def train(self):
-        for member in self.__dict__.values():
-            if type(member).__name__ == 'Sequential':
-                member._hyperparamters = self._hyperparameters
-                member.is_train = True
-                member.is_eval = False
-                for module in member._modules.values():
-                    module.is_train = True
-                    module.is_eval = False
+    @staticmethod
+    def train():
+        Module.is_train = True
+        Module.is_eval = False
 
-    def eval(self):
-        for member in self.__dict__.values():
-            if type(member).__name__ == "Sequential":
-                member.is_train = False
-                member.is_eval = True
-                for module in member._modules.values():
-                    module.is_train = False
-                    module.is_eval = True
+    @staticmethod
+    def eval():
+        Module.is_train = False
+        Module.is_eval = True
 
     def forward(self, *inputs):
         """
@@ -60,51 +52,59 @@ class Module(object):
     def backward(self, targets):
         if not Module._backward_hooks:
             self._forward_graph = self.register_forward_hooks()
-            self.register_backward_hooks(self._forward_graph)
-        gradients = targets # Alias for targets of classifier
+            self.register_backward_hooks(self._forward_graph[:])
+        gradients = targets  # Alias for targets of classifier
         for module in Module._backward_hooks.values():
             gradients = module.backward(gradients)
             # Store gradients @ current iteration
             # for every module
             self.gradients[module] = gradients
+        # self.update_parameters(lr=0.05)
             
-    def register_forward_hooks(self):
+    @staticmethod
+    def register_forward_hooks():
         temp = []
         for hook in Module._forward_hooks.values():
-            print(hook)
             if type(hook).__name__ in Module._layers:
                 temp.append(hook)
         return temp
     
-    def register_backward_hooks(self, graph):
+    @staticmethod
+    def register_backward_hooks(graph):
         for i, hook in enumerate(graph):
             hook.idx = str(i)
-            print(hook, hook.idx)
         graph.reverse()
         for hook in graph:
-            print(hook)
             Module._backward_hooks[hook.idx] = hook
-        print(Module._backward_hooks)
             
     def set_hyperparameters(self, **kwargs):
-        self._hyperparameters = kwargs
+        self._hypers = kwargs
 
-    def hyperparameters(self):
-        return self._hyperparameters
+    def hypers(self, name):
+        if name in self._hypers.keys():
+            return self._hypers['lr']
+        else:
+            print("Wrong hyper-parameter.")
+            raise KeyError
 
     def parameters(self):
         # If parameters are not added to the model,
         # add 'em right away.
-        if not self._parameters:
-            for member in self.__dict__.values():
-                print(type(member))
-                if type(member).__name__ == 'Sequential':
-                    if member not in self._parameters:
-                        self._parameters[member] = member.parameters()
-        return self._parameters
+        for hook in Module._forward_hooks.values():
+            if type(hook).__name__ in Module._layers:
+                if hook._parameters:
+                    self._parameters[str(len(self._parameters))] = hook._parameters
+        return self._parameters.values()
 
-    def update_parameters(self):
-        return self.update_parameters()
+    def update_parameters(self, lr, reg=None):
+        self._hypers['lr'] = lr
+        for module in self._forward_graph:
+            for param in module._parameters:
+                if reg is not None and param.tag == 'weight':
+                    # Add regularization gradient contribution
+                    param.gradient += (reg * param.data)
+                # Parameter update
+                param.data = param.data + (-lr * param.gradient)
 
     def _add_module(self, idx, module):
         self._modules[idx] = module
@@ -113,15 +113,9 @@ class Module(object):
     def _add_parameters(self, idx, module):
         self._parameters[idx] = module._parameters
 
-    # def _add_forward_hooks(self, module):
-    #     if module not in _forward_hooks.values():
-    #         _forward_hooks[str(len(_forward_hooks.keys()))] = module
-
-    def _add_backward_hooks(self):
-        """
-        Not required by the Sequential Container
-        """
-        raise NotImplementedError
+    def _add_forward_hooks(self):
+        if self not in Module._forward_hooks.values():
+            Module._forward_hooks[str(len(Module._forward_hooks))] = self
 
     def see_modules(self):
         print("\n" + type(self).__name__, end=" ")

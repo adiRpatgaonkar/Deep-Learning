@@ -10,29 +10,25 @@ class SGD:
         print("#Stochastic Gradient Descent:")
         # Capture model (Alias)
         self.model = model
-        #TODO : Load from config file 
+        # TODO : Load from config file
         self.curr_iter = 0
         self.lr0 = lr # Set base L.R.
         self.lr = self.lr0
         self.lr_decay = lr_decay
-        self.reg = reg_strength
         model.set_hyperparameters(lr=self.lr,
-                                  lr_decay=self.lr_decay,
-                                  reg_strength=self.reg)
+                                  lr_decay=self.lr_decay)
 
     def step(self):
-        for mem in self.model.__dict__.values():
-            if type(mem).__name__ == 'Sequential':
-                mem.update_parameters(self.lr, self.reg)
-                self.curr_iter += 1
-                self.model._hyperparameters['lr'] = self.time_decay()
+        self.model.update_parameters(lr=self.lr)
+        self.curr_iter += 1
+        self.lr = self.time_decay()
 
     def time_decay(self):
         self.lr = self.lr0 / (1 + self.lr_decay * self.curr_iter)
         return self.lr
 
     def step_decay(self, decay_after=5, drop=0.5):
-        if self.curr_epoch % decay_after == 0:
+        if self.curr_iter % decay_after == 0:
             self.lr *= drop
         pass
 

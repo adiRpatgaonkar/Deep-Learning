@@ -106,12 +106,12 @@ def average_loss(inputs):
     return torch.sum(inputs) / len(inputs)
 
 
-def l1_regularization(strength, modules):
+def l1_regularization(strength, parameters):
     reg_loss = 0
     # print(strength, modules.values())
 
-    for module in modules.values():
-        for param in module:
+    for param_group in parameters:
+        for param in param_group:
             if param.tag == 'weight':
                 reg_loss += torch.sum(param.data*param.data)
     reg_loss *= (strength * 0.5)
@@ -178,8 +178,6 @@ def gradient_bias(gradient_output):
 def gradient_relu(activations, gradients):
     # Commented out. Leading to a nan loss
     # gradients[activations == 0] = random.randint(1, 10) / 10.0
-    print('G', gradients)
-    print('A', activations)
     gradients[activations <= 0] = 0
     return gradients
 
