@@ -9,17 +9,22 @@ __dlevel__ = 0
 
 class Module(object):
     """ Base class for all nn modules """
+    _forward_hooks = OD()
+    _backward_hooks = OD()
+    _containers = {"Sequential"}
+    _layers = {"Linear", "ReLU", "Softmax"}
     def __init__(self):
         self._modules = OD()
         self._parameters = OD()
         self._hyperparameters = OD()
-        self._forward_hooks = OD()
-        self._backward_hooks = OD()
-        self.output = 0
+        self._gradients = OD()
+        self.data = 0
         self.is_train = False
         self.is_eval = False
 
     def __call__(self, *inputs):
+        if self not in Module._forward_hooks.values():
+            Module._forward_hooks[str(len(Module._forward_hooks))] = self
         result = self.forward(*inputs)
         return result
 
@@ -52,12 +57,35 @@ class Module(object):
         """
         raise NotImplementedError
 
-    def backward(self, *inputs):
-        """
-        Maybe be overridden by subclass modules
-        """
-        return self.backward(*inputs)
-
+    def backward(self, targets):
+        if not Module._backward_hooks:
+            self._forward_graph = self.register_forward_hooks()
+            self.register_backward_hooks(self._forward_graph)
+        gradients = targets # Alias for targets of classifier
+        for module in Module._backward_hooks.values():
+            gradients = module.backward(gradients)
+            # Store gradients @ current iteration
+            # for every module
+            self.gradients[module] = gradients
+            
+    def register_forward_hooks(self):
+        temp = []
+        for hook in Module._forward_hooks.values():
+            print(hook)
+            if type(hook).__name__ in Module._layers:
+                temp.append(hook)
+        return temp
+    
+    def register_backward_hooks(self, graph):
+        for i, hook in enumerate(graph):
+            hook.idx = str(i)
+            print(hook, hook.idx)
+        graph.reverse()
+        for hook in graph:
+            print(hook)
+            Module._backward_hooks[hook.idx] = hook
+        print(Module._backward_hooks)
+            
     def set_hyperparameters(self, **kwargs):
         self._hyperparameters = kwargs
 
@@ -85,9 +113,9 @@ class Module(object):
     def _add_parameters(self, idx, module):
         self._parameters[idx] = module._parameters
 
-    def _add_forward_hooks(self, module):
-        if module not in self._forward_hooks.values():
-            self._forward_hooks[str(len(self._forward_hooks.keys()))] = module
+    # def _add_forward_hooks(self, module):
+    #     if module not in _forward_hooks.values():
+    #         _forward_hooks[str(len(_forward_hooks.keys()))] = module
 
     def _add_backward_hooks(self):
         """

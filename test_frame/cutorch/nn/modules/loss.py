@@ -19,24 +19,23 @@ class CrossEntropyLoss(Module):
         self.targets = 0
         self.n_log_loss = 0
         self.reg_loss = 0
-        self.data = 0
         self.in_model = None
 
-    def forward(self, model, targets):
+    def forward(self, module, targets):
         """
         :param model: Model object
         :param targets: Targets List
         :return loss: Loss: Scalar
         """
-        self.in_model = model
-        self.inputs = model.data
+        self.in_model = type(module)._forward_hooks['0']
+        self.inputs = module.data
         self.targets = targets
-        self.n_log_loss = f.cross_entropy(model.data, targets)
+        self.n_log_loss = f.cross_entropy(module.data, targets)
         self.data = f.average_loss(self.n_log_loss)
         # Check if regularization is applicable
-        if 'reg_strength' in (model.hyperparameters()).keys():
-            reg = model.hyperparameters()['reg_strength']
-            self.data += f.l1_regularization(reg, model.parameters())
+#        if 'reg_strength' in (type(module).hyperparameters()).keys():
+#            reg = type(module).hyperparameters()['reg_strength']
+#            self.data += f.l1_regularization(reg, type(module).parameters())
 
         if f.nan_check(self.data):
             # Quit if loss is NaN.
@@ -45,4 +44,5 @@ class CrossEntropyLoss(Module):
         return self
 
     def backward(self):
+        print(self.in_model)
         return self.in_model.backward(self.targets)

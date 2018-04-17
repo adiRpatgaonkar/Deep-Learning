@@ -20,9 +20,9 @@ class ReLU(Module):
 
     def __init__(self):
         super(ReLU, self).__init__()
+        self.parent = None
         self.idx = 0
         self.inputs = 0
-        self.data = 0
         self.grad = OrderedDict()
         self.grad['output'] = 0
 
@@ -35,7 +35,7 @@ class ReLU(Module):
         if __debug__:
             if __dlevel__ == 4:
                 print(self.data)
-        return self.data
+        return self
 
     def backward(self, gradients):
         """
@@ -54,9 +54,9 @@ class Softmax(Module):
 
     def __init__(self):
         super(Softmax, self).__init__()
+        self.parent = None
         self.idx = 0
         self.inputs = 0
-        self.data = 0
         self.confidence = 0
         self.prediction = 0
         self.grad = OrderedDict()
@@ -69,7 +69,7 @@ class Softmax(Module):
             self.inputs = in_features
         self.data = f.softmax(self.inputs)
         if self.is_train:
-            return self.data
+            return self
         elif self.is_eval:
             return self.predict()
 

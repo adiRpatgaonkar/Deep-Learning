@@ -178,6 +178,8 @@ def gradient_bias(gradient_output):
 def gradient_relu(activations, gradients):
     # Commented out. Leading to a nan loss
     # gradients[activations == 0] = random.randint(1, 10) / 10.0
+    print('G', gradients)
+    print('A', activations)
     gradients[activations <= 0] = 0
     return gradients
 

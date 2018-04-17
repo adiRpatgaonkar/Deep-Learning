@@ -22,9 +22,9 @@ train_dataset = dsets.CIFAR10(directory="cutorchvision/data",
                               train=True,
                               form="tensor")
 # Data augmentation
-train_dataset = Transforms(dataset=train_dataset,
-                           lr_flip=True,
-                           crop=False)
+#train_dataset = Transforms(dataset=train_dataset,
+#                           lr_flip=True,
+#                           crop=False)
 
 test_dataset = dsets.CIFAR10(directory="cutorchvision/data",
                                 download=True,
@@ -39,17 +39,20 @@ test_loader = cutorch.utils.data.DataLoader(data=test_dataset.data,
 class FCM(nn.Module):
     def __init__(self):
         super(FCM, self).__init__()
-        self.fc = nn.Sequential(
+        self.fc1 = nn.Sequential(
             nn.Linear(32 * 32 * 3, 1024),
-            nn.ReLU(),
+            nn.ReLU())
+        self.fc2 = nn.Sequential(
             nn.Linear(1024, 10),
             nn.Softmax())
 
-        self.fc.see_modules()
+        self.fc1.see_modules()
+        self.fc2.see_modules()
 
     def forward(self, x):
         out = cutorch.standardize(x)
-        out = self.fc(out)
+        out = self.fc1(out)
+        out = self.fc2(out)
         return out
 
 

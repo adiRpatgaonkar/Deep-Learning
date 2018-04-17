@@ -24,12 +24,11 @@ class Linear(Module):
         # print('Linear layer created')
         # allocate size for the state variables appropriately
         super(Linear, self).__init__()
+        self.parent = None
         self.idx = 0
         self.in_features = in_features
         self.out_features = out_features
         self.inputs = torch.Tensor([0.0])
-        self.data = 0
-
         self.weight = Parameter(weight=torch.randn(self.in_features, self.out_features),
                                 require_gradient=True)
         if bias is True:
@@ -71,7 +70,7 @@ class Linear(Module):
             if __dlevel__ == 4:
                 print(type(self).__name__)
                 print(self.data)
-        return self.data
+        return self
 
     def backward(self, gradients):
         # print(self.inputs.t(), gradients['output'])

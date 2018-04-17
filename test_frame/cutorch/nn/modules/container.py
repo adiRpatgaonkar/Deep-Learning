@@ -17,10 +17,11 @@ class Sequential(Module):
         for idx, module in enumerate(modules):
             self._add_module(str(idx), module)
             self._add_parameters(str(idx), module)
-            self._add_forward_hooks(module)
+            #self._add_forward_hooks(module)
         self._backward_hooks = OD(
                                 reversed(self._forward_hooks.items()))
         self.gradients = OD()
+        self.parent = None
 
     def __getitem__(self, x):
         item, idx = x
@@ -33,8 +34,8 @@ class Sequential(Module):
         # print("Input:{}".format(inputs))
         for module in self._modules.values():
             inputs = module(inputs)
-        self.data = inputs
-        return self
+        self.data = inputs.data
+        return inputs
 
     def backward(self, targets):
         gradients = targets # Alias for targets of classifier
