@@ -18,20 +18,9 @@ class Sequential(Module):
             self._add_module(str(idx), module)
             self._add_parameters(str(idx), module)
 
-    def __getitem__(self, x):
-        item, idx = x
-        if item == 'module':
-            return self._modules.items()[idx]
-        if item == 'parameters':
-            return self._parameters.items()[idx]
-
     def forward(self, inputs):
         # print("Input:{}".format(inputs))
-        for module in self._modules.values():
+        for module in self.modules.values():
             inputs = module(inputs)
         self.data = inputs.data
         return inputs
-            
-    def parameters(self):
-        # Parameter modules of a container
-        return self._parameters

@@ -10,8 +10,6 @@ if torch.cuda.is_available():
     torch.cuda.set_device(0)
     print 'GPU used:', torch.cuda.current_device()
 
-
-
 # Hyper Params
 epochs = 250
 batch_size = 100

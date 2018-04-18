@@ -27,7 +27,9 @@ class CrossEntropyLoss(Module):
         :param targets: Targets List
         :return loss: Loss: Scalar
         """
-        self.in_model = type(module)._forward_hooks['0']
+        # Capture model from the 1st
+        # forward call.
+        self.in_model = module["base:module"]
         self.inputs = module.data
         self.targets = targets
         self.n_log_loss = f.cross_entropy(module.data, targets)

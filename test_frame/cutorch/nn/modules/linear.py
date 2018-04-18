@@ -21,22 +21,22 @@ class Linear(Module):
         pass
 
     def __init__(self, in_features, out_features, bias=True):
-        # print('Linear layer created')
-        # allocate size for the state variables appropriately
         super(Linear, self).__init__()
-        self.parent = None
+        # self.parent = None # No use as of now.
         self.idx = 0
         self.in_features = in_features
         self.out_features = out_features
         self.inputs = torch.Tensor([0.0])
+        self.data = 0
+        # Parameters' creation
         self.weight = Parameter(weight=torch.randn(self.in_features, self.out_features),
                                 require_gradient=True)
         if bias is True:
             self.bias = Parameter(bias=torch.Tensor(1, out_features).fill_(0),
                                   require_gradient=True)
         self._parameters = []
+        # Gradients' creation
         self.grad = OrderedDict()
-
         if self.weight.require_gradient:
             self.grad['weight'] = 0
         if bias and self.bias.require_gradient:
@@ -45,11 +45,11 @@ class Linear(Module):
 
         self.init_param_setup()
 
-        if __debug__:
-            if __dlevel__ == 4:
-                print(self.weight.tag, self.weight.data)
-                print(self.bias.tag, self.bias.data)
-                print(self.data)
+    def parameters(self):
+        try:
+            return self._parameters
+        except AttributeError:
+            return False
 
     def add2module(self):
         self._parameters.append(self.weight)
@@ -66,10 +66,6 @@ class Linear(Module):
         else:
             self.inputs = in_features
         self.data = f.linear(self.inputs, self.weight.data, self.bias.data)
-        if __debug__:
-            if __dlevel__ == 4:
-                print(type(self).__name__)
-                print(self.data)
         return self
 
     def backward(self, gradients):

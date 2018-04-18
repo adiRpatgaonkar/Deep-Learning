@@ -54,7 +54,7 @@ class Softmax(Module):
 
     def __init__(self):
         super(Softmax, self).__init__()
-        self.parent = None
+        # self.parent = None # No use as of now.
         self.idx = 0
         self.inputs = 0
         self.confidence = 0
