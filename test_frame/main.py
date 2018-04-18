@@ -1,5 +1,5 @@
 """
-TODO
+# TODO
 # PIPELINE
 Correct abstractions in code
 Best model saved
@@ -27,12 +27,17 @@ if cutorch.gpu_check.available():
 else:
     using_gpu = False
 
+# Global vars
+global time_train
+global images, labels, ground_truths, outputs, loss
+global train_loader, test_loader
+global accuracy
+accuracy = {'cval':[(0, 0.0)], 'test':[(0, 0.0)]}
 # Hyperparameters
-max_epochs = 10
+max_epochs = 1
 learning_rate = 5e-2
 lr_decay = 5e-5
-
-# Get train data for training and TODO: Cross validation
+# Get training data for training and Cross validation
 train_dataset = dsets.CIFAR10(directory="cutorchvision/data",
                               download=True, train=True,
                               form="tensor")
@@ -43,7 +48,7 @@ train_dataset = Transforms(dataset=train_dataset,
 test_dataset = dsets.CIFAR10(directory="cutorchvision/data",
                              download=True, test=True,
                              form="tensor")
-
+# Testing data for validation
 test_loader = cutorch.utils.data.DataLoader(data=test_dataset.data,
                                             batch_size=10000, 
                                             shuffled=False)
@@ -69,6 +74,26 @@ class FCM(nn.Module):
         out = self.fc2(out)
         return out
 
+    @staticmethod
+    def evaluate(dataset, task):
+        fcm.eval()
+        global total
+        global correct
+        correct = 0
+        total = 0
+        for images, labels in dataset:
+            if using_gpu:
+                images = images.cuda()
+            labels = torch.LongTensor(labels)
+            outputs = fcm(images)
+            _, predicted = outputs.data
+            total += len(labels)
+            correct += (predicted.cpu() == labels).sum()
+        if task == "cross-validate":
+            accuracy['cval'].append((total, 100*correct/total))
+        elif task == "validate":
+            accuracy['test'].append((total, 100*correct/total))
+
 fcm = FCM()
 
 # Loss & Optimizer
@@ -76,42 +101,37 @@ criterion = nn.CrossEntropyLoss()
 optimizer = cutorch.optim.SGD(fcm, lr=learning_rate, lr_decay=lr_decay)
 
 # Training mode
-time_start = time.time()
+time_start, time2train, time2test = time.time(), [], []
 for epoch in range(max_epochs):
     print("\nEpoch:[{}/{}]".format(epoch+1, max_epochs))
     train_loader = cutorch.utils.data.DataLoader(
         data=train_dataset.data, batch_size=100, shuffled=True)
-    for i, batch in enumerate(train_loader):
+    for i, batch in enumerate(train_loader[:-1]):
         images, ground_truths = batch
         if using_gpu:
             images = images.cuda()  # Move image batch to GPU
-        fcm.train()
+        fcm.train() # Switch to training mode
         time_train = time.time() # Time 2 train a batch
         outputs = fcm(images)
         loss = criterion(outputs, ground_truths)
         loss.backward()
         optimizer.step()
-        time2train = cutorch.utils.time_log(time.time() - time_train)
+        time2train.append(cutorch.utils.time_log(time.time() - time_train))
+        fcm.evaluate(train_loader[-2:-1], "cross-validate")
+        fcm.evaluate(test_loader,"validate")
         if (i+1) % 50 == 0:
-            print("L.R:[{:.5f}]".format(fcm.hypers('lr')), end=" ")
+            print("\nL.R:[{:.5f}]".format(fcm.hypers('lr')), end=" ")
             print("Iter:[{}/{}]".format(i+1, len(train_loader)), end=" ")
-            print("error:[{}]".format(loss.data), end=" ")
-            print("Time:[{}]".format(time2train))
+            print("error:[{:.5f}]".format(loss.data), end=" ")
+            print("Time:[{}]".format(time2train[-1]))
+            print('CVal accuracy on {} images: {} %'.format(accuracy['cval'][-1][0], accuracy['cval'][-1][1]))
+            print('Test accuracy on {} images: {} %'.format(accuracy['test'][-1][0], accuracy['test'][-1][1]))
         if using_gpu: # GPU cache cleaning. Unsure of effectiveness
             torch.cuda.empty_cache()
+
 net_time = cutorch.utils.time_log(time.time() - time_start)
-print("\nFinished training:\n{} examples, {} epochs: in {}.".format(len(train_dataset.data),
+print("Finished training:\n{} examples, {} epochs: in {}.".format(len(train_dataset.data),
                                                                    max_epochs, net_time))
-# Change to evaluation mode
-fcm.eval()
-correct = 0.0
-total = 0
-for images, labels in test_loader:
-    if using_gpu:
-        images = images.cuda()
-    labels = torch.LongTensor(labels)
-    outputs = fcm(images)
-    _, predicted = outputs.data
-    total += len(labels)
-    correct += (predicted.cpu() == labels).sum()
-print('Test accuracy of the model on {} test images: {} %'.format(int(total), 100 * (correct / total)))
+val = []
+fcm.evaluate(test_loader,"validate")
+print('Test accuracy on {} test images: {} %'.format(test[-1][0], test[-1][1]))

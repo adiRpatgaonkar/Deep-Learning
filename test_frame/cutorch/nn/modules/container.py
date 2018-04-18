@@ -14,9 +14,12 @@ class Sequential(Module):
 
     def __init__(self, *modules):
         super(Sequential, self).__init__()
+        self.idx = None
         for idx, module in enumerate(modules):
             self._add_module(str(idx), module)
-            self._add_parameters(str(idx), module)
+            # Necessary check. Some layer modules do not have parameters
+            if hasattr(module, "_parameters"):
+                self._add_parameters(module.idx, module.parameters())
 
     def forward(self, inputs):
         # print("Input:{}".format(inputs))

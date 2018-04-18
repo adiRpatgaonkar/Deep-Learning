@@ -4,34 +4,36 @@ from __future__ import print_function
 
 from collections import OrderedDict as OD
 
+import names
 
 class Module(object):
     """ Base class for all nn modules """
-    names = {"Sequential", "Linear", "ReLU", "Softmax", "CrossEntropyLoss"}
-    container_names = {"Sequential"}
-    layer_names = {"Linear", "ReLU", "Softmax"}
-    _forward_hooks = OD()
-    _backward_hooks = OD()
+    _forward_hooks = OD() # Capture every fprop
+    _backward_hooks = OD() # For backprop (Derived from forward graph)
     is_train = False
     is_eval = False
 
     def __init__(self):
-        self._parameters = OD()
         self._hypers = OD()
+        # For capturing connections b/w layers only
         self._forward_graph = None
         self.modules = OD()
+        self.param_groups = OD()
         self.gradients = OD()
         self.data = 0
 
     def __call__(self, *inputs):
         # Check if caller is not an inbuilt module class
-        if not type(self).__name__ in Module.names:
+        if not type(self).__name__ in names._all:
             # Search for containers if any.
             for name, member in self.__dict__.items():
                 # Add container to custom model modules
-                if type(member).__name__ in Module.container_names:
+                if type(member).__name__ in names.containers:
                     if member not in self.modules.values():
-                        self._add_module(str(len(self.modules)), member)
+                        idx = str(len(self.modules))
+                        self._add_module(idx, member)
+                        if hasattr(member, "param_groups"): # Sanity check
+                            self._add_parameters(member.idx, member.parameters())
         self._add_forward_hooks()
         result = self.forward(*inputs)
         return result
@@ -71,7 +73,7 @@ class Module(object):
     def register_forward_hooks():
         temp = []
         for hook in Module._forward_hooks.values():
-            if type(hook).__name__ in Module.layer_names:
+            if type(hook).__name__ in names.layers:
                 if not hook in temp:
                     temp.append(hook)
         return temp
@@ -132,20 +134,12 @@ class Module(object):
             raise KeyError
 
     def parameters(self):
-        # If parameters are not added to the model,
-        # add 'em right away.
-        stack = self.forward_stack() # Pass current forward-graph reference
-        for hook in stack.values():
-            if type(hook).__name__ in Module.layer_names:
-                if hook.parameters():
-                    if hook._parameters() not in self._parameters.values():
-                        self._parameters[str(len(self._parameters))] = hook.parameters()
-        return self._parameters.values()
+        return self.param_groups.values()
 
     def update_parameters(self, lr, reg=None):
         self._hypers['lr'] = lr
         for module in self._forward_graph:
-            for param in module._parameters:
+            for param in module.parameters():
                 # if reg is not None and param.tag == 'weight':
                 #     # Add regularization gradient contribution
                 #     param.gradient += (reg * param.data)
@@ -157,8 +151,9 @@ class Module(object):
             self.modules[idx] = module
             module.idx = idx # May not be absolute
     
-    def _add_parameters(self, idx, module):
-        self._parameters[idx] = module._parameters
+    def _add_parameters(self, idx, parameters):
+        if parameters not in self.parameters():
+            self.param_groups[idx] = parameters
 
     def _add_forward_hooks(self):
         if self not in Module._forward_hooks.values():

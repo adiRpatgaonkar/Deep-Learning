@@ -46,10 +46,7 @@ class Linear(Module):
         self.init_param_setup()
 
     def parameters(self):
-        try:
-            return self._parameters
-        except AttributeError:
-            return False
+        return self._parameters
 
     def add2module(self):
         self._parameters.append(self.weight)

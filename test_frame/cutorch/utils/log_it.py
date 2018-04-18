@@ -5,4 +5,4 @@ def time_log(t):
     elif t > 60:
         return str(round(t/60.00, 2)) + " minutes"
     else:
-        return str(round(t, 2)) + " seconds"
+        return str(round(t, 3)) + " seconds"
