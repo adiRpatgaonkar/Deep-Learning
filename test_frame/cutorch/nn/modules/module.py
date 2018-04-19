@@ -16,17 +16,20 @@ class Module(object):
     def __init__(self):
         self._hypers = OD()
         # For capturing connections b/w layers only
-        self._forward_graph = None
+        self._forward_graph = OD()
+        self._param_graph = OD()
+        self._state_dict = OD({'accuracy':0, 'best_params':None})
         self.modules = OD()
         self.param_groups = OD()
         self.gradients = OD()
         self.data = 0
+        self.results = OD({'accuracy':0, 'class_performace':[]})
 
     def __call__(self, *inputs):
         # Check if caller is not an inbuilt module class
         if not type(self).__name__ in names._all:
             # Search for containers if any.
-            for name, member in self.__dict__.items():
+            for _, member in self.__dict__.items():
                 # Add container to custom model modules
                 if type(member).__name__ in names.containers:
                     if member not in self.modules.values():
@@ -59,6 +62,15 @@ class Module(object):
             except ValueError:
                 print("Could not find module output")
 
+    def set_state(self, key, value):
+        self._state_dict[key] = value
+
+    def get_state(self, key):
+        return self._state_dict[key]
+
+    def state_dict(self):
+        return self._state_dict
+
     @staticmethod
     def train():
         Module.is_train = True
@@ -70,21 +82,13 @@ class Module(object):
         Module.is_eval = True
 
     @staticmethod
-    def register_forward_hooks():
-        temp = []
-        for hook in Module._forward_hooks.values():
-            if type(hook).__name__ in names.layers:
-                if not hook in temp:
-                    temp.append(hook)
-        return temp
-
-    @staticmethod
     def forward_stack():
         return Module._forward_hooks
 
     @staticmethod
     def register_backward_hooks(graph):
         for i, hook in enumerate(graph):
+            # Hook => layer module
             hook.idx = str(i)
         graph.reverse()
         for hook in graph:
@@ -100,28 +104,6 @@ class Module(object):
                 print("({}x{})".format(module.in_features, module.out_features), end="")
             print("")
         print(")\n")
-
-    def forward(self, *inputs):
-        """
-        Should be overridden by every subclass module
-
-        Usually:
-        :param inputs: Input data/batch
-        :return model: last module fproped/prediction
-        """
-        raise NotImplementedError
-
-    def backward(self, targets):
-        if not Module._backward_hooks:
-            self._forward_graph = self.register_forward_hooks()
-            self.register_backward_hooks(self._forward_graph[:])
-        gradients = targets  # Alias for targets of classifier
-        for module in Module._backward_hooks.values():
-            gradients = module.backward(gradients)
-            # Store gradients @ current iteration
-            # for every module
-            self.gradients[module.idx] = gradients
-        # self.update_parameters(lr=0.05)
             
     def set_hyperparameters(self, **kwargs):
         self._hypers = kwargs
@@ -133,12 +115,15 @@ class Module(object):
             print("Wrong hyper-parameter.")
             raise KeyError
 
-    def parameters(self):
-        return self.param_groups.values()
+    def parameters(self, graph=False):
+        if graph:
+            return self._param_graph
+        else:    
+            return self.param_groups
 
     def update_parameters(self, lr, reg=None):
         self._hypers['lr'] = lr
-        for module in self._forward_graph:
+        for module in self._forward_graph.values():
             for param in module.parameters():
                 # if reg is not None and param.tag == 'weight':
                 #     # Add regularization gradient contribution
@@ -152,9 +137,40 @@ class Module(object):
             module.idx = idx # May not be absolute
     
     def _add_parameters(self, idx, parameters):
-        if parameters not in self.parameters():
+        if parameters not in self.parameters().values():
             self.param_groups[idx] = parameters
 
     def _add_forward_hooks(self):
         if self not in Module._forward_hooks.values():
             Module._forward_hooks[str(len(Module._forward_hooks))] = self
+
+    def register_forward_hooks(self):
+        # Hook => layer module
+        for hook in Module._forward_hooks.values():
+            if type(hook).__name__ in names.layers:
+                if not hook in self._forward_graph:
+                    idx = len(self._forward_graph)
+                    self._forward_graph[str(idx)] = hook
+                    self._param_graph[str(idx)] = hook.parameters()
+
+    def forward(self, *inputs):
+        """
+        Should be overridden by every subclass module
+
+        Usually:
+        :param inputs: Input data/batch
+        :return model: last module fproped/prediction
+        """
+        raise NotImplementedError
+
+    def backward(self, targets):
+        if not Module._backward_hooks:
+            self.register_forward_hooks()
+            self.register_backward_hooks(self._forward_graph.values()[:])
+        gradients = targets  # Alias for targets of classifier
+        for module in Module._backward_hooks.values():
+            gradients = module.backward(gradients)
+            # Store gradients @ current iteration
+            # for every module
+            self.gradients[module.idx] = gradients
+        # self.update_parameters(lr=0.05)

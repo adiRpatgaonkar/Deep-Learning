@@ -1,5 +1,5 @@
 from __future__ import print_function
-
+from copy import deepcopy
 
 class SGD:
     """Schedules L.R and saves the optimum parameters"""
@@ -7,7 +7,7 @@ class SGD:
     #TODO: Momentum
     def __init__(self, model, lr, lr_decay=0, reg_strength=0):
         # Store model instance via the parameters method
-        print("#Stochastic Gradient Descent:")
+        print("#StochasticGradientDescent:")
         # Capture model (Alias)
         self.model = model
         # TODO : Load from config file
@@ -22,6 +22,7 @@ class SGD:
         self.model.update_parameters(lr=self.lr)
         self.curr_iter += 1
         self.lr = self.time_decay()
+        self.set_best_params()
 
     def time_decay(self):
         self.lr = self.lr0 / (1 + self.lr_decay * self.curr_iter)
@@ -36,9 +37,11 @@ class SGD:
         #  self.lr = (self.lr0 * math.exp(-self.lr_decay * self.curr_epoch))
         pass
 
-    def set_optim_param(self):
+    def set_best_params(self):
         # Check if you've got the best params via accuracies
-        pass
+        if self.model.results['accuracy'] > self.model.get_state('accuracy'):
+            self.model.set_state('accuracy', self.model.results['accuracy'])
+            self.model.set_state('best_params' , deepcopy(self.model.parameters(graph=True)))
 
     def clear_gradients(self):
         pass
