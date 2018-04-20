@@ -1,6 +1,8 @@
 from __future__ import print_function
 from copy import deepcopy
 
+from ..utils.model_store import save
+
 class SGD:
     """Schedules L.R and saves the optimum parameters"""
 
@@ -10,6 +12,7 @@ class SGD:
         print("#StochasticGradientDescent:")
         # Capture model (Alias)
         self.model = model
+        self.state_dict = {'best_model':None}
         # TODO : Load from config file
         self.curr_iter = 0
         self.lr0 = lr # Set base L.R.
@@ -22,7 +25,6 @@ class SGD:
         self.model.update_parameters(lr=self.lr)
         self.curr_iter += 1
         self.lr = self.time_decay()
-        self.set_best_params()
 
     def time_decay(self):
         self.lr = self.lr0 / (1 + self.lr_decay * self.curr_iter)
@@ -34,14 +36,18 @@ class SGD:
         pass
 
     def exp_decay(self):
-        #  self.lr = (self.lr0 * math.exp(-self.lr_decay * self.curr_epoch))
+        #  self.lr = (self.lr0 * math.exp(-self.lr_decay * self.curr_iter))
         pass
 
-    def set_best_params(self):
+    def check_model(self):
         # Check if you've got the best params via accuracies
+        print("\nChecking model results ...", end=" ")
         if self.model.results['accuracy'] > self.model.get_state('accuracy'):
             self.model.set_state('accuracy', self.model.results['accuracy'])
-            self.model.set_state('best_params' , deepcopy(self.model.parameters(graph=True)))
+            self.state_dict['best_model'] = deepcopy(self.model.state_dict())
+            #save(self.state_dict)
+        else:
+            print("done.")
 
     def clear_gradients(self):
         pass

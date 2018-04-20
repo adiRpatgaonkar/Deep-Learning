@@ -48,6 +48,9 @@ class Linear(Module):
     def parameters(self):
         return self._parameters
 
+    def set_parameters(self, parameters):
+        self._parameters = parameters
+
     def add2module(self):
         self._parameters.append(self.weight)
         if 'bias' in self.__dict__:

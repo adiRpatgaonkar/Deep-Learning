@@ -18,7 +18,7 @@ class Module(object):
         # For capturing connections b/w layers only
         self._forward_graph = OD()
         self._param_graph = OD()
-        self._state_dict = OD({'accuracy':0, 'best_params':None})
+        self._state_dict = OD({'accuracy':0})
         self.modules = OD()
         self.param_groups = OD()
         self.gradients = OD()
@@ -62,15 +62,6 @@ class Module(object):
             except ValueError:
                 print("Could not find module output")
 
-    def set_state(self, key, value):
-        self._state_dict[key] = value
-
-    def get_state(self, key):
-        return self._state_dict[key]
-
-    def state_dict(self):
-        return self._state_dict
-
     @staticmethod
     def train():
         Module.is_train = True
@@ -94,6 +85,14 @@ class Module(object):
         for hook in graph:
             Module._backward_hooks[hook.idx] = hook
             
+    def set_state(self, key, value):
+        self._state_dict[key] = value
+
+    def get_state(self, key):
+        return self._state_dict[key]
+
+    def state_dict(self):
+        return self
 
     def see_modules(self):
         print("\n" + type(self).__name__, end=" ")
