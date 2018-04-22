@@ -6,8 +6,7 @@ from subprocess import call
 
 saved_model_dir = 'outputs/models/'
 
-def save(model):
-    filename = 'best_model.pkl'
+def save(model, filename="model.pkl"):
     """ Save the status dictionary """
     if not os.path.exists(saved_model_dir):
         # print("Creating outputs/models/ directory")
