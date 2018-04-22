@@ -6,6 +6,7 @@ from subprocess import call
 
 saved_model_dir = 'outputs/models/'
 
+
 def save(model, filename="model.pkl"):
     """ Save the status dictionary """
     if not os.path.exists(saved_model_dir):
@@ -21,6 +22,7 @@ def save(model, filename="model.pkl"):
     print("done.")
     print('Model saved as %s' % saved_model_dir + filename)
     f.close()
+
 
 def load(filename):
     """ Load model from existing pickle file """

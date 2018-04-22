@@ -7,10 +7,11 @@ from copy import deepcopy
 
 import names
 
+
 class Module(object):
     """ Base class for all nn modules """
-    _forward_hooks = OD() # Capture every fprop
-    _backward_hooks = OD() # For backprop (Derived from forward graph)
+    _forward_hooks = OD()  # Capture every fprop
+    _backward_hooks = OD()  # For backprop (Derived from forward graph)
     is_train = False
     is_eval = False
 
@@ -19,16 +20,16 @@ class Module(object):
         # For capturing connections b/w layers only
         self._forward_graph = OD()
         self._param_graph = OD()
-        self._state_dict = OD({'accuracy':0, 'weight':OD()})
+        self._state_dict = OD({'accuracy': 0, 'weight': OD()})
         self.modules = OD()
         self.param_groups = OD()
         self.gradients = OD()
         self.data = 0
-        self.results = OD({'accuracy':0, 'class_performace':[]})
+        self.results = OD({'accuracy': 0, 'class_performace': []})
 
     def __call__(self, *inputs):
         # Check if caller is not an inbuilt module class
-        if not type(self).__name__ in names._all:
+        if not type(self).__name__ in names.all:
             # Search for containers if any.
             for _, member in self.__dict__.items():
                 # Add container to custom model modules
@@ -36,7 +37,7 @@ class Module(object):
                     if member not in self.modules.values():
                         idx = str(len(self.modules))
                         self._add_module(idx, member)
-                        if hasattr(member, "param_groups"): # Sanity check
+                        if hasattr(member, "param_groups"):  # Sanity check
                             self._add_parameters(member.idx, member.parameters())
         self._add_forward_hooks()
         result = self.forward(*inputs)
@@ -85,7 +86,7 @@ class Module(object):
         graph.reverse()
         for hook in graph:
             Module._backward_hooks[hook.idx] = hook
-            
+
     def set_state(self, key, value):
         self._state_dict[key] = value
 
@@ -115,7 +116,7 @@ class Module(object):
                 print("({}x{})".format(module.in_features, module.out_features), end="")
             print("")
         print(")\n")
-            
+
     def set_hyperparameters(self, **kwargs):
         self._hypers = kwargs
 
@@ -129,7 +130,7 @@ class Module(object):
     def parameters(self, graph=False):
         if graph:
             return self._param_graph
-        else:    
+        else:
             return self.param_groups
 
     def update_parameters(self, lr, reg=None):
@@ -145,8 +146,8 @@ class Module(object):
     def _add_module(self, idx, module):
         if idx not in self.modules.keys():
             self.modules[idx] = module
-            module.idx = idx # May not be absolute
-    
+            module.idx = idx  # May not be absolute
+
     def _add_parameters(self, idx, parameters):
         if parameters not in self.parameters().values():
             self.param_groups[idx] = parameters
@@ -159,7 +160,7 @@ class Module(object):
         # Hook => layer module
         for hook in Module._forward_hooks.values():
             if type(hook).__name__ in names.layers:
-                if not hook in self._forward_graph:
+                if hook not in self._forward_graph:
                     idx = len(self._forward_graph)
                     self._forward_graph[str(idx)] = hook
                     self._param_graph[str(idx)] = hook.parameters()

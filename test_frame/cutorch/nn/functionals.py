@@ -1,7 +1,5 @@
 from __future__ import print_function
 
-import random
-
 import math
 
 import torch
@@ -56,7 +54,7 @@ def linear(inputs, weight, bias=None):
     if bias is None:
         return torch.mm(inputs, weight)
     else:
-        return (torch.mm(inputs, weight) + bias)
+        return torch.mm(inputs, weight) + bias
 
 
 def relu(inputs):
@@ -171,7 +169,6 @@ def gradient_weight(inputs, gradient_output):
 
 def gradient_bias(gradient_output):
     # TODO: Find out WHY dim = 0 ?
-    #print(gradient_output)
     return torch.sum(gradient_output, dim=0, keepdim=True)
 
 

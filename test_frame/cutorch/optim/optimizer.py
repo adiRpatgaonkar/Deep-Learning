@@ -3,7 +3,8 @@ from collections import OrderedDict as OD
 
 from ..utils.model_store import save
 
-#TODO: Momentum (SGD)
+
+# TODO: Momentum (SGD)
 
 # Base optimizer class
 class Optimizer(object):
@@ -16,7 +17,7 @@ class Optimizer(object):
         self.model = model
         self.model_state = OD()
         self.curr_iter = 0
-        self.lr0 = lr # Set base L.R.
+        self.lr0 = lr  # Set base L.R.
         self.lr = self.lr0
         self.lr_decay = lr_decay
         model.set_hyperparameters(lr=self.lr,
@@ -34,7 +35,7 @@ class Optimizer(object):
         self.model.clean(["gradient"])
 
     # Select/store best model state/parameters
-    def check_model(self, select=False, store=False,     name="model.pkl"):
+    def check_model(self, select=False, store=False, name="model.pkl"):
         # Check if you've got the best params via accuracies
         if select:
             print("\nChecking model results ...", end=" ")
@@ -63,4 +64,3 @@ class Optimizer(object):
     def exp_decay(self):
         #  self.lr = (self.lr0 * math.exp(-self.lr_decay * self.curr_iter))
         pass
-

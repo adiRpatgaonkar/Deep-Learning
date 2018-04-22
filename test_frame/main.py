@@ -12,8 +12,6 @@ from __future__ import print_function
 
 import time
 
-import torch  # CUDA #
-import cutorch
 import cutorch.nn as nn
 import cutorchvision.datasets as dsets
 from cutorchvision.transforms import Transforms
@@ -26,7 +24,7 @@ else:
     using_gpu = False
 
 # Global vars
-global curr_time, time2train, time2test
+global curr_time, time2train
 global images, ground_truths, outputs, predicted, loss
 global train_loader, test_loader
 
@@ -47,8 +45,9 @@ test_dataset = dsets.CIFAR10(directory="cutorchvision/data",
                              form="tensor")
 # Testing data for validation
 test_loader = cutorch.utils.data.DataLoader(data=test_dataset.data,
-                                            batch_size=10000, 
+                                            batch_size=10000,
                                             shuffled=False)
+
 
 # Fully connected layer model
 class FCM(nn.Module):
@@ -71,6 +70,7 @@ class FCM(nn.Module):
         out = self.fc2(out)
         return out
 
+
 fcm = FCM()
 # Loss & Optimizer
 criterion = nn.CrossEntropyLoss()
@@ -85,23 +85,23 @@ for epoch in range(max_epochs):
         if using_gpu:
             images = images.cuda()
 
-        fcm.train() # Switch: training mode
+        fcm.train()  # Switch: training mode
         optimizer.zero_grad()
-        curr_time = time.time() # Time 2 train a batch in train set
+        curr_time = time.time()  # Time 2 train a batch in train set
         outputs = fcm(images)
         loss = criterion(outputs, ground_truths)
         loss.backward()
         optimizer.step()
-        time2train = cutorch.utils.time_log(time.time()-curr_time)
+        time2train = cutorch.utils.time_log(time.time() - curr_time)
         total, accuracy = evaluate(fcm, train_loader[-2:-1], "cross-validate")
-        if (i+1) % 50 == 0:
+        if (i + 1) % 50 == 0:
             print("\nL.R:[{:.5f}]".format(fcm.hypers('lr')), end=" ")
-            print("Epoch:[{}/{}]".format(epoch+1, max_epochs), end=" ")
-            print("Iter:[{}/{}]".format(i+1, len(train_loader)), end=" ")
+            print("Epoch:[{}/{}]".format(epoch + 1, max_epochs), end=" ")
+            print("Iter:[{}/{}]".format(i + 1, len(train_loader)), end=" ")
             print("error:[{:.5f}]".format(loss.data), end=" ")
             print("Time:[{}]".format(time2train))
             print("CVal accuracy on {} images: {} %".format(total, accuracy))
-        if using_gpu: # GPU cache cleaning. Unsure of effectiveness
+        if using_gpu:  # GPU cache cleaning. Unsure of effectiveness
             torch.cuda.empty_cache()
     total = evaluate(fcm, test_loader, "test")
     print('\nTest accuracy on {} images: {} %'.format(total, fcm.results['accuracy']))
@@ -111,13 +111,13 @@ net_time = cutorch.utils.time_log(time.time() - time_start)
 print("\nFinished training: {} examples for {} epochs.".format(len(train_dataset.data), max_epochs))
 print("Time[training + cross-validation + testing + best model]: {}".format(net_time))
 
-# Save trained model
-optimizer.check_model(store=True, name="fcm_best_test_1.pkl") 
+# Save best trained model
+optimizer.check_model(store=True, name="fcm_best_test_1.pkl")
+# Save final model
 cutorch.save(fcm.state_dict(), "fcm.pkl")
 
 # ++++ Load trained model & test it ++++ #
-model = cutorch.load('fcm.pkl')
-#model = cutorch.load('fcm_test_1.pkl')['best']
+model = cutorch.load('fcm.pkl') # Final model
+# model = cutorch.load('fcm_test_1.pkl')['best']  # Best trained model
 total = evaluate(model, test_loader, "test")
 print('Test accuracy of the trained model on {} test images: {} %'.format(total, model.results['accuracy']))
-
