@@ -12,6 +12,8 @@ LogSoftmax
 """
 from __future__ import print_function
 
+import pickle
+from pympler.asizeof import asizeof
 import time
 
 import torch  # CUDA #
@@ -112,6 +114,8 @@ for epoch in range(max_epochs):
         if using_gpu:
             images = images.cuda()  # Move image batch to GPU
         fcm.train() # Switch to training mode
+
+        optimizer.zero_grad()
         curr_time = time.time() # Time 2 train a batch using train set
         outputs = fcm(images)
         loss = criterion(outputs, ground_truths)
@@ -134,19 +138,19 @@ for epoch in range(max_epochs):
 
 net_time = cutorch.utils.time_log(time.time() - time_start)
 print("\nFinished training: {} examples for {} epochs.".format(len(train_dataset.data), max_epochs))
-print("Time[training + cross-validation + testing + saving best model]: {}".format(net_time))
+print("Time[training + cross-validation + testing + best model]: {}".format(net_time))
 
+optimizer.check_model(store=True)
+
+# ++++ Sanity model test ++++ #
 curr_time = time.time() # Time 2 test a batch in test set
-fcm.evaluate(test_loader, "test")
+optimizer.model_state['best_model'].evaluate(test_loader, "test")
 time2test = cutorch.utils.time_log(time.time()-curr_time)
 print('Test accuracy of the model on {} test images: {} %'.format(total, fcm.results['accuracy']))
 print("Time:[{}]\n".format(time2test))
 
 # ++++ Test loaded model ++++ #
-fcm_loaded = load('best_model.pkl')
-for params in fcm_loaded.parameters('graph').values():
-    if params:
-        for prm in params:
-            print(prm.data)
-fcm_loaded.evaluate(test_loader, "test")
-print('Test accuracy of the loaded model on {} test images: {} %'.format(total, fcm_loaded.results['accuracy']))
+best_model = load('best_model.pkl')['best_model']
+print(best_model)
+best_model.evaluate(test_loader, "test")
+print('Test accuracy of the loaded model on {} test images: {} %'.format(total, best_model.results['accuracy']))

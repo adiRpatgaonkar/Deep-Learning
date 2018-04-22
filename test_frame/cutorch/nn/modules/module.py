@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 from collections import OrderedDict as OD
+from copy import deepcopy
 
 import names
 
@@ -18,7 +19,7 @@ class Module(object):
         # For capturing connections b/w layers only
         self._forward_graph = OD()
         self._param_graph = OD()
-        self._state_dict = OD({'accuracy':0})
+        self._state_dict = OD({'accuracy':0, 'weight':OD()})
         self.modules = OD()
         self.param_groups = OD()
         self.gradients = OD()
@@ -91,8 +92,19 @@ class Module(object):
     def get_state(self, key):
         return self._state_dict[key]
 
+    def clean(self, objects):
+        for hook in self._forward_graph.values():
+            if "input" in objects:
+                hook.inputs = None
+            if "output" in objects:
+                hook.data = 0
+            if "gradient" in objects:
+                hook.grad = OD()
+                self.gradients = OD()
+
     def state_dict(self):
-        return self
+        self.clean(["input", "output", "gradient"])
+        return deepcopy(self)
 
     def see_modules(self):
         print("\n" + type(self).__name__, end=" ")
@@ -151,6 +163,9 @@ class Module(object):
                     idx = len(self._forward_graph)
                     self._forward_graph[str(idx)] = hook
                     self._param_graph[str(idx)] = hook.parameters()
+
+    def forward_graph(self):
+        return self._forward_graph
 
     def forward(self, *inputs):
         """

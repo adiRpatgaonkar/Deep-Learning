@@ -17,8 +17,8 @@ def save(model):
         call("rm -f " + saved_model_dir+filename, shell=True)
     print("\nSaving", end=" ")
     print(filename, 'to', saved_model_dir, end=" ... ")
-    f = open(saved_model_dir + filename, 'w')
-    pickle.dump(model, f)
+    with open(saved_model_dir + filename, 'wb') as f:  # Overwrites any existing file.
+        pickle.dump(model, f, pickle.HIGHEST_PROTOCOL)
     print("done.")
     print('Model saved as %s' % saved_model_dir + filename)
     f.close()

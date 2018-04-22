@@ -20,8 +20,7 @@ class ReLU(Module):
 
     def __init__(self):
         super(ReLU, self).__init__()
-        self.parent = None
-        self.idx = 0
+        self.idx = -1
         self.inputs = 0
         self.grad = OrderedDict()
         self.grad['output'] = 0
@@ -55,7 +54,7 @@ class Softmax(Module):
     def __init__(self):
         super(Softmax, self).__init__()
         # self.parent = None # No use as of now.
-        self.idx = 0
+        self.idx = -1
         self.inputs = 0
         self.confidence = 0
         self.prediction = 0

@@ -23,7 +23,7 @@ class Linear(Module):
     def __init__(self, in_features, out_features, bias=True):
         super(Linear, self).__init__()
         # self.parent = None # No use as of now.
-        self.idx = 0
+        self.idx = -1
         self.in_features = in_features
         self.out_features = out_features
         self.inputs = torch.Tensor([0.0])

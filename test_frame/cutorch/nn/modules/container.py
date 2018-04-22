@@ -14,7 +14,7 @@ class Sequential(Module):
 
     def __init__(self, *modules):
         super(Sequential, self).__init__()
-        self.idx = None
+        self.idx = -1
         for idx, module in enumerate(modules):
             self._add_module(str(idx), module)
             # Necessary check. Some layer modules do not have parameters
