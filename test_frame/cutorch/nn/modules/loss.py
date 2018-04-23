@@ -9,11 +9,8 @@ from .. import functionals as f
 
 
 class CrossEntropyLoss(Module):
-    """
-    Calculate cross-entropy loss
-    """
-
     def __init__(self):
+        """Calculate cross-entropy loss"""
         super(CrossEntropyLoss, self).__init__()
         self.inputs = 0
         self.targets = 0

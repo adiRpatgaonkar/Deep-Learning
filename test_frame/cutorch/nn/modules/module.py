@@ -9,7 +9,7 @@ import names
 
 
 class Module(object):
-    """ Base class for all nn modules """
+    """Base class for all nn modules"""
     _forward_hooks = OD()  # Capture every fprop
     _backward_hooks = OD()  # For backprop (Derived from forward graph)
     is_train = False
@@ -127,19 +127,19 @@ class Module(object):
             print("Wrong hyper-parameter.")
             raise KeyError
 
-    def parameters(self, graph=False):
-        if graph:
-            return self._param_graph
-        else:
+    def parameters(self, group=False):
+        if group:
             return self.param_groups
+        else:
+            return self._param_graph
 
     def update_parameters(self, lr, reg=None):
         self._hypers['lr'] = lr
-        for module in self._forward_graph.values():
+        for module in self.forward_graph().values():
             for param in module.parameters():
-                # if reg is not None and param.tag == 'weight':
-                #     # Add regularization gradient contribution
-                #     param.gradient += (reg * param.data)
+                if reg is not None and param.tag == 'weight':
+                    # Add regularization gradient contribution
+                    param.gradient += (reg * param.data)
                 # Parameter update
                 param.data = param.data + (-lr * param.gradient)
 

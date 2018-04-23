@@ -4,7 +4,6 @@
 Correct abstractions in code
 Class performance
 # MODEL IMPROVEMENTS
-Regularization
 Momentum
 LogSoftmax
 """
@@ -13,6 +12,7 @@ from __future__ import print_function
 import time
 
 import cutorch.nn as nn
+import cutorch.nn.functionals as F
 import cutorchvision.datasets as dsets
 from cutorchvision.transforms import Transforms
 from evaluate import *
@@ -29,9 +29,10 @@ global images, ground_truths, outputs, predicted, loss
 global train_loader, test_loader
 
 # Hyperparameters
-max_epochs = 10
-learning_rate = 5e-2
-lr_decay = 5e-5
+max_epochs = 50
+learning_rate, lr_decay = 5e-2, 5e-5
+reg = 1e-3
+
 # Get training data for training and Cross validation
 train_dataset = dsets.CIFAR10(directory="cutorchvision/data",
                               download=True, train=True,
@@ -39,6 +40,7 @@ train_dataset = dsets.CIFAR10(directory="cutorchvision/data",
 # Data augmentation
 train_dataset = Transforms(dataset=train_dataset,
                            lr_flip=True, crop=False)
+                           
 # For testing
 test_dataset = dsets.CIFAR10(directory="cutorchvision/data",
                              download=True, test=True,
@@ -74,7 +76,7 @@ class FCM(nn.Module):
 fcm = FCM()
 # Loss & Optimizer
 criterion = nn.CrossEntropyLoss()
-optimizer = cutorch.optim.Optimizer(fcm, lr=learning_rate, lr_decay=lr_decay)
+optimizer = cutorch.optim.Optimizer(fcm, lr=learning_rate, lr_decay=lr_decay, reg=reg)
 
 time_start = time.time()
 for epoch in range(max_epochs):
@@ -90,6 +92,7 @@ for epoch in range(max_epochs):
         curr_time = time.time()  # Time 2 train a batch in train set
         outputs = fcm(images)
         loss = criterion(outputs, ground_truths)
+        loss.data += F.l2_reg(reg, fcm.parameters())
         loss.backward()
         optimizer.step()
         time2train = cutorch.utils.time_log(time.time() - curr_time)
@@ -105,19 +108,23 @@ for epoch in range(max_epochs):
             torch.cuda.empty_cache()
     total = evaluate(fcm, test_loader, "test")
     print('\nTest accuracy on {} images: {} %'.format(total, fcm.results['accuracy']))
-    optimizer.check_model(select=True)
+    optimizer.check_model(select=True) # Keep a snapshot of the best model
 
 net_time = cutorch.utils.time_log(time.time() - time_start)
 print("\nFinished training: {} examples for {} epochs.".format(len(train_dataset.data), max_epochs))
 print("Time[training + cross-validation + testing + best model]: {}".format(net_time))
 
-# Save best trained model
-optimizer.check_model(store=True, name="fcm_best_test_1.pkl")
-# Save final model
-cutorch.save(fcm.state_dict(), "fcm.pkl")
+# Evaluate best model found while training
+# total = evaluate(optimizer.state['model'], test_loader, "test")
+# print('Test accuracy of the trained model on {} test images: {} %'.format(total, optimizer.state['model'].results['accuracy']))
 
-# ++++ Load trained model & test it ++++ #
-model = cutorch.load('fcm.pkl') # Final model
-# model = cutorch.load('fcm_test_1.pkl')['best']  # Best trained model
-total = evaluate(model, test_loader, "test")
-print('Test accuracy of the trained model on {} test images: {} %'.format(total, model.results['accuracy']))
+# Save best trained model
+optimizer.check_model(store=True, name="fcm_best")
+# Save final model
+cutorch.save(fcm.state_dict(), "fcm_final")
+
+# # ++++ Load trained model & test it ++++ #
+# model = cutorch.load('fcm.pkl') # Final model
+# # model = cutorch.load('fcm_test_1.pkl')['model']  # Best trained model
+# total = evaluate(model, test_loader, "test")
+# print('Test accuracy of the trained model on {} test images: {} %'.format(total, model.results['accuracy']))

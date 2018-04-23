@@ -7,8 +7,10 @@ from subprocess import call
 saved_model_dir = 'outputs/models/'
 
 
-def save(model, filename="model.pkl"):
+def save(model, filename="model"):
     """ Save the status dictionary """
+    filename += ".pkl"
+
     if not os.path.exists(saved_model_dir):
         # print("Creating outputs/models/ directory")
         call("mkdir outputs && mkdir outputs/models", shell=True)

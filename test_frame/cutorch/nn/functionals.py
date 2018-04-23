@@ -104,11 +104,9 @@ def average_loss(inputs):
     return torch.sum(inputs) / len(inputs)
 
 
-def l1_regularization(strength, parameters):
+def l2_reg(strength, parameters):
     reg_loss = 0
-    # print(strength, modules.values())
-
-    for param_group in parameters:
+    for param_group in parameters.values():
         for param in param_group:
             if param.tag == 'weight':
                 reg_loss += torch.sum(param.data*param.data)
