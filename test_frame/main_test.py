@@ -1,13 +1,3 @@
-"""
-# TODO
-# PIPELINE
-Correct abstractions in code
-Class performance
-# MODEL IMPROVEMENTS
-Regularization
-Momentum
-LogSoftmax
-"""
 from __future__ import print_function
 
 import time
@@ -18,7 +8,6 @@ from cutorchvision.transforms import Transforms
 from evaluate import *
 
 if cutorch.gpu_check.available():
-    torch.set_default_tensor_type("torch.cuda.FloatTensor")
     using_gpu = True
 else:
     using_gpu = False
@@ -33,7 +22,7 @@ max_epochs = 10
 learning_rate = 5e-2
 lr_decay = 5e-5
 # Get training data for training and Cross validation
-trainset = dsets.CIFAR10(directory="cutorchvision/data",
+trainset = dsets.CIFAR10(dir="cutorchvision/data",
                          download=True, train=True,
                          form="tensor")
 # # Data augmentation

@@ -16,6 +16,7 @@ def flatten(data):
     num_examples = 1
     if data.dim() == 3:
         num_examples = 1
+        print("3D tensor given. 4D tensor preferred. Unsqueezing ... ")
         data = data.unsqueeze(0)
     elif data.dim() == 4:
         num_examples = data.size(0)
@@ -38,7 +39,6 @@ def decay_weight(weight_data):
 #                   FORWARD                     #
 #                                               #
 #################################################
-
 
 def linear(inputs, weight, bias=None):
     """
@@ -91,7 +91,9 @@ def cross_entropy(inputs, targets):
         (correct) negative log probs
         of targets only (list)
     """
-    probs = correct_probs(inputs, targets)
+    #print("I:", inputs)
+    probs = inputs[range(len(inputs)), targets]
+    #print("O:", probs)
     negative_log_probs = neg_log_probs(probs)
     return negative_log_probs
 
@@ -119,16 +121,6 @@ def l2_reg(strength, parameters):
 #                                               #
 #################################################
 
-
-def correct_probs(inputs, targets):
-    """
-    :param inputs: softmaxed probs
-    :param targets: target indices list
-    :return probs of targets only (list)
-    """
-    return inputs[range(len(inputs)), targets]
-
-
 def neg_log_probs(inputs):
     """
     :param inputs: correct probs
@@ -155,7 +147,6 @@ def nan_check(data):
 #                   GRADIENTS                   #
 #                                               #
 #################################################
-
 
 def gradient_linear(weight, gradient_output):
     return torch.mm(gradient_output, weight.t())

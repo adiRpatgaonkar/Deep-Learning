@@ -9,8 +9,8 @@ from .. import functionals as f
 
 
 class CrossEntropyLoss(Module):
+    """ Calculate cross-entropy loss """
     def __init__(self):
-        """Calculate cross-entropy loss"""
         super(CrossEntropyLoss, self).__init__()
         self.inputs = 0
         self.targets = 0
@@ -31,13 +31,10 @@ class CrossEntropyLoss(Module):
         self.targets = targets
         self.n_log_loss = f.cross_entropy(module.data, targets)
         self.data = f.average_loss(self.n_log_loss)
-        # Check if regularization is applicable
-        #self.data += f.l1_regularization(0.001, self.in_model.parameters())
 
         if f.nan_check(self.data):
             # Quit if loss is NaN.
-            print('Loss is NaN\nExiting ...\n')
-            sys.exit(1)
+            sys.exit('Loss is NaN\nExiting ...\n')
         return self
 
     def backward(self):

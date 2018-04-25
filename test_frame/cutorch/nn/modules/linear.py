@@ -11,9 +11,6 @@ from .module import Module
 from .. import functionals as f
 
 
-__dlevel__ = 0
-
-
 class Linear(Module):
     """Linear Layer class"""
 

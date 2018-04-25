@@ -12,12 +12,9 @@ import torch
 from .module import Module
 from .. import functionals as f
 
-__dlevel__ = 0
-
 
 class ReLU(Module):
-    """ReLU Activation layer class"""
-
+    """ ReLU Activation layer class """
     def __init__(self):
         super(ReLU, self).__init__()
         self.idx = -1
@@ -31,9 +28,6 @@ class ReLU(Module):
         else:
             self.inputs = in_features
         self.data = f.relu(self.inputs)
-        if __debug__:
-            if __dlevel__ == 4:
-                print(self.data)
         return self
 
     def backward(self, gradients):
@@ -46,11 +40,7 @@ class ReLU(Module):
 
 
 class Softmax(Module):
-    """
-    Classifier
-    Softmax class
-    """
-
+    """ Classifier Softmax class """
     def __init__(self):
         super(Softmax, self).__init__()
         # self.parent = None # No use as of now.
