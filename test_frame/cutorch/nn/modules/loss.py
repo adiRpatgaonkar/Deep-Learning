@@ -12,7 +12,7 @@ class CrossEntropyLoss(Module):
     """ Calculate cross-entropy loss """
     def __init__(self):
         super(CrossEntropyLoss, self).__init__()
-        self.inputs = 0
+        self.input = 0
         self.targets = 0
         self.n_log_loss = 0
         self.reg_loss = 0
@@ -27,7 +27,7 @@ class CrossEntropyLoss(Module):
         # Capture model from the 1st
         # forward call.
         self.in_model = module["base:module"]
-        self.inputs = module.data
+        self.input = module.data
         self.targets = targets
         self.n_log_loss = f.cross_entropy(module.data, targets)
         self.data = f.average_loss(self.n_log_loss)

@@ -18,16 +18,16 @@ class ReLU(Module):
     def __init__(self):
         super(ReLU, self).__init__()
         self.idx = -1
-        self.inputs = 0
+        self.input = 0
         self.grad = OrderedDict()
         self.grad['output'] = 0
 
     def forward(self, in_features):
         if not torch.is_tensor(in_features):
-            self.inputs = in_features.data
+            self.input = in_features.data
         else:
-            self.inputs = in_features
-        self.data = f.relu(self.inputs)
+            self.input = in_features
+        self.data = f.relu(self.input)
         return self
 
     def backward(self, gradients):
@@ -45,7 +45,7 @@ class Softmax(Module):
         super(Softmax, self).__init__()
         # self.parent = None # No use as of now.
         self.idx = -1
-        self.inputs = 0
+        self.input = 0
         self.confidence = 0
         self.prediction = 0
         self.grad = OrderedDict()
@@ -53,10 +53,10 @@ class Softmax(Module):
     def forward(self, in_features):
         # Compute softmax probabilities
         if not torch.is_tensor(in_features):
-            self.inputs = in_features.data
+            self.input = in_features.data
         else:
-            self.inputs = in_features
-        self.data = f.softmax(self.inputs)
+            self.input = in_features
+        self.data = f.softmax(self.input)
         if Module.is_train:
             return self
         elif Module.is_eval:

@@ -34,7 +34,7 @@ learning_rate, lr_decay = 5e-2, 5e-5
 reg = 1e-3
 
 # Get training data for training and Cross validation
-train_dataset = dsets.CIFAR10(directory="cutorchvision/data",
+train_dataset = dsets.CIFAR10(dir="cutorchvision/data",
                               download=True, train=True,
                               form="tensor")
 # Data augmentation
@@ -42,7 +42,7 @@ train_dataset = Transforms(dataset=train_dataset,
                            lr_flip=True, crop=False)
                            
 # For testing
-test_dataset = dsets.CIFAR10(directory="cutorchvision/data",
+test_dataset = dsets.CIFAR10(dir="cutorchvision/data",
                              download=True, test=True,
                              form="tensor")
 # Testing data for validation

@@ -10,6 +10,7 @@ from torch.autograd import Variable
 
 if torch.cuda.is_available():
     torch.cuda.set_device(0)
+    torch.set_default_tensor_type("torch.cuda.FloatTensor")
     print('GPU used:', torch.cuda.current_device())
 
 
@@ -52,9 +53,11 @@ class CNN(nn.Module):
 
     def forward(self, x):
         out = self.layer1(x)
+        print(torch.sum(out))
         out = self.layer2(out)
         out = out.view(out.size(0), -1)
         self.fc = nn.Linear(out.size(1), 10)
+        #print(self.fc.weight)
         out = self.fc(out)
         return out
 
@@ -74,15 +77,19 @@ label1 = torch.LongTensor([5])
 label2 = torch.LongTensor([7])
 labels = [label1, label2]
 
-for x, y in zip(images, labels):
-    x = Variable(x)
-    y = Variable(y)
+for epoch in range(2):
+    for x, y in zip(images, labels):
+        if torch.cuda.is_available():
+            x = x.cuda()
+            y = y.cuda()    
+        x = Variable(x)
+        y = Variable(y)
 
-    optimizer.zero_grad()
-    print("\nInput size:", x.size())
-    output = cnn(x)
-    print("Output:", output)
-    loss = criterion(output, y)
-    loss.backward()
-    optimizer.step()
-    print("Loss:", loss.data[0])
+        optimizer.zero_grad()
+        print("\nInput size:", x.size())
+        output = cnn(x)
+        #print("Output:", output)
+        loss = criterion(output, y)
+        loss.backward()
+        optimizer.step()
+        print("Loss:", loss.data[0])

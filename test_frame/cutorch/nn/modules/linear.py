@@ -23,7 +23,7 @@ class Linear(Module):
         self.idx = -1
         self.in_features = in_features
         self.out_features = out_features
-        self.inputs = torch.Tensor([0.0])
+        self.input = torch.Tensor([0.0])
         self.data = 0
         # Parameters' creation
         self.weight = Parameter(weight=torch.randn(self.in_features, self.out_features),
@@ -59,19 +59,19 @@ class Linear(Module):
 
     def forward(self, in_features):
         if not torch.is_tensor(in_features):
-            self.inputs = in_features.data
+            self.input = in_features.data
         else:
-            self.inputs = in_features
-        self.data = f.linear(self.inputs, self.weight.data, self.bias.data)
+            self.input = in_features
+        self.data = f.linear(self.input, self.weight.data, self.bias.data)
         return self
 
     def backward(self, gradients):
-        # print(self.inputs.t(), gradients['output'])
+        # print(self.input.t(), gradients['output'])
         if gradients['output'].dim() == 1:
             gradients['output'] = gradients['output'].unsqueeze(0)
 
         if self.weight.require_gradient:
-            self.grad['weight'] = f.gradient_weight(self.inputs, gradients['output'])
+            self.grad['weight'] = f.gradient_weight(self.input, gradients['output'])
             self.weight.gradient = self.grad['weight']
 
         if self.bias.require_gradient:
@@ -79,7 +79,7 @@ class Linear(Module):
             self.bias.gradient = self.grad['bias']
         if self.idx == '0':
             # No gradients required for input layer (idx == 0)
-            self.grad['output'] = torch.Tensor(self.inputs.size())
+            self.grad['output'] = torch.Tensor(self.input.size())
         else:
             self.grad['output'] = f.gradient_linear(self.weight.data, gradients['output'])
         return self.grad

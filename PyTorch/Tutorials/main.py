@@ -7,7 +7,7 @@ import torchvision.transforms as transforms
 from torch.autograd import Variable
 
 if torch.cuda.is_available():
-    torch.cuda.set_device(0)
+    torch.cuda.set_device(1)
     print 'GPU used:', torch.cuda.current_device()
 
 # Hyper Params
@@ -80,11 +80,6 @@ for epoch in range(epochs):
         if (i+1) % 100 == 0:
             print ('Epoch [%d/%d], Iter[%d/%d] Loss: %.4f'
             %(epoch + 1, epochs, i + 1, len(train_dataset)//batch_size, loss.data[0]))
-            
-    if epoch % 50 == 0 and epoch != 0:
-        learning_rate /= 2
-        print learning_rate
-        optimizer = torch.optim.Adam(cnn.parameters(), lr=learning_rate)
 
 cnn.eval()  # Change model to 'eval' mode (BN uses moving mean/var).
 correct = 0

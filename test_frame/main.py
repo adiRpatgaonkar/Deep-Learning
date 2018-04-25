@@ -80,12 +80,12 @@ optimizer = cutorch.optim.Optimizer(fcm, lr=learning_rate, lr_decay=lr_decay, re
 
 time_start = time.time()
 for epoch in range(max_epochs):
-    for i, batch in enumerate(train_loader):
-        images, labels = batch
+    for i, (images, labels) in enumerate(train_loader):
         if cutorch.gpu.used:
             images = images.cuda()
-            labels = labels.cuda()
+            labels = labels.cuda()   
         fcm.train()  # Switch: training mode
+
         optimizer.zero_grad()
         curr_time = time.time()  # Time 2 train a batch in train set
         outputs = fcm(images)
@@ -109,7 +109,7 @@ for epoch in range(max_epochs):
     optimizer.check_model(select=True)  # Keep a snapshot of the best model
 
 net_time = cutorch.utils.time_log(time.time() - time_start)
-print("\nFinished training: {} examples for {} epochs.".format(len(train_set.data), max_epochs))
+print("\nFinished training: {} examples for {} epochs.".format(len(trainset.data), max_epochs))
 print("Time[training + cross-validation + testing + best model selection]: {}".format(net_time))
 
 # Evaluate best model found while training
