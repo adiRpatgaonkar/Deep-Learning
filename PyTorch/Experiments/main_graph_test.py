@@ -1,5 +1,7 @@
 # CIFAR-10 using CNN using Pytorch
 
+from __future__ import print_function
+
 import torch
 import torch.nn as nn
 import torchvision.datasets as dsets
@@ -8,7 +10,7 @@ from torch.autograd import Variable
 
 if torch.cuda.is_available():
     torch.cuda.set_device(0)
-    print 'GPU used:', torch.cuda.current_device()
+    print('GPU used:', torch.cuda.current_device())
 
 
 
@@ -47,12 +49,12 @@ class CNN(nn.Module):
             nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.MaxPool2d(2))
-        self.fc = nn.Linear(5*5*32, 10)
 
     def forward(self, x):
         out = self.layer1(x)
         out = self.layer2(out)
         out = out.view(out.size(0), -1)
+        self.fc = nn.Linear(out.size(1), 10)
         out = self.fc(out)
         return out
 
@@ -65,40 +67,22 @@ if torch.cuda.is_available():
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(cnn.parameters(), lr=learning_rate)
 
-# Train the Model
-for epoch in range(epochs):
-    for i, (images, labels) in enumerate(train_loader):
-        if torch.cuda.is_available():
-            images = images.cuda()
-            labels = labels.cuda()
-        images = Variable(images)
-        labels = Variable(labels)
+image1 = (torch.LongTensor(1, 3, 32, 32).random_(0, 255)).float()
+image2 = (torch.LongTensor(1, 3, 28, 28).random_(0, 255)).float()
+images = [image1, image2]
+label1 = torch.LongTensor([5])
+label2 = torch.LongTensor([7])
+labels = [label1, label2]
 
-        optimizer.zero_grad()
-        outputs = cnn(images)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
-        if (i+1) % 100 == 0:
-            print ('Epoch [%d/%d], Iter[%d/%d] Loss: %.4f'
-            %(epoch + 1, epochs, i + 1, len(train_dataset)//batch_size, loss.data[0]))
-            
-    if epoch % 50 == 0 and epoch != 0:
-        learning_rate /= 2
-        print learning_rate
-        optimizer = torch.optim.Adam(cnn.parameters(), lr=learning_rate)
+for x, y in zip(images, labels):
+    x = Variable(x)
+    y = Variable(y)
 
-cnn.eval()  # Change model to 'eval' mode (BN uses moving mean/var).
-correct = 0
-total = 0
-for images, labels in test_loader:
-    if torch.cuda.is_available():
-        images = images.cuda()
-    images = Variable(images)
-    outputs = cnn(images)
-    _, predicted = torch.max(outputs.data, 1)
-    total += labels.size(0)
-    correct += (predicted.cpu() == labels).sum()
-
-print('Test accuracy of the model on 10000 test images: %d %%' % (100 * correct / total))
-torch.save(cnn.state_dict(), 'cnn.pkl')
+    optimizer.zero_grad()
+    print("\nInput size:", x.size())
+    output = cnn(x)
+    print("Output:", output)
+    loss = criterion(output, y)
+    loss.backward()
+    optimizer.step()
+    print("Loss:", loss.data[0])

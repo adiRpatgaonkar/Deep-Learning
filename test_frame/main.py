@@ -29,8 +29,8 @@ global images, ground_truths, outputs, predicted, loss
 global train_loader, test_loader
 
 # Hyperparameters
-max_epochs = 50
-learning_rate, lr_decay = 5e-2, 5e-5
+max_epochs = 200
+learning_rate, lr_decay = 5e-2, 5e-6
 reg = 1e-3
 
 # Get training data for training and Cross validation
@@ -56,11 +56,13 @@ class FCM(nn.Module):
     def __init__(self):
         super(FCM, self).__init__()
         self.fc1 = nn.Sequential(
-            nn.Linear(32 * 32 * 3, 1024),
+            nn.Linear(32 * 32 * 3, 2048),
             nn.ReLU())
 
         self.fc2 = nn.Sequential(
-            nn.Linear(1024, 10),
+            nn.Linear(2048, 512),
+            nn.ReLU(),
+            nn.Linear(512, 10),
             nn.Softmax())
 
         self.fc1.see_modules()
@@ -80,8 +82,8 @@ optimizer = cutorch.optim.Optimizer(fcm, lr=learning_rate, lr_decay=lr_decay, re
 
 time_start = time.time()
 for epoch in range(max_epochs):
-    train_loader = cutorch.utils.data.DataLoader(
-        data=train_dataset.data, batch_size=100, shuffled=True)
+    train_loader = cutorch.utils.data.DataLoader(data=train_dataset.data, batch_size=100, 
+                                                 shuffled=True)
     for i, batch in enumerate(train_loader[:-1]):
         images, ground_truths = batch
         if using_gpu:
@@ -115,16 +117,16 @@ print("\nFinished training: {} examples for {} epochs.".format(len(train_dataset
 print("Time[training + cross-validation + testing + best model]: {}".format(net_time))
 
 # Evaluate best model found while training
-# total = evaluate(optimizer.state['model'], test_loader, "test")
-# print('Test accuracy of the trained model on {} test images: {} %'.format(total, optimizer.state['model'].results['accuracy']))
+total = evaluate(optimizer.state['model'], test_loader, "test")
+print('Test accuracy of the trained model on {} test images: {} %'.format(total, optimizer.state['model'].results['accuracy']))
 
 # Save best trained model
 optimizer.check_model(store=True, name="fcm_best")
 # Save final model
 cutorch.save(fcm.state_dict(), "fcm_final")
 
-# # ++++ Load trained model & test it ++++ #
-# model = cutorch.load('fcm.pkl') # Final model
-# # model = cutorch.load('fcm_test_1.pkl')['model']  # Best trained model
-# total = evaluate(model, test_loader, "test")
-# print('Test accuracy of the trained model on {} test images: {} %'.format(total, model.results['accuracy']))
+# ++++ Load trained model & test it ++++ #
+model = cutorch.load('fcm_best.pkl') # Final model
+# model = cutorch.load('fcm_test_1.pkl')['model']  # Best trained model
+total = evaluate(model, test_loader, "test")
+print('Test accuracy of the trained model on {} test images: {} %'.format(total, model.results['accuracy']))

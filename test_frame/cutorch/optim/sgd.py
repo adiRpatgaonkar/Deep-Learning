@@ -1,6 +1,6 @@
 from __future__ import print_function
-from collections import OrderedDict as OD
-from copy import deepcopy
+
+import torch
 
 from .optimizer import Optimizer
 from ..utils.model_store import save
@@ -12,13 +12,10 @@ from ..utils.model_store import save
 class SGD(Optimizer):
     """Schedules L.R and saves the optimum parameters"""
 
-    def __init__(self, parameters, lr, momentum, reg=None):
-        super(SGD, self).__init__()
-        print("#StochasticGradientDescent with momentum:")
+    def __init__(self, model, lr, lr_decay, momentum, reg=None):
+        super(SGD, self).__init__(model, lr, lr_decay, reg)
         # Capture model (Alias)
-        self.model = parameters.im_self
-        self.parameters = parameters
-        self.v = 0
+        self.v = torch.FloatTensor([0])
         self.mu = momentum
         self.model.set_hyperparameters(momentum=self.mu)
 
@@ -31,11 +28,13 @@ class SGD(Optimizer):
 
     def update_parameters(self):
         self.model._hypers['lr'] = self.lr
-        for param in self.parameters:
-            if self.reg is not None and param.tag == 'weight':
-                # Add regularization gradient contribution
-                param.gradient += (self.reg * param.data)
-            # Momentum update
-            self.v = self.mu * self.v - self.lr * param.gradient
-            # Parameter update
-            param.data = param.data + self.v
+        for module in self.model.forward_graph().values():
+            for param in module.parameters():
+                if self.reg is not None and param.tag == 'weight':
+                    # Add regularization gradient contribution
+                    param.gradient += (self.reg * param.data)
+                # Momentum update
+                if self.v.dim() > 1 and self.v.size() == param.gradient.size():
+                    self.v = (self.mu * self.v) - (self.lr * param.gradient)
+                    # Parameter update
+                    param.data = param.data + self.v
