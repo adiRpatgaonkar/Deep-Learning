@@ -3,8 +3,7 @@ from __future__ import print_function
 import math
 
 import torch
-
-__dlevel__ = 0
+import numpy as np
 
 
 def flatten(data):
@@ -36,6 +35,49 @@ def decay_weight(weight_data):
 
 #################################################
 #                                               #
+#                     CONV                      #
+#                                               #
+#################################################
+
+def conv2d(in_features, weight, bias=None):
+    # Use post im2col op
+    if bias is None:
+        return torch.mm(weight, in_features)
+    else:
+        return torch.mm(weight, in_features) + bias
+    
+
+def max_pool2d(in_features):
+    # Use post im2col op
+    return torch.max(in_features, 1)
+
+def im2col(image, kernel_size, stride):
+    #print("im2col_in", image.size())
+    im2col_out = torch.FloatTensor()
+    fh = fw = kernel_size
+    for i in range(0, image.size(1) - kernel_size + 1, stride):
+        for j in range(0, image.size(2) - kernel_size + 1, stride):
+            col_im = image[:, i:fh, j:fw]
+            col_im = col_im.contiguous()  # Need to make tensor contiguous to flatten it
+            col_im.unsqueeze_(0)
+            col_im = col_im.view(col_im.size(0), -1)
+            im2col_out = torch.cat((im2col_out, col_im.t()), 1)  # Cat. as col vector
+            fw += stride  
+        fh += stride
+        fw = kernel_size  # Reset kernel width (Done parsing the width (j) for a certain i)
+    fh = kernel_size  # Reset kernel height (Done parsing the height (i))
+    #print("im2col_out", im2col_out.size())
+    return im2col_out
+
+def pad_image(image, padding):
+    in_features = np.pad(image,
+                         mode='constant', constant_values=0,
+                         pad_width=((0, 0), (0, 0), 
+                         (padding, padding), (padding, padding)))
+    return in_features
+
+#################################################
+#                                               #
 #                   FORWARD                     #
 #                                               #
 #################################################
@@ -64,10 +106,6 @@ def relu(inputs):
     :return: ReLU activated Tensor [2D]
     """
     relu_activations = torch.clamp(inputs, min=0)
-    if __debug__:
-        if __dlevel__ is 2:
-            print(inputs)
-            print(relu_activations)
     return relu_activations
 
 
@@ -117,7 +155,7 @@ def l2_reg(strength, parameters):
 
 #################################################
 #                                               #
-#                     Math                      #
+#                     MATH                      #
 #                                               #
 #################################################
 

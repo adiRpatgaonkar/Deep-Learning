@@ -50,6 +50,7 @@ class CNN(nn.Module):
     def forward(self, x):
         out = self.layer1(x)
         out = self.layer2(out)
+        print(out.size())
         out = out.view(out.size(0), -1)
         out = self.fc(out)
         return out
