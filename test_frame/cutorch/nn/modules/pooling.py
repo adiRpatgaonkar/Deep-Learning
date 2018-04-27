@@ -35,13 +35,9 @@ class MaxPool2d(Module):
         """ Prepare in features """
         if in_features.dim() == 3: # For a single image
             in_features = torch.unsqueeze(in_features, 0)
-        # im2col operation
-        # for image in in_features:
-        #     in_features = F.im2col(image, self.spatial_extent, self.stride)
-        # return in_features
         batch_im = torch.Tensor()
-        for image in in_features:
-            batch_im = torch.cat((batch_im, F.im2col(image, self.spatial_extent, self.stride).unsqueeze_(0)), 0)
+        for image in in_features: 
+            batch_im = torch.cat((batch_im, F.im2col(image, self.spatial_extent, self.stride, task="pooling").unsqueeze_(0)), 0)
         return batch_im
 
     def forward(self, in_features):
@@ -50,17 +46,11 @@ class MaxPool2d(Module):
             self.input = in_features.data
         else:
             self.input = in_features
-        # print("Input to max_pool2d layer:", self.input.size())
+        print("Input to max_pool2d layer:", self.input.size())
         self.create_output_vol(self.input)
         in_features = self.prepare_input(self.input) # post im2col
-        # print("Post im2col:", in_features.size())
+        #print("Post im2col:", in_features.size())
         self.data, self.max_track = F.max_pool2d(in_features)
-        self.data, self.max_track = torch.Tensor(), torch.Tensor()
-        for image in in_features:
-            cache_data, cache_max_track  = F.max_pool2d(image)
-            self.data = torch.cat((self.data, cache_data.unsqueeze_(0)), 0)
-            self.max_track = torch.cat((self.max_track, (cache_max_track.float()).unsqueeze_(0)), 0)
-        # print("Post max_pool2D:", self.data.size())
-        self.data.resize_(self.data.size(0), self.output_dim[0], self.output_dim[1], self.output_dim[2])
-        # print("Resized:", self.data.size())
+        #print("Post_max_pool", self.data) 
+        self.data = self.data.view(self.data.size(0), self.output_dim[0], self.output_dim[1], self.output_dim[2])
         return self
