@@ -49,7 +49,7 @@ def conv2d(input, weight, bias=None):
         bias = bias.unsqueeze(0).expand(input.size(0), *bias.size())
         weight = weight.unsqueeze(0).expand(input.size(0), *weight.size())
         if bias is None:  
-            return torch.bmm(weigt, input)
+            return torch.bmm(weight, input)
         else:    
             return torch.bmm(weight, input) + bias
 
@@ -70,16 +70,16 @@ def im2col(image, kernel_size, stride, task="conv"):
     fh = fw = kernel_size    
     for i in range(0, image.size(1) - kernel_size + 1, stride):
         for j in range(0, image.size(2) - kernel_size + 1, stride):
-            col_im = image[:, i:fh, j:fw]
-            col_im = col_im.contiguous()  # Need to make tensor contiguous to flatten it
-            col_im.unsqueeze_(0) # Stretch to 4D tensor
+            im_col = image[:, i:fh, j:fw]
+            im_col = im_col.contiguous()  # Need to make tensor contiguous to flatten it
+            im_col.unsqueeze_(0) # Stretch to 4D tensor
             if task == "conv":
-                # Collapse across 3D space
-                col_im = col_im.view(col_im.size(0), -1)
+                # Flatten across 3D space
+                im_col = im_col.view(im_col.size(0), -1)
             elif task == "pooling": 
-                # Collapse across 2D i.e. preserve depth dim
-                col_im = col_im.view(col_im.size(1), -1)
-            im2col_out = torch.cat((im2col_out, col_im.t()), 1)  # Cat. as col vector
+                # Flatten across 2D i.e. preserve depth dim
+                im_col = im_col.view(im_col.size(1), -1)
+            im2col_out = torch.cat((im2col_out, im_col.t()), 1)  # Cat. as col vector
             fw += stride  
         fh += stride
         fw = kernel_size  # Reset kernel width (Done parsing the width (j) for a certain i)
@@ -87,13 +87,13 @@ def im2col(image, kernel_size, stride, task="conv"):
     return im2col_out
 
 def pad_image(image, padding):
-    if torch.is_tensor(in_features):
-        in_features = in_features.numpy()
-    in_features = np.pad(image,
-                         mode='constant', constant_values=0,
-                         pad_width=((0, 0), (0, 0), 
-                         (padding, padding), (padding, padding)))
-    return in_features
+    if torch.is_tensor(image):
+        image = image.numpy()
+    image = np.pad(image,
+                   mode='constant', constant_values=0,
+                   pad_width=((0, 0), (0, 0), 
+                   (padding, padding), (padding, padding)))
+    return image
 
 #################################################
 #                                               #

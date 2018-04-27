@@ -39,8 +39,19 @@ test_loader = torch.utils.data.DataLoader(dataset=test_dataset,
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
+        self.layer0 = nn.Sequential(
+            nn.Conv2d(3, 8, kernel_size=5),
+            nn.BatchNorm2d(8),
+            nn.ReLU())       
+
         self.layer1 = nn.Sequential(
-            nn.Conv2d(3, 16, kernel_size=5),
+            nn.Conv2d(8, 16, kernel_size=5),
+            nn.BatchNorm2d(16),
+            nn.ReLU(),
+            nn.MaxPool2d(2))
+
+        self.layer1_op = nn.Sequential(
+            nn.Conv2d(8, 16, kernel_size=3),
             nn.BatchNorm2d(16),
             nn.ReLU(),
             nn.MaxPool2d(2))
@@ -50,15 +61,32 @@ class CNN(nn.Module):
             nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.MaxPool2d(2))
+        # self.fc = nn.Linear(5*5*32, 10)
+        print("INITIAL:")
+        print("Layer 1 weight:", self.layer1[0].weight[0][0])
+        print("Layer 1 opt weight:", self.layer1_op[0].weight[0][0])
+        print("+" * 10)
 
     def forward(self, x):
-        out = self.layer1(x)
-        print(torch.sum(out))
+        out = self.layer0(x)
+        print("layer0 ->", torch.sum(out), end=" ")
+
+        if torch.sum(out.data) > 1000:
+            out = self.layer1(out)
+            print("layer1 ->", end=" ")
+        else: 
+            out = self.layer1_op(out)
+            print("layer1 option ->", end=" ")              
+
+        # print("Output: layer1:", torch.sum(out))
         out = self.layer2(out)
+        print("layer2 ->", end= " ")
         out = out.view(out.size(0), -1)
+        # Changing linear layer dimenstions on runtime
         self.fc = nn.Linear(out.size(1), 10)
         #print(self.fc.weight)
         out = self.fc(out)
+        print("fc")
         return out
 
 cnn = CNN()
@@ -77,8 +105,8 @@ label1 = torch.LongTensor([5])
 label2 = torch.LongTensor([7])
 labels = [label1, label2]
 
-for epoch in range(2):
-    for x, y in zip(images, labels):
+for epoch in range(1):
+    for i, (x, y) in enumerate(zip(images, labels)):
         if torch.cuda.is_available():
             x = x.cuda()
             y = y.cuda()    
@@ -86,10 +114,13 @@ for epoch in range(2):
         y = Variable(y)
 
         optimizer.zero_grad()
-        print("\nInput size:", x.size())
+        print("\nImage {}: {}".format(i, x.size()))
         output = cnn(x)
         #print("Output:", output)
         loss = criterion(output, y)
         loss.backward()
         optimizer.step()
+        print("Layer 1 weight:", cnn.layer1[0].weight[0][0])
+        print("Layer 1 opt weight:", cnn.layer1_op[0].weight[0][0])
         print("Loss:", loss.data[0])
+        print("-" * 20)

@@ -34,8 +34,13 @@ test_loader = torch.utils.data.DataLoader(dataset=test_dataset,
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
+        self.layer0 = nn.Sequential(
+            nn.Conv2d(3, 8, kernel_size=5),
+            nn.BatchNorm2d(8),
+            nn.ReLU())       
+
         self.layer1 = nn.Sequential(
-            nn.Conv2d(3, 16, kernel_size=5),
+            nn.Conv2d(8, 16, kernel_size=5),
             nn.BatchNorm2d(16),
             nn.ReLU(),
             nn.MaxPool2d(2))
@@ -48,7 +53,10 @@ class CNN(nn.Module):
         self.fc = nn.Linear(5*5*32, 10)
 
     def forward(self, x):
-        out = self.layer1(x)
+        out = self.layer0(x)
+        print(out.size())
+        out = self.layer1(out)
+        print(out.size())
         out = self.layer2(out)
         print(out.size())
         out = out.view(out.size(0), -1)
