@@ -5,7 +5,6 @@ import torch
 import cutorch
 import cutorchvision.datasets as dsets
 
-
 accuracy = {'cval': [], 'test': []}
 
 def evaluate(model, dataset, task):

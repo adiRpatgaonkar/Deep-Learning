@@ -18,8 +18,33 @@ class Conv2d(Module):
         self.kernels, self.padding, self.stride = kernels, pad, stride
         # Setup weights(kernels) and biases
         self.weight = 0.01 * torch.randn(self.kernels, channels, self.kernel_size, self.kernel_size)
+        # HARDCODED VERIFICATION via CS231n
+        # self.weight = [
+        #                 [
+        #                     [[-1, 0, -1], [0, 0, -1], [-1, -1, -1]],
+        #                     [[0, 0, 0], [1, 0, -1], [0, -1, 0]],
+        #                     [[-1, 0, -1], [1, -1, 0], [0, 0, -1]]
+        #                 ],
+        #                 [
+        #                     [[0, 1, 0], [1, -1, -1], [0, 1, 1]],
+        #                     [[0, 1, 1], [1, 0, -1], [1, 0, -1]],
+        #                     [[1, 0, 0], [1, 1, -1], [1, -1, -1]]
+        #                 ]
+        #               ]
+        # self.weight = torch.Tensor(self.weight)
+        # print(self.weight)
         if bias:
             self.bias = torch.ones(self.kernels, 1, 1, 1)  # print(self.biases)
+        #     self.bias = [
+        #                     [
+        #                         [[1]]
+        #                     ],
+        #                     [
+        #                         [[0]]
+        #                     ]
+        #                 ]
+        #     self.bias = torch.Tensor(self.bias)
+        #     print(self.bias)
         # Layer construct check
         if pad < 0:
             raise ValueError("Invalid padding value. Should be >= 0")
@@ -28,7 +53,7 @@ class Conv2d(Module):
 
     def create_output_vol(self):
         """ Create output volume """
-        # Check & setup input tensor dimensions
+        # Check & setup input tensor dimensions. (Convert to 4D Tensor)
         if self.input.dim() != 4:  # For batch image tensor
             if self.input.dim() == 3:  # For a 3D image tensor
                 self.input = torch.unsqueeze(self.input, 0)
@@ -37,8 +62,9 @@ class Conv2d(Module):
         self.height, self.width = self.input.size()[2:]
         self.output_dim = [0, 0, 0] # For a single image
         self.output_dim[0] = self.kernels
-        self.output_dim[1] = ((self.width - self.kernel_size + 2 * self.padding) / self.stride) + 1
-        self.output_dim[2] = ((self.height - self.kernel_size + 2 * self.padding) / self.stride) + 1
+        self.output_dim[1] = ((self.width - self.kernel_size + 2 * self.padding) / self.stride + 1)
+        self.output_dim[2] = ((self.height - self.kernel_size + 2 * self.padding) / self.stride + 1)
+        print(self.output_dim)
 
     def prepare_input(self):
         """ Prepare in features """
@@ -47,6 +73,7 @@ class Conv2d(Module):
             self.input = F.pad_image(self.input, self.padding)
             if type(self.input) is np.ndarray: # If numpy array, convert to tensor before conv op.
                 self.input = torch.from_numpy(self.input)
+        print(self.input)
         # 2. im2col operation
         batch_ims = torch.Tensor()
         for image in self.input:
@@ -62,15 +89,14 @@ class Conv2d(Module):
             self.input = in_features
         print("Input to conv layer:", self.input.size())
         self.create_output_vol()
-        in_features = self.prepare_input() # im2col'ed input
-        # print("Post im2col:", in_features.size())
-        self.data = F.conv2d(in_features, self.weight.view(self.weight.size(0), -1), 
+        self.input = self.prepare_input() # im2col'ed input
+        # print("Post im2col:", self.input.size())
+        self.data = F.conv_2d(self.input, self.weight.view(self.weight.size(0), -1), 
                              self.bias.view(self.bias.size(0), -1))
         # Reshape to feature volume 
         self.data = self.data.view(self.data.size(0), self.output_dim[0], 
                                    self.output_dim[1], self.output_dim[2])
         # print("Reshaped:", self.data.size())
-        del in_features
         return self
 
     def backward(self):

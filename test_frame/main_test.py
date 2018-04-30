@@ -1,10 +1,11 @@
 from __future__ import print_function
 
 import torch
+
 import cutorch
 import cutorch.nn as nn
 import cutorchvision.datasets as dsets
-from cutorchvision.transforms import Transforms
+from cutorchvision.transforms import Transforms, see
 #from evaluate import *
 
 # if cutorch.gpu_check.available():
@@ -60,29 +61,39 @@ lr_decay = 5e-5
 #image1 = (torch.LongTensor(1, 3, 32, 32).random_(0, 255)).float()
 
 # Net
-conv1 = nn.Conv2d(3, 16, kernel_size=5)
-relu1 = nn.ReLU()
-pool1 = nn.MaxPool2d(2)
-conv2 = nn.Conv2d(16, 32, kernel_size=5)
-relu2 = nn.ReLU()
-pool2 = nn.MaxPool2d(2)
-fc = nn.Linear(5*5*32, 10)
+conv1 = nn.Conv2d(3, 2, kernel_size=3, stride=2, pad=1)
+# relu1 = nn.ReLU()
+# pool1 = nn.MaxPool2d(2)
+# conv2 = nn.Conv2d(16, 32, kernel_size=5)
+# relu2 = nn.ReLU()
+# pool2 = nn.MaxPool2d(2)
+# fc = nn.Linear(5*5*32, 10)
 
 # x = torch.unsqueeze(trainset.data[0:2][0])
-x = (torch.LongTensor(2, 3, 32, 32).random_(0, 255)).float()
+# HARDCODED VERIFICATION via CS231n
+# input = [
+#          [[0, 0, 2, 1, 0], [0, 1, 0, 0, 2], [2 ,1, 1, 1, 0], [2, 2, 1, 0, 1], [2, 1, 2, 1, 1]], 
+#          [[1, 0, 0, 0, 1], [0, 1, 0, 2, 1], [2, 1, 0, 0, 1], [2, 0, 1, 0, 2], [1, 1, 1, 0, 1]],
+#          [[2, 0, 0, 1, 0], [1, 2, 2, 0, 2], [1, 0, 2, 0, 0], [2, 1, 1, 0, 2], [0, 0, 2, 2, 2]]
+#         ]
+# input = torch.Tensor(input)
+# print(input)
+x = (torch.LongTensor(1, 3, 5, 5).random_(0, 255)).float()
+x1 = (torch.LongTensor([]).float())
 #x = cutorch.standardize(x)
-out = conv1(x)
+out = conv1(input)
 print("Out conv1:", out.data.size())
-out = relu1(out)
-print("Out relu1:", out.data.size())
-out = pool1(out)
-print("Out pool1:", out.data.size())
-out = conv2(out)
-print("Out conv2:", out.data.size())
-out = relu2(out)
-print("Out relu2:", out.data.size())
-out = pool2(out)
-print("Out pool2:", out.data.size())
-out = out.data.view(out.data.size(0), -1)
-out = fc(out)
-print("Out fc:", out.data.size())
+# out = relu1(out)
+# print("Out relu1:", out.data.size())
+# out = pool1(out)
+# print("Out pool1:", out.data.size())
+# out = conv2(out)
+# print("Out conv2:", out.data.size())
+# out = relu2(out)
+# print("Out relu2:", out.data.size())
+# out = pool2(out)
+# print("Out pool2:", out.data.size())
+# out = out.data.view(out.data.size(0), -1)
+# out = fc(out)
+# print("Out fc:", out.data.size())
+

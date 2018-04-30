@@ -84,8 +84,8 @@ for epoch in range(max_epochs):
         if cutorch.gpu.used:
             images = images.cuda()
             labels = labels.cuda()   
-        fcm.train()  # Switch: training mode
 
+        fcm.train()  # Switch: training mode
         optimizer.zero_grad()
         curr_time = time.time()  # Time 2 train a batch in train set
         outputs = fcm(images)

@@ -21,6 +21,9 @@ class Sequential(Module):
             if hasattr(module, "_parameters"):
                 self._add_parameters(module.idx, module.parameters())
 
+    def __getitem__(self, idx):
+        return self.modules[str(idx)]
+
     def forward(self, inputs):
         # print("Input:{}".format(inputs))
         for module in self.modules.values():

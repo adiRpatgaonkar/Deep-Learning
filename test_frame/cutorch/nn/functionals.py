@@ -35,11 +35,47 @@ def decay_weight(weight_data):
 
 #################################################
 #                                               #
-#                     CONV                      #
+#                   CONV-OPS                    #
 #                                               #
 #################################################
 
-def conv2d(input, weight, bias=None):
+def im2col(image, kernel_size, stride, task="conv"):
+    im2col_out = torch.FloatTensor()
+    # To parse across width and height (temp vars).
+    # Keep kernel_size constant
+    fh = fw = kernel_size 
+    for i in range(0, image.size(1) - kernel_size + 1, stride):
+        for j in range(0, image.size(2) - kernel_size + 1, stride):
+            im_col = image[:, i:fh, j:fw]
+            im_col = im_col.contiguous()  # Need to make tensor contiguous to flatten it
+            im_col.unsqueeze_(0) # Stretch to 4D tensor
+            if task == "conv":
+                # Flatten across 3D space
+                im_col = im_col.view(im_col.size(0), -1)
+            elif task == "pooling": 
+                # Flatten across 2D i.e. preserve depth dim
+                im_col = im_col.view(im_col.size(1), -1)
+            im2col_out = torch.cat((im2col_out, im_col.t()), 1)  # Cat. as col vector
+            fw += stride  
+        fh += stride
+        fw = kernel_size  # Reset kernel width (Done parsing the width (j) for a certain i)
+    fh = kernel_size  # Reset kernel height (Done parsing the height (i))
+    return im2col_out
+
+def pad_image(image, p):
+    if torch.is_tensor(image):
+        image = image.numpy()
+    image = np.pad(image, mode='constant', constant_values=0,
+                   pad_width=((0,0), (0,0), (p,p), (p,p)))
+    return image
+
+#################################################
+#                                               #
+#                   FORWARD                     #
+#                                               #
+#################################################
+
+def conv_2d(input, weight, bias=None):
     # Use post im2col op
  
     # Batch matrix multiplication. Adam Paszke's solution in Pytorch forums
@@ -64,42 +100,6 @@ def conv2d(input, weight, bias=None):
 def max_pool2d(in_features):
     # Use post im2col op
     return torch.max(in_features, 1)
-
-def im2col(image, kernel_size, stride, task="conv"):
-    im2col_out = torch.FloatTensor()
-    fh = fw = kernel_size    
-    for i in range(0, image.size(1) - kernel_size + 1, stride):
-        for j in range(0, image.size(2) - kernel_size + 1, stride):
-            im_col = image[:, i:fh, j:fw]
-            im_col = im_col.contiguous()  # Need to make tensor contiguous to flatten it
-            im_col.unsqueeze_(0) # Stretch to 4D tensor
-            if task == "conv":
-                # Flatten across 3D space
-                im_col = im_col.view(im_col.size(0), -1)
-            elif task == "pooling": 
-                # Flatten across 2D i.e. preserve depth dim
-                im_col = im_col.view(im_col.size(1), -1)
-            im2col_out = torch.cat((im2col_out, im_col.t()), 1)  # Cat. as col vector
-            fw += stride  
-        fh += stride
-        fw = kernel_size  # Reset kernel width (Done parsing the width (j) for a certain i)
-    fh = kernel_size  # Reset kernel height (Done parsing the height (i))
-    return im2col_out
-
-def pad_image(image, padding):
-    if torch.is_tensor(image):
-        image = image.numpy()
-    image = np.pad(image,
-                   mode='constant', constant_values=0,
-                   pad_width=((0, 0), (0, 0), 
-                   (padding, padding), (padding, padding)))
-    return image
-
-#################################################
-#                                               #
-#                   FORWARD                     #
-#                                               #
-#################################################
 
 def linear(inputs, weight, bias=None):
     """

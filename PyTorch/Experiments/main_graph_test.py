@@ -61,11 +61,7 @@ class CNN(nn.Module):
             nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.MaxPool2d(2))
-        # self.fc = nn.Linear(5*5*32, 10)
-        print("INITIAL:")
-        print("Layer 1 weight:", self.layer1[0].weight[0][0])
-        print("Layer 1 opt weight:", self.layer1_op[0].weight[0][0])
-        print("+" * 10)
+        # self.fc = nn.Linear(5*5*32, 10)    
 
     def forward(self, x):
         out = self.layer0(x)
@@ -100,10 +96,12 @@ optimizer = torch.optim.Adam(cnn.parameters(), lr=learning_rate)
 
 image1 = (torch.LongTensor(1, 3, 32, 32).random_(0, 255)).float()
 image2 = (torch.LongTensor(1, 3, 28, 28).random_(0, 255)).float()
-images = [image1, image2]
+image3 = (torch.LongTensor(1, 3, 50, 50).random_(0, 255)).float()
+images = [image1, image2, image3]
 label1 = torch.LongTensor([5])
 label2 = torch.LongTensor([7])
-labels = [label1, label2]
+label3 = torch.LongTensor([3])
+labels = [label1, label2, label3]
 
 for epoch in range(1):
     for i, (x, y) in enumerate(zip(images, labels)):
@@ -112,14 +110,19 @@ for epoch in range(1):
             y = y.cuda()    
         x = Variable(x)
         y = Variable(y)
-
+        print("Previous:")
+        print("Layer 1 weight buffer:", cnn.layer1[0].weight[0][0])
+        print("Layer 1 opt weight buffer:", cnn.layer1_op[0].weight[0][0])
         optimizer.zero_grad()
         print("\nImage {}: {}".format(i, x.size()))
+        buffers1 = cnn.layer1[0].weight[0][0]
+        buffers2 = cnn.layer1_op[0].weight[0][0] 
         output = cnn(x)
         #print("Output:", output)
         loss = criterion(output, y)
         loss.backward()
         optimizer.step()
+        print("Current:")
         print("Layer 1 weight:", cnn.layer1[0].weight[0][0])
         print("Layer 1 opt weight:", cnn.layer1_op[0].weight[0][0])
         print("Loss:", loss.data[0])
