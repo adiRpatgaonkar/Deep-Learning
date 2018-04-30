@@ -55,7 +55,7 @@ class Conv2d(Module):
 
     def forward(self, in_features):
         """ Convolution op (Auto-correlation i.e. no kernel flipping) """
-        # Check for tensor input
+        # Check for input tensor
         if not torch.is_tensor(in_features):
             self.input = in_features.data
         else:

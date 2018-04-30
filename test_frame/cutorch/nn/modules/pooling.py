@@ -50,7 +50,7 @@ class MaxPool2d(Module):
 
     def forward(self, in_features):
         """ Pooling op """
-        # Check for tensor input
+        # Check for input tensor
         if not torch.is_tensor(in_features):
             self.input = in_features.data
         else:

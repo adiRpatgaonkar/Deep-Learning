@@ -83,6 +83,9 @@ def pad_image(image, p):
 #                                               #
 #################################################
 
+def batchnorm_2d(input, beta, gamma):
+    N, C, H, W = input.size()
+
 def conv_2d(input, weight, bias=None):
     # Use post im2col op
  
