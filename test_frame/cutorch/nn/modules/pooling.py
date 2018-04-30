@@ -29,11 +29,11 @@ class MaxPool2d(Module):
     def create_output_vol(self):
         """ Create output volume """
         # Check & setup input tensor dimensions
-        if self.input.dim() != 4:  # For batch image tensor
-            if self.input.dim() == 3:  # For a 3D image tensor
-                self.input = torch.unsqueeze(self.input, 0)
-            else:
-                raise ValueError("Input tensor should be 3D or 4D")
+        # Input should be a batch or 3D tensor
+        if self.input.dim() not in (3, 4):
+            raise ValueError("Input tensor should be 3D or 4D")
+        elif self.input.dim() == 3:
+            self.input = torch.unsqueeze(self.input, 0)
         self.height, self.width = self.input.size()[2:]
         self.output_dim = [0, 0, 0] # For a single image
         self.output_dim[0] = self.input.size(1)

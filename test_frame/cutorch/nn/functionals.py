@@ -40,6 +40,7 @@ def decay_weight(weight_data):
 #################################################
 
 def im2col(image, kernel_size, stride, task="conv"):
+    # One image @ a time
     im2col_out = torch.FloatTensor()
     # To parse across width and height (temp vars).
     # Keep kernel_size constant
@@ -62,9 +63,16 @@ def im2col(image, kernel_size, stride, task="conv"):
     fh = kernel_size  # Reset kernel height (Done parsing the height (i))
     return im2col_out
 
+
 def pad_image(image, p):
+    # Works for a batch of images
+    # i.e. 4D tensor
     if torch.is_tensor(image):
+        if image.dim() != 4:
+            raise ValueError("Works for 4D Tensor only.")
         image = image.numpy()
+    elif type(image) != np.ndarray:
+        raise TypeError("Padding will be done on a numpy array only.")
     image = np.pad(image, mode='constant', constant_values=0,
                    pad_width=((0,0), (0,0), (p,p), (p,p)))
     return image
@@ -97,9 +105,10 @@ def conv_2d(input, weight, bias=None):
             return torch.mm(weight, input) + bias
     
 
-def max_pool2d(in_features):
+def max_pool2d(input):
     # Use post im2col op
-    return torch.max(in_features, 1)
+    return torch.max(input, 1)
+
 
 def linear(inputs, weight, bias=None):
     """
