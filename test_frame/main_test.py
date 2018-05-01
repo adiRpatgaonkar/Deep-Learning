@@ -48,11 +48,13 @@ class CNN(nn.Module):
         super(CNN, self).__init__()
         self.layer1 = nn.Sequential(
             nn.Conv2d(3, 16, kernel_size=5),
+            nn.BatchNorm2d(16),
             nn.ReLU(),
             nn.MaxPool2d(2))
 
         self.layer2 = nn.Sequential(
             nn.Conv2d(16, 32, kernel_size=5),
+            nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.MaxPool2d(2))
         self.fc = nn.Linear(5*5*32, 10)
@@ -65,6 +67,6 @@ class CNN(nn.Module):
         return out
 
 
-image = (torch.LongTensor(3, 32, 32).random_(0, 255)).float()
+image = (torch.LongTensor(2, 3, 32, 32).random_(0, 255)).float()
 cnn = CNN()
 cnn(image)

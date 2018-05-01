@@ -17,12 +17,11 @@ class BatchNorm2d(Module):
         self.channels = channels
         self.mean = 0
         self.variance = 0
-        self.x_hat = 0
         self.epsilon = eps
         if beta is None:
-            self.beta = torch.Tensor([1, 1])
+            self.beta = torch.zeros(self.channels)
         if gamma is None:
-            self.gamma = torch.Tensor([0, 0])
+            self.gamma = torch.ones(self.channels)
         self.data = 0
 
     def forward(self, in_features):
@@ -31,10 +30,11 @@ class BatchNorm2d(Module):
             self.input = in_features.data
         else:
             self.input = in_features
-
-        self.mean, self.variance, \
-        self.x_hat, self.data = F.batchnorm_2d(self.input, self.beta, 
-                                               self.gamma, self.epsilon)
+        assert self.input.size(1) == self.channels, ("input channels should be {}".format(self.channels))
+        print("Input to B_normed2d layer:", self.input.size())
+        self.mean, self.variance, self.data = \
+        F.batchnorm_2d(self.input, self.beta, self.gamma, self.epsilon)
+        return self
 
     def backward(self):
         pass

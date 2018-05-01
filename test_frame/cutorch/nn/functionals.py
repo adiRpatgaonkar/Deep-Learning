@@ -83,8 +83,28 @@ def pad_image(image, p):
 #                                               #
 #################################################
 
-def batchnorm_2d(input, beta, gamma):
-    N, C, H, W = input.size()
+def batchnorm_2d(x, beta, gamma, epsilon):
+    assert x.dim() == 4, ("input should be a 4D Tensor")
+    N, C, H, W = x.size()
+    mean, variance = [], []
+    # Mean
+    for channel in range(C):
+        mean.append(torch.mean(x[:, channel, :, :]))
+    mean = torch.Tensor(mean)
+    # print(mean)
+    # Variance
+    x = (x - mean.view(1, C, 1, 1)) ** 2
+    for channel in range(C):
+        variance.append(torch.mean(x[:, channel, :, :]))
+    variance = torch.Tensor(variance)
+    # print(variance)
+    # Normalized input.
+    x_hat = (x - mean.view(1, C, 1, 1)) * 1.0 / torch.sqrt(variance.view(1, C, 1, 1) ** 2 + epsilon)
+    # print(x_hat)
+    # Output. Scale & shift.
+    out = gamma.view(1, C, 1, 1) * x_hat + beta.view(1, C, 1, 1)
+    # print(out)
+    return mean, variance, out 
 
 def conv_2d(input, weight, bias=None):
     # Use post im2col op
@@ -92,7 +112,6 @@ def conv_2d(input, weight, bias=None):
     # Batch matrix multiplication. Adam Paszke's solution in Pytorch forums
     # Multiplying 3D input tensor with 2D weight tensor
     if input.dim() == 3: # 3D in_features tensor
-        # Stretching paramateres for batch ops. Unsure about bias though.
         bias = bias.unsqueeze(0).expand(input.size(0), *bias.size())
         weight = weight.unsqueeze(0).expand(input.size(0), *weight.size())
         if bias is None:  
