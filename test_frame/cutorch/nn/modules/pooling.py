@@ -14,17 +14,25 @@ class MaxPool2d(Module):
 
     def __init__(self, f, stride=None):
         super(MaxPool2d, self).__init__()
-        self.spatial_extent = f
+        # Layer construct check
+        assert f >= 2, ("Invalid padding value. Should be >= 2")
+        if stride:
+            assert stride > 0, ("Invalid stride. Should be > 0")
+        self.idx = -1
+        self.kernel_size = f
         # If stride is not given, set equal to spatial extent
         if stride is None:
             self.stride = f
         else:
             self.stride = stride
-        # Layer construct check
-        if f < 2:
-            raise ValueError("Invalid padding value. Should be >= 2")
-        if stride and stride <= 0:
-            raise ValueError("Invalid padding value. Should be > 0")
+        self.input = None  # TODO:CLEAN
+        self.data = 0  # TODO:CLEAN
+        self.height = self.width = 0
+        self.output_dim = [0, 0, 0]  # For a single image
+        self.batch_ims = None # im2col data. # TODO:CLEAN
+        # Gradients' creation
+        self.grad = OrderedDict()
+        self.grad['output'] = 0
     
     def create_output_vol(self):
         """ Create output volume """
@@ -35,18 +43,17 @@ class MaxPool2d(Module):
         elif self.input.dim() == 3:
             self.input = torch.unsqueeze(self.input, 0)
         self.height, self.width = self.input.size()[2:]
-        self.output_dim = [0, 0, 0] # For a single image
         self.output_dim[0] = self.input.size(1)
-        self.output_dim[1] = ((self.width - self.spatial_extent) / self.stride) + 1
-        self.output_dim[2] = ((self.height - self.spatial_extent) / self.stride) + 1
+        self.output_dim[1] = ((self.width - self.kernel_size) / self.stride) + 1
+        self.output_dim[2] = ((self.height - self.kernel_size) / self.stride) + 1
 
     def prepare_input(self):
         """ Prepare in features """
         # 1. im2col operation (One image @ a time.)
-        batch_ims = torch.Tensor()
+        self.batch_ims = torch.Tensor() # RESET
         for image in self.input: 
-            batch_ims = torch.cat((batch_ims, F.im2col(image, self.spatial_extent, self.stride, task="pooling").unsqueeze_(0)), 0)
-        return batch_ims
+            self.batch_ims = torch.cat((self.batch_ims, F.im2col(image, self.kernel_size, self.stride, task="pooling").unsqueeze_(0)), 0)
+        return self.batch_ims
 
     def forward(self, in_features):
         """ Pooling op """

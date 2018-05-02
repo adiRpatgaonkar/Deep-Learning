@@ -68,5 +68,16 @@ class CNN(nn.Module):
 
 
 image = (torch.LongTensor(2, 3, 32, 32).random_(0, 255)).float()
-cnn = CNN()
-cnn(image)
+# cnn = CNN()
+# cnn(image)
+# print(cnn.parameters())
+conv1 = nn.Conv2d(3, 2, kernel_size=3, stride=2, pad=1)
+# HARDCODED VERIFICATION via CS231n
+input = [
+         [[0, 2, 1, 2, 2], [2, 2, 0, 2, 2], [2 , 2, 1, 0, 2], [0, 0, 2, 1, 0], [0, 2, 1, 2, 2]], 
+         [[2, 2, 0, 0, 2], [2, 0, 0, 1, 2], [2, 2, 0, 2, 1], [2, 2, 1, 2, 2], [0, 1, 2, 2, 2]],
+         [[0, 1, 2, 1, 0], [1, 1, 0, 1, 1], [2, 1, 2, 1, 2], [1, 2, 1, 2, 2], [2, 2, 0, 1, 1]]
+        ]
+input = torch.Tensor(input)
+print(input)
+print(conv1(input))

@@ -14,26 +14,23 @@ from .. import functionals as f
 class Linear(Module):
     """Linear Layer class"""
 
-    def _add_backward_hooks(self):
-        pass
-
-    def __init__(self, in_features, out_features, bias=True):
+    def __init__(self, in_features, out_features, bias=True, beta=0.01):
         super(Linear, self).__init__()
         # self.parent = None # No use as of now.
         self.idx = -1
         self.in_features = in_features
         self.out_features = out_features
-        self.input = torch.Tensor([0.0])
-        self.data = 0
+        self.input = None # CLEAN
+        self.data = 0 # CLEAN
         # Parameters' creation
-        self.weight = Parameter(weight=torch.randn(self.in_features, self.out_features),
+        self._parameters = []
+        self.weight = Parameter(weight=beta*torch.randn(self.in_features, self.out_features),
                                 require_gradient=True)
         if bias is True:
             self.bias = Parameter(bias=torch.Tensor(1, out_features).fill_(0),
                                   require_gradient=True)
-        self._parameters = []
         # Gradients' creation
-        self.grad = OrderedDict()
+        self.grad = OrderedDict() # CLEAN
         if self.weight.require_gradient:
             self.grad['weight'] = 0
         if bias and self.bias.require_gradient:
@@ -45,17 +42,10 @@ class Linear(Module):
     def parameters(self):
         return self._parameters
 
-    def set_parameters(self, parameters):
-        self._parameters = parameters
-
-    def add2module(self):
+    def init_param_setup(self):
         self._parameters.append(self.weight)
         if 'bias' in self.__dict__:
             self._parameters.append(self.bias)
-
-    def init_param_setup(self):
-        self.weight.data = f.decay_weight(self.weight.data)
-        self.add2module()
 
     def forward(self, in_features):
         if not torch.is_tensor(in_features):
