@@ -1,3 +1,7 @@
+""" 
+Pooling layers' class
+1. MaxPool2d
+"""
 from __future__ import print_function
 
 from collections import OrderedDict

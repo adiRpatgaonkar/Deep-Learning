@@ -1,4 +1,7 @@
-""" Conv layers' class """
+""" 
+Conv layers' class
+1. Conv2d
+"""
 
 from __future__ import print_function
 
@@ -41,33 +44,7 @@ class Conv2d(Module):
         if bias and self.bias.require_gradient:
             self.grad['bias'] = 0
         self.grad['output'] = 0
-        # HARDCODED VERIFICATION via CS231n
-        self.weight.data = [
-                        [
-                            [[1, 1, 1], [1, -1, -1], [1, 0, 0]],
-                            [[1, -1, -1], [1, 0, -1], [-1, 1, 0]],
-                            [[-1, 1, 1], [0, 1, -1], [-1, 1, 0]]
-                        ],
-                        [
-                            [[1, -1, 1], [1, -1, -1], [1, 1, 0]],
-                            [[-1, -1, -1], [0, 1, 1], [0, -1, 1]],
-                            [[1, -1, 1], [0, -1, -1], [0, -1, 0]]
-                        ]
-                      ]
-        self.weight.data = torch.Tensor(self.weight.data)
-        print(self.weight.data)
-
-        self.bias.data = [
-                        [
-                            [[1]]
-                        ],
-                        [
-                            [[0]]
-                        ]
-                    ]
-        self.bias.data = torch.Tensor(self.bias.data)
-        print(self.bias.data)
-
+        # Finish param setup
         self.init_param_setup()
 
     def parameters(self):
@@ -97,7 +74,6 @@ class Conv2d(Module):
             self.input = F.pad_image(self.input, self.padding)
             if type(self.input) is np.ndarray: # If numpy array, convert to tensor before conv op.
                 self.input = torch.from_numpy(self.input)
-        print("Input to conv layer:", self.input)
         # 2. im2col operation (One image @ a time.)
         self.batch_ims = torch.Tensor() # RESET
         for image in self.input:
@@ -111,7 +87,7 @@ class Conv2d(Module):
             self.input = in_features.data
         else:
             self.input = in_features
-        print("Input to conv layer:", self.input)
+        print("Input to conv layer:", self.input.size())
         self.create_output_vol()
         self.input = self.prepare_input() # im2col'ed input
         # print("Post im2col:", self.input.size())
@@ -121,7 +97,7 @@ class Conv2d(Module):
         self.data = self.data.view(self.data.size(0), self.output_dim[0], 
                                    self.output_dim[1], self.output_dim[2])
         # print("Reshaped:", self.data.size())
-        return self.data
+        return self
 
     def backward(self):
         pass

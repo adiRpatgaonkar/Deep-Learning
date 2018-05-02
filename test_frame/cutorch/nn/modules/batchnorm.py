@@ -1,3 +1,8 @@
+"""
+Batchnorm layer class
+1. BatchNorm2d 
+"""
+
 from __future__ import print_function
 
 from collections import OrderedDict
@@ -38,7 +43,7 @@ class BatchNorm2d(Module):
         if self.gamma.require_gradient:
             self.grad['gamma'] = 0
         self.grad['output'] = 0
-
+        # Finish param setup
         self.init_param_setup()
 
     def parameters(self):

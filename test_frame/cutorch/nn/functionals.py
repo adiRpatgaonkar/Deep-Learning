@@ -84,7 +84,7 @@ def pad_image(image, p):
 #################################################
 
 def batchnorm_2d(x, beta, gamma, epsilon):
-    assert x.dim() == 4, ("input should be a 4D Tensor")
+    assert x.dim() == 4, ("Input should be a 4D Tensor")
     N, C, H, W = x.size()
     mean, variance = [], []
     # Mean
@@ -93,11 +93,14 @@ def batchnorm_2d(x, beta, gamma, epsilon):
     mean = torch.Tensor(mean)
     # print(mean)
     # Variance
-    x = (x - mean.view(1, C, 1, 1)) ** 2
+    x_mu = (x - mean.view(1, C, 1, 1))
+    x_mu_sq = x_mu ** 2
     for channel in range(C):
-        variance.append(torch.mean(x[:, channel, :, :]))
-    variance = torch.Tensor(variance)
+        variance.append(torch.mean(x_mu_sq[:, channel, :, :]))
+    variance = torch.Tensor(variance)  # sigma^2
     # print(variance)
+    sqrt_var = torch.sqrt(variance.view(1, C, 1, 1) + epsilon)
+    invr_var = 1. / sqrt_var 
     # Normalized input.
     x_hat = (x - mean.view(1, C, 1, 1)) * 1.0 / torch.sqrt(variance.view(1, C, 1, 1) ** 2 + epsilon)
     # print(x_hat)

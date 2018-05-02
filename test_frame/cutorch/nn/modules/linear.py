@@ -36,7 +36,7 @@ class Linear(Module):
         if bias and self.bias.require_gradient:
             self.grad['bias'] = 0
         self.grad['output'] = 0
-
+        # Finish param setup
         self.init_param_setup()
 
     def parameters(self):
