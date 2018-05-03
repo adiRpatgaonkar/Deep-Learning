@@ -35,7 +35,7 @@ class Linear(Module):
             self.grad['weight'] = 0
         if bias and self.bias.require_gradient:
             self.grad['bias'] = 0
-        self.grad['output'] = 0
+        self.grad['input'] = 0
         # Finish param setup
         self.init_param_setup()
 
@@ -52,24 +52,31 @@ class Linear(Module):
             self.input = in_features.data
         else:
             self.input = in_features
+        # Clean
+        del in_features
         self.data = f.linear(self.input, self.weight.data, self.bias.data)
         return self
 
     def backward(self, gradients):
-        # print(self.input.t(), gradients['output'])
-        if gradients['output'].dim() == 1:
-            gradients['output'] = gradients['output'].unsqueeze(0)
+        # gradients['input'] are actually output gradients
+        # grad['input'] are actual input gradients
+        # print(self.input.t(), gradients['input'])
+        if gradients['input'].dim() == 1:
+            gradients['input'] = gradients['input'].unsqueeze(0)
 
         if self.weight.require_gradient:
-            self.grad['weight'] = f.gradient_weight(self.input, gradients['output'])
+            self.grad['weight'] = f.gradient_weight(self.input, gradients['input'])
             self.weight.gradient = self.grad['weight']
 
         if self.bias.require_gradient:
-            self.grad['bias'] = f.gradient_bias(gradients['output'])
+            self.grad['bias'] = f.gradient_bias(gradients['input'])
             self.bias.gradient = self.grad['bias']
         if self.idx == '0':
             # No gradients required for input layer (idx == 0)
-            self.grad['output'] = torch.Tensor(self.input.size())
+            self.grad['input'] = torch.Tensor(self.input.size())
         else:
-            self.grad['output'] = f.gradient_linear(self.weight.data, gradients['output'])
+            self.grad['input'] = f.gradient_linear(self.weight.data, gradients['input'])
+        # Clean
+        del gradients
         return self.grad
+

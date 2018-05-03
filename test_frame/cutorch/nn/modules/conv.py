@@ -97,7 +97,28 @@ class Conv2d(Module):
         self.data = self.data.view(self.data.size(0), self.output_dim[0], 
                                    self.output_dim[1], self.output_dim[2])
         # print("Reshaped:", self.data.size())
+        # Clean
+        del in_features
         return self
 
-    def backward(self):
-        pass
+    def backward(self, gradients):
+        # gradients['input'] are actually output gradients
+        # grad['input'] are actual input gradients
+        
+        if self.bias.require_gradient:
+            self.grad['bias'] = F.grad_conv2d_bias(gradients['input'])
+            self.bias.gradient = self.grad['bias']
+
+        if self.weight.require_gradient:
+            self.grad['weight'] = F.grad_conv2d_weight(self.input, gradients['input'])
+            self.weight.gradient = self.grad['weight']
+
+        if self.idx == '0':
+            # No gradients required for input layer (idx == 0)
+            self.grad['input'] = torch.Tensor(self.input.size())
+        else:
+            self.grad['input'] = F.gradient_conv2d(self.weight.data, gradients['input'])
+        # Clean
+        del gradients
+        return self.grad
+

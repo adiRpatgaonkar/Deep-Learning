@@ -21,8 +21,8 @@ class BatchNorm2d(Module):
         super(BatchNorm2d, self).__init__()
         self.idx = -1
         self.channels = num_features
-        self.mean = 0
-        self.variance = 0
+        self.mean = 0  # running
+        self.variance = 0  # running
         self.epsilon = eps
         self.input = None  # TODO:CLEAN
         # Intermediate terms used for backward
@@ -60,10 +60,22 @@ class BatchNorm2d(Module):
         else:
             self.input = in_features
         assert self.input.size(1) == self.channels, ("input channels should be {}".format(self.channels))
-        print("Input to B_normed2d layer:", self.input.size())
-        self.mean, self.variance, self.data = \
+        #print("Input to B_normed2d layer:", self.input.size())
+        self.data, self.mean, self.variance, self.cache = \
         F.batchnorm_2d(self.input, self.beta.data, self.gamma.data, self.epsilon)
+        # Clean
+        del in_features
         return self
 
-    def backward(self):
-        pass
+    def backward(self, gradients):
+        if self.beta.require_gradient:
+            self.grad['beta'] = F.gradient_beta(gradients['output'])
+            self.beta.gradient = self.grad['beta']
+        if self.gamma.require_gradient:
+            self.grad['gamma'] = F.gradient_gamma(self.cache[0], gradients['output'])
+            self.gamma.gradient = self.grad['gamma']
+        self.grad['output'] = F.gradient_bnorm2d(self.gamma.data, self.cache, gradients['output'])
+        # Clean
+        del gradients 
+        return self.grad
+

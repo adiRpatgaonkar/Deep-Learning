@@ -23,16 +23,6 @@ def flatten(data):
     return data.view(num_examples, -1)
 
 
-def decay_weight(weight_data):
-    """
-    Decay weights for nn layers
-    :param weight_data: Tensor
-    :return: Decayed weight Tensor
-    """
-    # TODO: Get decay rate from config
-    return weight_data * 0.01
-
-
 #################################################
 #                                               #
 #                   CONV-OPS                    #
@@ -61,6 +51,8 @@ def im2col(image, kernel_size, stride, task="conv"):
         fh += stride
         fw = kernel_size  # Reset kernel width (Done parsing the width (j) for a certain i)
     fh = kernel_size  # Reset kernel height (Done parsing the height (i))
+    # Clean
+    del image, im_col
     return im2col_out
 
 
@@ -87,12 +79,12 @@ def batchnorm_2d(x, beta, gamma, epsilon):
     assert x.dim() == 4, ("Input should be a 4D Tensor")
     N, C, H, W = x.size()
     mean, variance = [], []
-    # Mean
+    # Mean: w.r.t channels
     for channel in range(C):
         mean.append(torch.mean(x[:, channel, :, :]))
     mean = torch.Tensor(mean)
     # print(mean)
-    # Variance
+    # Variance: w.r.t channels
     x_mu = (x - mean.view(1, C, 1, 1))
     x_mu_sq = x_mu ** 2
     for channel in range(C):
@@ -100,27 +92,30 @@ def batchnorm_2d(x, beta, gamma, epsilon):
     variance = torch.Tensor(variance)  # sigma^2
     # print(variance)
     sqrt_var = torch.sqrt(variance.view(1, C, 1, 1) + epsilon)
-    invr_var = 1. / sqrt_var 
+    invr_var = 1.0 / sqrt_var
     # Normalized input.
-    x_hat = (x - mean.view(1, C, 1, 1)) * 1.0 / torch.sqrt(variance.view(1, C, 1, 1) ** 2 + epsilon)
+    x_hat = x_mu * invr_var
     # print(x_hat)
     # Output. Scale & shift.
     out = gamma.view(1, C, 1, 1) * x_hat + beta.view(1, C, 1, 1)
     # print(out)
-    return mean, variance, out 
+    cache = (x_hat, invr_var) # To be used for backwarding BN2D
+    del x, x_mu, x_mu_sq, sqrt_var
+    # Clean
+    return out, mean, variance, cache 
+
 
 def conv_2d(input, weight, bias=None):
     # Use post im2col op
  
     # Batch matrix multiplication. Adam Paszke's solution in Pytorch forums
     # Multiplying 3D input tensor with 2D weight tensor
-    if input.dim() == 3: # 3D in_features tensor
-        bias = bias.unsqueeze(0).expand(input.size(0), *bias.size())
+    if input.dim() == 3: # 3D in_features tensor 
         weight = weight.unsqueeze(0).expand(input.size(0), *weight.size())
         if bias is None:  
             return torch.bmm(weight, input)
         else:    
-            return torch.bmm(weight, input) + bias
+            return torch.bmm(weight, input) + bias.unsqueeze(0).expand(input.size(0), *bias.size())
 
     # Matrix multiplication. input: 2D tensor, weight: 2D tensor
     else:
@@ -158,15 +153,14 @@ def relu(inputs):
     :param inputs: Input features Tensor [2D]
     :return: ReLU activated Tensor [2D]
     """
-    relu_activations = torch.clamp(inputs, min=0)
-    return relu_activations
+    # relu_activations = torch.clamp(inputs, min=0)
+    return torch.clamp(inputs, min=0)
 
 
 def softmax(inputs):
     exp_inputs = torch.exp(inputs)
-    softmaxed = exp_inputs / torch.sum(exp_inputs, dim=1, keepdim=True)
-    return softmaxed
-
+    # softmaxed = exp_inputs / torch.sum(exp_inputs, dim=1, keepdim=True)
+    return exp_inputs / torch.sum(exp_inputs, dim=1, keepdim=True) 
 
 #################################################
 #                                               #
@@ -185,8 +179,8 @@ def cross_entropy(inputs, targets):
     #print("I:", inputs)
     probs = inputs[range(len(inputs)), targets]
     #print("O:", probs)
-    negative_log_probs = neg_log_probs(probs)
-    return negative_log_probs
+    # negative_log_probs = neg_log_probs(probs)
+    return neg_log_probs(probs)
 
 
 def average_loss(inputs):
@@ -256,6 +250,8 @@ def gradient_relu(activations, gradients):
     # Commented out. Leading to a nan loss
     # gradients[activations == 0] = random.randint(1, 10) / 10.0
     gradients[activations <= 0] = 0
+    # Clean
+    del activations
     return gradients
 
 
@@ -263,4 +259,43 @@ def gradient_softmax(inputs, targets):
     d_probs = inputs
     d_probs[range(len(inputs)), targets] -= 1
     d_probs /= len(inputs)
+    # Clean
+    del inputs
     return d_probs
+
+
+def gradient_beta(grad_output):
+    #print("dout:", grad_output)
+    grad_beta = []
+    for c in range(grad_output.size(1)):
+        grad_beta.append(torch.sum(grad_output[:, c, :, :]))
+    return torch.Tensor(grad_beta)
+
+
+def gradient_gamma(x_hat, grad_output):
+    #print("dout:", grad_output)
+    grad_gamma = []
+    for c in range(grad_output.size(1)):
+        grad_gamma.append(torch.sum(grad_output[:, c, :, :]))
+    return torch.Tensor(grad_gamma)
+
+
+def gradient_bnorm2d(gamma, cache, grad_output):
+    N, C, H, W = grad_output.size()
+    x_hat, invr_var = cache
+    grad_xhat = grad_output.clone()
+    sum_grad_xhat = []
+    sum_xhat_grad_xhat = []
+    for c in range(C):
+        grad_xhat[:, c, :, :] *= gamma[c]  # Intermediate gradient of x_hat 
+        sum_grad_xhat.append(torch.sum(grad_xhat[:, c, :, :]))
+        sum_xhat_grad_xhat.append(torch.sum(x_hat[:, c, :, :] * grad_xhat[:, c, :, :]))
+    grad_xhat = torch.Tensor(grad_xhat)  # Intermediate term 1
+    sum_grad_xhat = torch.Tensor(sum_grad_xhat)  # Intermediate term 2 
+    sum_xhat_grad_xhat = torch.Tensor(sum_xhat_grad_xhat) # Intermediate term 3
+    # Gradient input: Final expression
+    grad_in = (1. / N) * invr_var * ((N * grad_xhat) - sum_grad_xhat.view(1, C, 1, 1) - (x_hat * sum_xhat_grad_xhat.view(1, C, 1, 1)))
+    # Clean
+    del gamma, cache, grad_output, x_hat, invr_var, grad_xhat, sum_grad_xhat, sum_xhat_grad_xhat
+    return grad_in
+

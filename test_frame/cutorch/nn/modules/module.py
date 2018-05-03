@@ -101,7 +101,11 @@ class Module(object):
                 hook.data = 0
             if "gradient" in objects:
                 hook.grad = OD()
+                if '_parameters' in hook.__dict__.keys() and len(hook.__dict__['_parameters']) > 0:
+                    for param in hook.parameters():
+                        param.gradient = 0
                 self.gradients = OD()
+
 
     def state_dict(self):
         self.clean(["input", "output", "gradient"])

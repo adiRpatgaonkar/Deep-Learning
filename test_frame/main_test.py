@@ -70,4 +70,8 @@ class CNN(nn.Module):
 image = (torch.LongTensor(2, 3, 32, 32).random_(0, 255)).float()
 cnn = CNN()
 cnn(image)
-print(cnn.layer1[0].parameters())
+print(cnn.layer1[1].parameters())
+from collections import OrderedDict as OD
+gradients = OD()
+gradients['output'] = torch.randn(2, 16, 28, 28)
+print(cnn.layer1[1].backward(gradients))

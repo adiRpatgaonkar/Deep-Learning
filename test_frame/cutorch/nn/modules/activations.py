@@ -22,7 +22,7 @@ class ReLU(Module):
         self.data = 0 # CLEAN
         # Gradients' creation
         self.grad = OrderedDict() # CLEAN
-        self.grad['output'] = 0
+        self.grad['input'] = 0
 
     def forward(self, in_features):
         if not torch.is_tensor(in_features):
@@ -30,6 +30,8 @@ class ReLU(Module):
         else:
             self.input = in_features
         self.data = f.relu(self.input)
+        # Clean
+        del in_features
         return self
 
     def backward(self, gradients):
@@ -37,7 +39,11 @@ class ReLU(Module):
         :param gradients: gradients from the last 
                           back-propagated layer
         """
-        self.grad['output'] = f.gradient_relu(self.data, gradients['output'])
+        # gradients['input'] are actually output gradients
+        # grad['input'] are actual input gradients
+        self.grad['input'] = f.gradient_relu(self.data, gradients['input'])
+        # Clean
+        del gradients
         return self.grad
 
 
@@ -60,14 +66,20 @@ class Softmax(Module):
         else:
             self.input = in_features
         self.data = f.softmax(self.input)
+        # Clean
+        del in_features
         if Module.is_train:
             return self
         elif Module.is_eval:
             return self.predict()
 
     def backward(self, targets):
+        # targets: LongTensor of labels
+        # grad['input'] are actual input gradients
         # Gradient of softmax outputs @ fprop
-        self.grad['output'] = f.gradient_softmax(self.data, targets)
+        self.grad['input'] = f.gradient_softmax(self.data, targets)
+        # Clean
+        del targets
         return self.grad
 
     def predict(self):
@@ -75,3 +87,4 @@ class Softmax(Module):
         self.confidence, self.prediction = torch.max(self.data, 1)
         self.data = (self.confidence, self.prediction)
         return self
+
