@@ -66,40 +66,13 @@ class CNN(nn.Module):
         out = self.fc(out)
         return out
 import sys
-def im2col(batch, kernel_size, stride, task="conv"):
-    # One image @ a time
-    batch_i2c = torch.Tensor() 
-    # To parse across width and height (temp vars).
-    # Keep kernel_size constant
-    fh = fw = kernel_size
-    for image in batch:
-        i2c_per_im = torch.Tensor()
-        for i in range(0, image.size(1) - kernel_size + 1, stride):
-            for j in range(0, image.size(2) - kernel_size + 1, stride):
-                im_col = image[:, i:fh, j:fw]
-                im_col = im_col.contiguous()  # tensor must be contiguous to flatten it
-                im_col.unsqueeze_(0) # Stretch to 4D tensor
-                if task == "conv":
-                    # Flatten across 3D space
-                    im_col = im_col.view(im_col.size(0), -1)
-                elif task == "pooling": 
-                    # Flatten across 2D i.e. preserve depth dim
-                    im_col = im_col.view(im_col.size(1), -1)
-                i2c_per_im = torch.cat((i2c_per_im, im_col.t()), 1)  # Cat as col vector
-                fw += stride
-            fh += stride
-            fw = kernel_size  # Reset kernel width
-        fh = kernel_size  # Reset kernel height 
-        batch_i2c = torch.cat((batch_i2c, i2c_per_im), 1)
-        #print("Bim2c",batch_im2col)
-    return batch_i2c
 
 image = (torch.LongTensor(2, 3, 32, 32).random_(0, 255)).float()
-im2col_t = im2col(image, 5, 2, task="conv")
-print(im2col_t)
-#cnn = CNN()
-#cnn(image)
-#print(cnn.layer1[1].parameters())
+
+cnn = CNN()
+out = cnn(image)
+print("Net-out", out.data.size())
+print(cnn.layer1[1].parameters())
 #from collections import OrderedDict as OD
 #gradients = OD()
 #gradients['input'] = torch.randn(2, 16, 28, 28)

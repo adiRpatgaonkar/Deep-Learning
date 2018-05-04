@@ -53,11 +53,8 @@ class MaxPool2d(Module):
 
     def prepare_input(self):
         """ Prepare in features """
-        # 1. im2col operation (One image @ a time.)
-        self.batch_ims = torch.Tensor() # RESET
-        for image in self.input: 
-            self.batch_ims = torch.cat((self.batch_ims, F.im2col(image, self.kernel_size, self.stride, task="pooling").unsqueeze_(0)), 0)
-        return self.batch_ims
+        # 1. im2col operation (Batch op) 
+        return F.im2col(self.input, self.kernel_size, self.stride, task="pool") 
 
     def forward(self, in_features):
         """ Pooling op """
@@ -66,13 +63,14 @@ class MaxPool2d(Module):
             self.input = in_features.data
         else:
             self.input = in_features
+        N = self.input.size(0)
         print("Input to max_pool2d layer:", self.input.size())
         self.create_output_vol()
         self.input = self.prepare_input() # im2col'ed input
-        #print("Post im2col:", self.input.size())
+        print("Post im2col:", self.input.size())
         self.data, self.max_track = F.max_pool2d(self.input)
-        #print("Post_max_pool", self.data) 
-        self.data = self.data.view(self.data.size(0), self.output_dim[0], 
+        print("Post_max_pool:", self.data.size()) 
+        self.data = self.data.view(N, self.output_dim[0], 
                                    self.output_dim[1], self.output_dim[2])
         # print("Reshaped:", self.data.size())
         # Clean

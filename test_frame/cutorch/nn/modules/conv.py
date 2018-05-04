@@ -74,12 +74,8 @@ class Conv2d(Module):
             self.input = F.pad_image(self.input, self.padding)
             if type(self.input) is np.ndarray: # If numpy array, convert to tensor before conv op.
                 self.input = torch.from_numpy(self.input)
-        # 2. im2col operation (One image @ a time.)
-        self.batch_ims = torch.Tensor() # RESET
-        for image in self.input:
-            self.batch_ims = torch.cat((self.batch_ims, F.im2col(image, self.kernel_size, self.stride, task="conv").unsqueeze_(0)), 0)
-        return self.batch_ims
-
+        return F.im2col(self.input, self.kernel_size, self.stride, task="conv")
+ 
     def forward(self, in_features):
         """ Convolution op (Auto-correlation i.e. no kernel flipping) """
         # Check for input tensor
@@ -87,15 +83,16 @@ class Conv2d(Module):
             self.input = in_features.data
         else:
             self.input = in_features
+        N = self.input.size(0)
         print("Input to conv layer:", self.input.size())
         self.create_output_vol()
         self.input = self.prepare_input() # im2col'ed input
         print("Post im2col:", self.input.size())
         self.data = F.conv_2d(self.input, self.weight.data.view(self.weight.data.size(0), -1), 
-                              self.bias.data.view(self.bias.data.size(0), -1))
-        # Reshape to the o/p feature volume 
-        self.data = self.data.view(self.data.size(0), self.output_dim[0], 
-                                   self.output_dim[1], self.output_dim[2])
+                              self.bias.data.view(self.bias.data.size(0), -1)) 
+        # Reshape to the o/p feature volume
+        self.data = self.data.view(N, self.output_dim[0], self.output_dim[1], 
+                                   self.output_dim[2])
         # print("Reshaped:", self.data.size())
         # Clean
         del in_features

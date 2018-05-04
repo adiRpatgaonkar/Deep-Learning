@@ -29,31 +29,36 @@ def flatten(data):
 #                                               #
 #################################################
 
-def im2col(image, kernel_size, stride, task="conv"):
-    # One image @ a time
-    im2col_out = torch.FloatTensor()
+def im2col(batch, kernel_size, stride, task="conv"):
+    """ im2col for batch inputs i.e. 4D Tensors """
+    assert batch.dim() == 4, ("Input batch should be 4D tensor")
+    batch_i2c = torch.Tensor() 
     # To parse across width and height (temp vars).
     # Keep kernel_size constant
-    fh = fw = kernel_size 
-    for i in range(0, image.size(1) - kernel_size + 1, stride):
-        for j in range(0, image.size(2) - kernel_size + 1, stride):
-            im_col = image[:, i:fh, j:fw]
-            im_col = im_col.contiguous()  # Need to make tensor contiguous to flatten it
-            im_col.unsqueeze_(0) # Stretch to 4D tensor
-            if task == "conv":
-                # Flatten across 3D space
-                im_col = im_col.view(im_col.size(0), -1)
-            elif task == "pooling": 
-                # Flatten across 2D i.e. preserve depth dim
-                im_col = im_col.view(im_col.size(1), -1)
-            im2col_out = torch.cat((im2col_out, im_col.t()), 1)  # Cat. as col vector
-            fw += stride  
-        fh += stride
-        fw = kernel_size  # Reset kernel width (Done parsing the width (j) for a certain i)
-    fh = kernel_size  # Reset kernel height (Done parsing the height (i))
+    fh = fw = kernel_size
+    for image in batch:
+        i2c_per_im = torch.Tensor()
+        for i in range(0, image.size(1) - kernel_size + 1, stride):
+            for j in range(0, image.size(2) - kernel_size + 1, stride):
+                im_col = image[:, i:fh, j:fw]
+                im_col = im_col.contiguous()  # tensor must be contiguous to flatten it
+                im_col.unsqueeze_(0) # Stretch to 4D tensor
+                if task == "conv":
+                    # Flatten across 3D space
+                    im_col = im_col.view(im_col.size(0), -1)
+                elif task == "pool": 
+                    # Flatten across 2D i.e. preserve depth dim
+                    im_col = im_col.view(im_col.size(1), -1)
+                i2c_per_im = torch.cat((i2c_per_im, im_col.t()), 1)  # Cat as col vector
+                fw += stride
+            fh += stride
+            fw = kernel_size  # Reset kernel width
+        fh = kernel_size  # Reset kernel height 
+        batch_i2c = torch.cat((batch_i2c, i2c_per_im), 1)
+        #print("Bim2c",batch_im2col)
     # Clean
-    del image, im_col
-    return im2col_out
+    del batch, i2c_per_im, im_col
+    return batch_i2c
 
 
 def pad_image(image, p):
@@ -108,26 +113,15 @@ def batchnorm_2d(x, beta, gamma, epsilon):
 def conv_2d(input, weight, bias=None):
     # Use post im2col op
  
-    # Batch matrix multiplication. Adam Paszke's solution in Pytorch forums
-    # Multiplying 3D input tensor with 2D weight tensor
-    if input.dim() == 3: # 3D in_features tensor 
-        weight = weight.unsqueeze(0).expand(input.size(0), *weight.size())
-        if bias is None:  
-            return torch.bmm(weight, input)
-        else:    
-            return torch.bmm(weight, input) + bias.unsqueeze(0).expand(input.size(0), *bias.size())
-
-    # Matrix multiplication. input: 2D tensor, weight: 2D tensor
+    if  bias is None:
+        return torch.mm(weight, input)
     else:
-        if  bias is None:
-            return torch.mm(weight, input)
-        else:
-            return torch.mm(weight, input) + bias
+        return torch.mm(weight, input) + bias
     
 
 def max_pool2d(input):
     # Use post im2col op
-    return torch.max(input, 1)
+    return torch.max(input, 0)
 
 
 def linear(inputs, weight, bias=None):
