@@ -264,26 +264,26 @@ def gradient_softmax(inputs, targets):
     return d_probs
 
 
-def gradient_beta(grad_output):
-    #print("dout:", grad_output)
+def gradient_beta(grad_out):
+    #print("dout:", grad_out)
     grad_beta = []
-    for c in range(grad_output.size(1)):
-        grad_beta.append(torch.sum(grad_output[:, c, :, :]))
+    for c in range(grad_out.size(1)):
+        grad_beta.append(torch.sum(grad_out[:, c, :, :]))
     return torch.Tensor(grad_beta)
 
 
-def gradient_gamma(x_hat, grad_output):
-    #print("dout:", grad_output)
+def gradient_gamma(x_hat, grad_out):
+    #print("dout:", grad_out)
     grad_gamma = []
-    for c in range(grad_output.size(1)):
-        grad_gamma.append(torch.sum(grad_output[:, c, :, :]))
+    for c in range(grad_out.size(1)):
+        grad_gamma.append(torch.sum(grad_out[:, c, :, :]))
     return torch.Tensor(grad_gamma)
 
 
-def gradient_bnorm2d(gamma, cache, grad_output):
-    N, C, H, W = grad_output.size()
+def gradient_bnorm2d(gamma, cache, grad_out):
+    N, C, H, W = grad_out.size()
     x_hat, invr_var = cache
-    grad_xhat = grad_output.clone()
+    grad_xhat = grad_out.clone()
     sum_grad_xhat = []
     sum_xhat_grad_xhat = []
     for c in range(C):
@@ -296,6 +296,35 @@ def gradient_bnorm2d(gamma, cache, grad_output):
     # Gradient input: Final expression
     grad_in = (1. / N) * invr_var * ((N * grad_xhat) - sum_grad_xhat.view(1, C, 1, 1) - (x_hat * sum_xhat_grad_xhat.view(1, C, 1, 1)))
     # Clean
-    del gamma, cache, grad_output, x_hat, invr_var, grad_xhat, sum_grad_xhat, sum_xhat_grad_xhat
+    del gamma, cache, grad_out, x_hat, invr_var, grad_xhat, sum_grad_xhat, sum_xhat_grad_xhat
     return grad_in
 
+
+def grad_conv2d_bias(grad_out):
+    C = grad_out.size(1)
+    grad_bias = []
+
+    for c in range(C):
+        grad_bias.append(torch.sum(grad_out[:, c, :, :]))
+    return torch.Tensor(grad_bias)
+
+
+def grad_conv2d_weight(input, grad_out): 
+    C = grad_out.size(1)
+    grad_out = grad_out.permute(1, 2, 3, 0).contiguous()
+    grad_out = grad_out.view(C, -1)
+    input = input.permute(1, 0, 2).contiguous()
+    input = input.view(input.size(0), -1)
+    print(input, grad_out)
+    grad_weight = torch.mm(grad_out, input.t())
+    # Clean
+    del input
+    return grad_weight, grad_out
+
+def grad_conv2d(cache, weight, grad_out): 
+    C = grad_out.size(1)
+    weight_reshaped = weight.view(C, -1) 
+    grad_Xcol = torch.mm(weight_reshaped.t(), cache)
+    return grad_Xcol
+
+ 

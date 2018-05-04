@@ -73,5 +73,7 @@ cnn(image)
 print(cnn.layer1[1].parameters())
 from collections import OrderedDict as OD
 gradients = OD()
-gradients['output'] = torch.randn(2, 16, 28, 28)
-print(cnn.layer1[1].backward(gradients))
+gradients['input'] = torch.randn(2, 16, 28, 28)
+grad = cnn.layer1[1].backward(gradients)
+cnn.layer1[0].backward(grad)
+

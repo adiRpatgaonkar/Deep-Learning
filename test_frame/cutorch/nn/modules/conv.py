@@ -90,7 +90,7 @@ class Conv2d(Module):
         print("Input to conv layer:", self.input.size())
         self.create_output_vol()
         self.input = self.prepare_input() # im2col'ed input
-        # print("Post im2col:", self.input.size())
+        print("Post im2col:", self.input.size())
         self.data = F.conv_2d(self.input, self.weight.data.view(self.weight.data.size(0), -1), 
                               self.bias.data.view(self.bias.data.size(0), -1))
         # Reshape to the o/p feature volume 
@@ -108,16 +108,21 @@ class Conv2d(Module):
         if self.bias.require_gradient:
             self.grad['bias'] = F.grad_conv2d_bias(gradients['input'])
             self.bias.gradient = self.grad['bias']
+            print("GC2DB:", self.grad['bias'])
 
         if self.weight.require_gradient:
-            self.grad['weight'] = F.grad_conv2d_weight(self.input, gradients['input'])
-            self.weight.gradient = self.grad['weight']
-
+            self.grad['weight'], cache = F.grad_conv2d_weight(self.input, gradients['input'])
+            # Reshape to the size of the layer's kernels
+            self.grad['weight'] = self.grad['weight'].view(self.weight.data.size())
+        self.idx = 1
         if self.idx == '0':
             # No gradients required for input layer (idx == 0)
             self.grad['input'] = torch.Tensor(self.input.size())
         else:
-            self.grad['input'] = F.gradient_conv2d(self.weight.data, gradients['input'])
+            self.grad['input'] = F.grad_conv2d(cache, self.weight.data, gradients['input'])
+        # Reshape it to the proper size
+        self.grad['input'] = self.grad['input'].view(self.input.size(0), self.grad['input'].size(0), self.input.size(2)))
+        # Might want to de-im2col gradients. Not sure. Run tests. Possible solution is to rewrite Conv2d forward pass
         # Clean
         del gradients
         return self.grad
