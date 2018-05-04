@@ -121,7 +121,7 @@ class Conv2d(Module):
         else:
             self.grad['input'] = F.grad_conv2d(cache, self.weight.data, gradients['input'])
         # Reshape it to the proper size
-        self.grad['input'] = self.grad['input'].view(self.input.size(0), self.grad['input'].size(0), self.input.size(2)))
+        self.grad['input'] = self.grad['input'].view(self.input.size(0), self.grad['input'].size(0), self.input.size(2))
         # Might want to de-im2col gradients. Not sure. Run tests. Possible solution is to rewrite Conv2d forward pass
         # Clean
         del gradients
