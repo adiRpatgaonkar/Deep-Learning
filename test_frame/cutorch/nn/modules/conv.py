@@ -44,6 +44,7 @@ class Conv2d(Module):
         if bias and self.bias.require_gradient:
             self.grad['bias'] = 0
         self.grad['output'] = 0
+         
         # Finish param setup
         self.init_param_setup()
 
@@ -58,9 +59,9 @@ class Conv2d(Module):
     def create_output_vol(self):
         """ Create output volume """
         # Check & setup input tensor dimensions
-        # Input should be a batch or 3D tensor
+        # Input should be a batch (4D) or 3D tensor
         assert self.input.dim() in (3, 4), ("Input tensor should be 3D or 4D")
-        if self.input.dim() == 3:
+        if self.input.dim() == 3: # Convert to 4D tensor
             self.input = torch.unsqueeze(self.input, 0)
         self.height, self.width = self.input.size()[2:]
         self.output_dim[0] = self.kernels
@@ -82,14 +83,14 @@ class Conv2d(Module):
         if not torch.is_tensor(in_features):
             self.input = in_features.data
         else:
-            self.input = in_features
-        N = self.input.size(0)
-        print("Input to conv layer:", self.input.size())
+            self.input = in_features 
         self.create_output_vol()
+        print("Input to conv layer:", self.input.size())
+        N = self.input.size(0) 
         self.input = self.prepare_input() # im2col'ed input
         print("Post im2col:", self.input.size())
         self.data = F.conv_2d(self.input, self.weight.data.view(self.weight.data.size(0), -1), 
-                              self.bias.data.view(self.bias.data.size(0), -1)) 
+                              self.bias.data.view(self.bias.data.size(0), -1))
         # Reshape to the o/p feature volume
         self.data = self.data.view(N, self.output_dim[0], self.output_dim[1], 
                                    self.output_dim[2])
@@ -111,7 +112,6 @@ class Conv2d(Module):
             self.grad['weight'], cache = F.grad_conv2d_weight(self.input, gradients['input'])
             # Reshape to the size of the layer's kernels
             self.grad['weight'] = self.grad['weight'].view(self.weight.data.size())
-        self.idx = 1
         if self.idx == '0':
             # No gradients required for input layer (idx == 0)
             self.grad['input'] = torch.Tensor(self.input.size())

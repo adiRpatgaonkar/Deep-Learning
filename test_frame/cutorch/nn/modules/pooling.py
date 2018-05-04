@@ -41,10 +41,9 @@ class MaxPool2d(Module):
     def create_output_vol(self):
         """ Create output volume """
         # Check & setup input tensor dimensions
-        # Input should be a batch or 3D tensor
-        if self.input.dim() not in (3, 4):
-            raise ValueError("Input tensor should be 3D or 4D")
-        elif self.input.dim() == 3:
+        # Input should be a batch (4D) or 3D tensor
+        assert self.input.dim() in (3, 4), ("Input tensor should be 3D or 4D")
+        if self.input.dim() == 3: # Convert to 4D tensor
             self.input = torch.unsqueeze(self.input, 0)
         self.height, self.width = self.input.size()[2:]
         self.output_dim[0] = self.input.size(1)
@@ -62,10 +61,10 @@ class MaxPool2d(Module):
         if not torch.is_tensor(in_features):
             self.input = in_features.data
         else:
-            self.input = in_features
+            self.input = in_features   
+        self.create_output_vol()
         N = self.input.size(0)
         print("Input to max_pool2d layer:", self.input.size())
-        self.create_output_vol()
         self.input = self.prepare_input() # im2col'ed input
         print("Post im2col:", self.input.size())
         self.data, self.max_track = F.max_pool2d(self.input)
