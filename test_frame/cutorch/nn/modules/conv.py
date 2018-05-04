@@ -63,7 +63,7 @@ class Conv2d(Module):
         assert self.input.dim() in (3, 4), ("Input tensor should be 3D or 4D")
         if self.input.dim() == 3: # Convert to 4D tensor
             self.input = torch.unsqueeze(self.input, 0)
-        self.height, self.width = self.input.size()[2:]
+        self.batches, self.channels, self.height, self.width = self.input.size()
         self.output_dim[0] = self.kernels
         self.output_dim[1] = ((self.width - self.kernel_size + 2 * self.padding) / self.stride + 1)
         self.output_dim[2] = ((self.height - self.kernel_size + 2 * self.padding) / self.stride + 1)
@@ -109,17 +109,18 @@ class Conv2d(Module):
             print("GC2DB:", self.grad['bias'])
 
         if self.weight.require_gradient:
-            self.grad['weight'], cache = F.grad_conv2d_weight(self.input, gradients['input'])
+            self.grad['weight'], cache = F.grad_conv2d_weight(self.input, gradients['input'])   
             # Reshape to the size of the layer's kernels
             self.grad['weight'] = self.grad['weight'].view(self.weight.data.size())
+            print(self.grad['weight'].size())
+        self.idx = '1'
         if self.idx == '0':
             # No gradients required for input layer (idx == 0)
             self.grad['input'] = torch.Tensor(self.input.size())
         else:
-            self.grad['input'] = F.grad_conv2d(cache, self.weight.data, gradients['input'])
-        # Reshape it to the proper size
-        self.grad['input'] = self.grad['input'].view(self.input.size(0), self.grad['input'].size(0), self.input.size(2))
-        # Might want to de-im2col gradients. Not sure. Run tests. Possible solution is to rewrite Conv2d forward pass
+            self.grad['input'] = F.grad_conv2d(cache, self.weight.data, gradients['input']) 
+        # De-im2col grad ins i.e. F.col2im(self.grad['input'])
+        F.col2im(self.grad['input'], (self.batches, self.channels, self.height, self.width), self.kernel_size, self.stride, task="conv")
         # Clean
         del gradients
         return self.grad

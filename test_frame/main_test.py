@@ -66,16 +66,22 @@ class CNN(nn.Module):
         out = self.fc(out)
         return out
 import sys
-
+import cutorch.nn.functionals as F
 image = (torch.LongTensor(2, 3, 32, 32).random_(0, 255)).float()
-
+print(image)
+i2c = F.im2col(image, 5, 2)
+#print(i2c)
+c2i = F.col2im(i2c, image.size(), 5, 2)
+print(c2i)
+'''
 cnn = CNN()
 out = cnn(image)
 print("Net-out", out.data.size())
 print(cnn.layer1[1].parameters())
-#from collections import OrderedDict as OD
-#gradients = OD()
-#gradients['input'] = torch.randn(2, 16, 28, 28)
-#grad = cnn.layer1[1].backward(gradients)
-#cnn.layer1[0].backward(grad)
+from collections import OrderedDict as OD
+gradients = OD()
+gradients['input'] = torch.randn(2, 16, 28, 28)
+grad = cnn.layer1[1].backward(gradients)
+cnn.layer1[0].backward(grad)
+'''
 

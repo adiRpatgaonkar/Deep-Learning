@@ -61,6 +61,38 @@ def im2col(batch, kernel_size, stride, task="conv"):
     return batch_i2c
 
 
+def col2im(input, x_size, k_size, stride, task="conv"):
+    """ col2im or de-im2col for 2D tensors """
+    assert input.dim() == 2, ("Input should be a 2D tensor")
+    assert len(x_size) == 4, ("Input size should have 4 values for 4D tensor")
+    batch_c2i = torch.Tensor()
+    N, C, H, W = x_size
+    batch = torch.chunk(input, N, dim=1)
+    #print(batch)
+    fh = fw = k_size
+    print(H - k_size + 1, W - k_size + 1)
+    for image in batch:
+        m = 0  # Number of locations convolved
+        c2i_per_im = torch.zeros(C, H, W)
+        for i in range(0, H - k_size + 1, stride):
+            for j in range(0, W - k_size + 1, stride):
+                col = image[:, m].contiguous()
+                c2i_per_im[:, i:fh, j:fw] = col.view(C, k_size, k_size)
+                m += 1
+                if m > 196:
+                    print(col, col.view(C, k_size, k_size))
+                    raise ValueError("Damn")
+                fw += stride
+            fh += stride
+            fw = k_size
+            print(c2i_per_im)
+        fh = k_size
+        batch_c2i = torch.cat((batch_c2i, c2i_per_im.unsqueeze(0)), 0)
+        #print(batch_c2i)
+        sys.exit(1)
+    return batch_c2i
+        
+ 
 def pad_image(image, p):
     # Works for a batch of images
     # i.e. 4D tensor
@@ -111,8 +143,7 @@ def batchnorm_2d(x, beta, gamma, epsilon):
 
 
 def conv_2d(input, weight, bias=None):
-    # Use post im2col op
- 
+    # Use post im2col op 
     if  bias is None:
         return torch.mm(weight, input)
     else:
@@ -300,25 +331,28 @@ def grad_conv2d_bias(grad_out):
 
     for c in range(C):
         grad_bias.append(torch.sum(grad_out[:, c, :, :]))
+    # Clean
+    del grad_out
     return torch.Tensor(grad_bias)
 
-
+import sys
 def grad_conv2d_weight(input, grad_out): 
     C = grad_out.size(1)
     grad_out = grad_out.permute(1, 2, 3, 0).contiguous()
     grad_out = grad_out.view(C, -1)
-    input = input.permute(1, 0, 2).contiguous()
-    input = input.view(input.size(0), -1)
-    print(input, grad_out)
+    print(input.size(), grad_out.size())
     grad_weight = torch.mm(grad_out, input.t())
     # Clean
     del input
     return grad_weight, grad_out
 
-def grad_conv2d(cache, weight, grad_out): 
+def grad_conv2d(cache, weight, grad_out):
+    print(cache.size(), weight.size(), grad_out.size()) 
     C = grad_out.size(1)
-    weight_reshaped = weight.view(C, -1) 
+    weight_reshaped = weight.view(C, -1)
+    print(weight_reshaped.size()) 
     grad_Xcol = torch.mm(weight_reshaped.t(), cache)
+    print(grad_Xcol.size())
     return grad_Xcol
 
  
