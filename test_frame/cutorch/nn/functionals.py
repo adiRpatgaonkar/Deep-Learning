@@ -7,11 +7,13 @@ import numpy as np
 
 
 def flatten(data):
+    # Maybe redundant & hence deprecated.
     """
     Flatten data Tensor
     :param data: 2D Tensor
     :return: flattened Tensor(1D Tensor)
     """
+    assert data.dim() in (3, 4), "Expected 3D or 4D tensor, got {}D tensor".format(data.dim)
     num_examples = 1
     if data.dim() == 3:
         num_examples = 1
@@ -31,8 +33,8 @@ def flatten(data):
 
 def im2col(batch, kernel_size, stride, task="conv"):
     """ im2col for batch inputs i.e. 4D Tensors """
-    assert batch.dim() == 4, ("Input batch should be 4D tensor")
-    batch_i2c = torch.Tensor() 
+    assert batch.dim() == 4, "Input batch should be 4D tensor"
+    batch_i2c = torch.Tensor()
     # To parse across width and height (temp vars).
     # Keep kernel_size constant
     fh = fw = kernel_size
@@ -42,20 +44,20 @@ def im2col(batch, kernel_size, stride, task="conv"):
             for j in range(0, image.size(2) - kernel_size + 1, stride):
                 im_col = image[:, i:fh, j:fw]
                 im_col = im_col.contiguous()  # tensor must be contiguous to flatten it
-                im_col.unsqueeze_(0) # Stretch to 4D tensor
+                im_col.unsqueeze_(0)  # Stretch to 4D tensor
                 if task == "conv":
                     # Flatten across 3D space
                     im_col = im_col.view(im_col.size(0), -1)
-                elif task == "pool": 
+                elif task == "pool":
                     # Flatten across 2D i.e. preserve depth dim
                     im_col = im_col.view(im_col.size(1), -1)
                 i2c_per_im = torch.cat((i2c_per_im, im_col.t()), 1)  # Cat as col vector
                 fw += stride
             fh += stride
             fw = kernel_size  # Reset kernel width
-        fh = kernel_size  # Reset kernel height 
+        fh = kernel_size  # Reset kernel height
         batch_i2c = torch.cat((batch_i2c, i2c_per_im), 1)
-        #print("Bim2c",batch_im2col)
+        # print("Bim2c",batch_im2col)
     # Clean
     del batch, i2c_per_im, im_col
     return batch_i2c
@@ -63,36 +65,32 @@ def im2col(batch, kernel_size, stride, task="conv"):
 
 def col2im(input, x_size, k_size, stride, task="conv"):
     """ col2im or de-im2col for 2D tensors """
-    assert input.dim() == 2, ("Input should be a 2D tensor")
-    assert len(x_size) == 4, ("Input size should have 4 values for 4D tensor")
+    assert input.dim() == 2, "Input should be a 2D tensor"
+    assert len(x_size) == 4, "Input size should have 4 values for 4D tensor"
     batch_c2i = torch.Tensor()
     N, C, H, W = x_size
     batch = torch.chunk(input, N, dim=1)
-    #print(batch)
+    # To parse across width and height (temp vars).
+    # Keep kernel_size constant
     fh = fw = k_size
-    print(H - k_size + 1, W - k_size + 1)
     for image in batch:
-        m = 0  # Number of locations convolved
+        m = 0  # Number of locations convolved(mth col)
         c2i_per_im = torch.zeros(C, H, W)
         for i in range(0, H - k_size + 1, stride):
             for j in range(0, W - k_size + 1, stride):
                 col = image[:, m].contiguous()
-                c2i_per_im[:, i:fh, j:fw] = col.view(C, k_size, k_size)
-                m += 1
-                if m > 196:
-                    print(col, col.view(C, k_size, k_size))
-                    raise ValueError("Damn")
+                if task == "conv":
+                    c2i_per_im[:, i:fh, j:fw] = col.view(C, k_size, k_size)
+                m += 1  #
                 fw += stride
             fh += stride
             fw = k_size
-            print(c2i_per_im)
         fh = k_size
         batch_c2i = torch.cat((batch_c2i, c2i_per_im.unsqueeze(0)), 0)
-        #print(batch_c2i)
-        sys.exit(1)
+    del input, batch, col, c2i_per_im
     return batch_c2i
-        
- 
+
+
 def pad_image(image, p):
     # Works for a batch of images
     # i.e. 4D tensor
@@ -103,8 +101,9 @@ def pad_image(image, p):
     elif type(image) != np.ndarray:
         raise TypeError("Padding will be done on a numpy array only.")
     image = np.pad(image, mode='constant', constant_values=0,
-                   pad_width=((0,0), (0,0), (p,p), (p,p)))
+                   pad_width=((0, 0), (0, 0), (p, p), (p, p)))
     return image
+
 
 #################################################
 #                                               #
@@ -113,7 +112,7 @@ def pad_image(image, p):
 #################################################
 
 def batchnorm_2d(x, beta, gamma, epsilon):
-    assert x.dim() == 4, ("Input should be a 4D Tensor")
+    assert x.dim() == 4, "Input should be a 4D Tensor"
     N, C, H, W = x.size()
     mean, variance = [], []
     # Mean: w.r.t channels
@@ -136,19 +135,19 @@ def batchnorm_2d(x, beta, gamma, epsilon):
     # Output. Scale & shift.
     out = gamma.view(1, C, 1, 1) * x_hat + beta.view(1, C, 1, 1)
     # print(out)
-    cache = (x_hat, invr_var) # To be used for backwarding BN2D
+    cache = (x_hat, invr_var)  # To be used for backwarding BN2D
     del x, x_mu, x_mu_sq, sqrt_var
     # Clean
-    return out, mean, variance, cache 
+    return out, mean, variance, cache
 
 
 def conv_2d(input, weight, bias=None):
     # Use post im2col op 
-    if  bias is None:
+    if bias is None:
         return torch.mm(weight, input)
     else:
         return torch.mm(weight, input) + bias
-    
+
 
 def max_pool2d(input):
     # Use post im2col op
@@ -185,7 +184,8 @@ def relu(inputs):
 def softmax(inputs):
     exp_inputs = torch.exp(inputs)
     # softmaxed = exp_inputs / torch.sum(exp_inputs, dim=1, keepdim=True)
-    return exp_inputs / torch.sum(exp_inputs, dim=1, keepdim=True) 
+    return exp_inputs / torch.sum(exp_inputs, dim=1, keepdim=True)
+
 
 #################################################
 #                                               #
@@ -201,9 +201,9 @@ def cross_entropy(inputs, targets):
         (correct) negative log probs
         of targets only (list)
     """
-    #print("I:", inputs)
+    # print("I:", inputs)
     probs = inputs[range(len(inputs)), targets]
-    #print("O:", probs)
+    # print("O:", probs)
     # negative_log_probs = neg_log_probs(probs)
     return neg_log_probs(probs)
 
@@ -221,9 +221,10 @@ def l2_reg(strength, parameters):
     for param_group in parameters.values():
         for param in param_group:
             if param.tag == 'weight':
-                reg_loss += torch.sum(param.data*param.data)
+                reg_loss += torch.sum(param.data * param.data)
     reg_loss *= (strength * 0.5)
     return reg_loss
+
 
 #################################################
 #                                               #
@@ -290,15 +291,15 @@ def gradient_softmax(inputs, targets):
 
 
 def gradient_beta(grad_out):
-    #print("dout:", grad_out)
+    # print("dout:", grad_out)
     grad_beta = []
     for c in range(grad_out.size(1)):
         grad_beta.append(torch.sum(grad_out[:, c, :, :]))
     return torch.Tensor(grad_beta)
 
 
-def gradient_gamma(x_hat, grad_out):
-    #print("dout:", grad_out)
+def gradient_gamma(grad_out):
+    # print("dout:", grad_out)
     grad_gamma = []
     for c in range(grad_out.size(1)):
         grad_gamma.append(torch.sum(grad_out[:, c, :, :]))
@@ -317,9 +318,10 @@ def gradient_bnorm2d(gamma, cache, grad_out):
         sum_xhat_grad_xhat.append(torch.sum(x_hat[:, c, :, :] * grad_xhat[:, c, :, :]))
     grad_xhat = torch.Tensor(grad_xhat)  # Intermediate term 1
     sum_grad_xhat = torch.Tensor(sum_grad_xhat)  # Intermediate term 2 
-    sum_xhat_grad_xhat = torch.Tensor(sum_xhat_grad_xhat) # Intermediate term 3
+    sum_xhat_grad_xhat = torch.Tensor(sum_xhat_grad_xhat)  # Intermediate term 3
     # Gradient input: Final expression
-    grad_in = (1. / N) * invr_var * ((N * grad_xhat) - sum_grad_xhat.view(1, C, 1, 1) - (x_hat * sum_xhat_grad_xhat.view(1, C, 1, 1)))
+    grad_in = (1. / N) * invr_var * (
+                (N * grad_xhat) - sum_grad_xhat.view(1, C, 1, 1) - (x_hat * sum_xhat_grad_xhat.view(1, C, 1, 1)))
     # Clean
     del gamma, cache, grad_out, x_hat, invr_var, grad_xhat, sum_grad_xhat, sum_xhat_grad_xhat
     return grad_in
@@ -335,24 +337,21 @@ def grad_conv2d_bias(grad_out):
     del grad_out
     return torch.Tensor(grad_bias)
 
-import sys
-def grad_conv2d_weight(input, grad_out): 
+
+def grad_conv2d_weight(input, grad_out):
     C = grad_out.size(1)
     grad_out = grad_out.permute(1, 2, 3, 0).contiguous()
     grad_out = grad_out.view(C, -1)
-    print(input.size(), grad_out.size())
     grad_weight = torch.mm(grad_out, input.t())
     # Clean
     del input
     return grad_weight, grad_out
 
+
 def grad_conv2d(cache, weight, grad_out):
-    print(cache.size(), weight.size(), grad_out.size()) 
     C = grad_out.size(1)
     weight_reshaped = weight.view(C, -1)
-    print(weight_reshaped.size()) 
     grad_Xcol = torch.mm(weight_reshaped.t(), cache)
-    print(grad_Xcol.size())
+    # Clean
+    del cache, weight_reshaped, grad_out
     return grad_Xcol
-
- 

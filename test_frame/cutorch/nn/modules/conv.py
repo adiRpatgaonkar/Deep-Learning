@@ -14,6 +14,7 @@ from cutorch.nn.parameter import Parameter
 from .module import Module
 from .. import functionals as F
 
+
 class Conv2d(Module):
     """2D Conv layer class"""
 
@@ -29,7 +30,7 @@ class Conv2d(Module):
         self.data = 0  # TODO:CLEAN
         self.height = self.width = 0
         self.output_dim = [0, 0, 0]
-        self.batch_ims = None # im2col data. # TODO:CLEAN
+        self.batch_ims = None # im2col data.  # TODO:CLEAN
         # Parameters' creation
         self._parameters = []
         self.weight = Parameter(weight=beta*torch.randn(self.kernels, channels, self.kernel_size, self.kernel_size),
@@ -38,7 +39,7 @@ class Conv2d(Module):
             self.bias = Parameter(bias=torch.Tensor(self.kernels, 1, 1, 1).fill_(1),
                                   require_gradient=True)  # print(self.biases)
         # Gradients' creation
-        self.grad = OrderedDict() # TODO:CLEAN
+        self.grad = OrderedDict()  # TODO:CLEAN
         if self.weight.require_gradient:
             self.grad['weight'] = 0
         if bias and self.bias.require_gradient:
@@ -106,13 +107,11 @@ class Conv2d(Module):
         if self.bias.require_gradient:
             self.grad['bias'] = F.grad_conv2d_bias(gradients['input'])
             self.bias.gradient = self.grad['bias']
-            print("GC2DB:", self.grad['bias'])
 
         if self.weight.require_gradient:
             self.grad['weight'], cache = F.grad_conv2d_weight(self.input, gradients['input'])   
             # Reshape to the size of the layer's kernels
             self.grad['weight'] = self.grad['weight'].view(self.weight.data.size())
-            print(self.grad['weight'].size())
         self.idx = '1'
         if self.idx == '0':
             # No gradients required for input layer (idx == 0)
@@ -120,8 +119,10 @@ class Conv2d(Module):
         else:
             self.grad['input'] = F.grad_conv2d(cache, self.weight.data, gradients['input']) 
         # De-im2col grad ins i.e. F.col2im(self.grad['input'])
-        F.col2im(self.grad['input'], (self.batches, self.channels, self.height, self.width), self.kernel_size, self.stride, task="conv")
+            self.grad['input'] = F.col2im(self.grad['input'], (self.batches, self.channels,
+                                                               self.height, self.width),
+                                          self.kernel_size, self.stride, task="conv")
         # Clean
-        del gradients
+        del gradients, cache
         return self.grad
 

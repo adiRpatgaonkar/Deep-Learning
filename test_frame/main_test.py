@@ -2,10 +2,8 @@ from __future__ import print_function
 
 import torch
 
-import cutorch
 import cutorch.nn as nn
-import cutorchvision.datasets as dsets
-from cutorchvision.transforms import Transforms, see
+
 #from evaluate import *
 
 # if cutorch.gpu_check.available():
@@ -42,8 +40,9 @@ lr_decay = 5e-5
 #                                             batch_size=100,
 #                                             shuffled=True)
 
-# Net
+
 class CNN(nn.Module):
+    # Net
     def __init__(self):
         super(CNN, self).__init__()
         self.layer1 = nn.Sequential(
@@ -65,23 +64,17 @@ class CNN(nn.Module):
         out = out.data.view(out.data.size(0), -1)
         out = self.fc(out)
         return out
-import sys
-import cutorch.nn.functionals as F
+
+
 image = (torch.LongTensor(2, 3, 32, 32).random_(0, 255)).float()
-print(image)
-i2c = F.im2col(image, 5, 2)
-#print(i2c)
-c2i = F.col2im(i2c, image.size(), 5, 2)
-print(c2i)
-'''
 cnn = CNN()
-out = cnn(image)
-print("Net-out", out.data.size())
+outputs = cnn(image)
+print("Net-out:", outputs.data.size())
 print(cnn.layer1[1].parameters())
+# Backprop testing
+# Dummy grads
 from collections import OrderedDict as OD
 gradients = OD()
 gradients['input'] = torch.randn(2, 16, 28, 28)
 grad = cnn.layer1[1].backward(gradients)
 cnn.layer1[0].backward(grad)
-'''
-

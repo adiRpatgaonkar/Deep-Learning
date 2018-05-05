@@ -8,7 +8,6 @@ from __future__ import print_function
 from collections import OrderedDict
 
 import torch
-import numpy as np
 
 from cutorch.nn.parameter import Parameter
 from .module import Module
@@ -72,7 +71,7 @@ class BatchNorm2d(Module):
             self.grad['beta'] = F.gradient_beta(gradients['input'])
             self.beta.gradient = self.grad['beta']
         if self.gamma.require_gradient:
-            self.grad['gamma'] = F.gradient_gamma(self.cache[0], gradients['input'])
+            self.grad['gamma'] = F.gradient_gamma(gradients['input'])
             self.gamma.gradient = self.grad['gamma']
         self.grad['input'] = F.gradient_bnorm2d(self.gamma.data, self.cache, gradients['input'])
         # Clean
