@@ -33,7 +33,7 @@ reg = 1e-3
 
 # Get training data for training and Cross validation
 trainset = dsets.CIFAR10(dir="cutorchvision/data", download=True, 
-                          train=True, form="tensor")
+                         train=True, form="tensor")
 # Data augmentation
 trainset = Transforms(dataset=trainset, lr_flip=True, crop=False)
 train_loader = cutorch.utils.data.DataLoader(data=trainset.data, 
@@ -43,7 +43,7 @@ train_loader = cutorch.utils.data.DataLoader(data=trainset.data,
 
 # For testing
 testset = dsets.CIFAR10(dir="cutorchvision/data", download=True, 
-                         test=True, form="tensor")
+                        test=True, form="tensor")
 test_loader = cutorch.utils.data.DataLoader(data=testset.data, 
                                             batch_size=10000,
                                             shuffled=False)
@@ -114,7 +114,8 @@ print("Time[training + cross-validation + testing + best model selection]: {}".f
 
 # Evaluate best model found while training
 total = evaluate(optimizer.state['model'], test_loader, "test")
-print('Test accuracy of the trained model on {} test images: {} %'.format(total, optimizer.state['model'].results['accuracy']))
+print('Test accuracy of the trained model on {} test images: {} %'.format(total,
+                                                                          optimizer.state['model'].results['accuracy']))
 
 # Save best trained model
 optimizer.check_model(store=True, name="fcm_best")

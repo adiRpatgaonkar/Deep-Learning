@@ -4,16 +4,10 @@ import torch
 
 import cutorch.nn as nn
 
-#from evaluate import *
-
 # if cutorch.gpu_check.available():
 #     using_gpu = True
 # else:
 #     using_gpu = False
-
-# Global vars
-global images, ground_truths, outputs, predicted, loss
-global train_loader, test_loader
 
 # Hyperparameters
 max_epochs = 10
@@ -68,6 +62,7 @@ class CNN(nn.Module):
 
 image = (torch.LongTensor(2, 3, 32, 32).random_(0, 255)).float()
 cnn = CNN()
+global outputs
 outputs = cnn(image)
 print("Net-out:", outputs.data.size())
 print(cnn.layer1[1].parameters())
@@ -75,6 +70,7 @@ print(cnn.layer1[1].parameters())
 # Dummy grads
 from collections import OrderedDict as OD
 gradients = OD()
-gradients['input'] = torch.randn(2, 16, 28, 28)
-grad = cnn.layer1[1].backward(gradients)
-cnn.layer1[0].backward(grad)
+gradients['input'] = torch.randn(2, 16, 14, 14)
+grad = cnn.layer1[3].backward(gradients)
+grad = cnn.layer1[1].backward(grad)
+grad = cnn.layer1[0].backward(grad)

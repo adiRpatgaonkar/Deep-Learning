@@ -31,7 +31,7 @@ def flatten(data):
 #                                               #
 #################################################
 
-def im2col(batch, kernel_size, stride, task="conv"):
+def im2col(batch, kernel_size, stride):
     """ im2col for batch inputs i.e. 4D Tensors """
     assert batch.dim() == 4, "Input batch should be 4D tensor"
     batch_i2c = torch.Tensor()
@@ -45,12 +45,7 @@ def im2col(batch, kernel_size, stride, task="conv"):
                 im_col = image[:, i:fh, j:fw]
                 im_col = im_col.contiguous()  # tensor must be contiguous to flatten it
                 im_col.unsqueeze_(0)  # Stretch to 4D tensor
-                if task == "conv":
-                    # Flatten across 3D space
-                    im_col = im_col.view(im_col.size(0), -1)
-                elif task == "pool":
-                    # Flatten across 2D i.e. preserve depth dim
-                    im_col = im_col.view(im_col.size(1), -1)
+                im_col = im_col.view(im_col.size(0), -1)
                 i2c_per_im = torch.cat((i2c_per_im, im_col.t()), 1)  # Cat as col vector
                 fw += stride
             fh += stride
@@ -63,10 +58,10 @@ def im2col(batch, kernel_size, stride, task="conv"):
     return batch_i2c
 
 
-def col2im(input, x_size, k_size, stride, task="conv"):
+def col2im(input, x_size, k_size, stride):
     """ col2im or de-im2col for 2D tensors """
-    assert input.dim() == 2, "Input should be a 2D tensor"
-    assert len(x_size) == 4, "Input size should have 4 values for 4D tensor"
+    assert input.dim() == 2, "Input should be a 2D tensor."
+    assert len(x_size) == 4, "Input size should have 4 values for 4D tensor."
     batch_c2i = torch.Tensor()
     N, C, H, W = x_size
     batch = torch.chunk(input, N, dim=1)
@@ -75,12 +70,12 @@ def col2im(input, x_size, k_size, stride, task="conv"):
     fh = fw = k_size
     for image in batch:
         m = 0  # Number of locations convolved(mth col)
+
         c2i_per_im = torch.zeros(C, H, W)
         for i in range(0, H - k_size + 1, stride):
             for j in range(0, W - k_size + 1, stride):
                 col = image[:, m].contiguous()
-                if task == "conv":
-                    c2i_per_im[:, i:fh, j:fw] = col.view(C, k_size, k_size)
+                c2i_per_im[:, i:fh, j:fw] = col.view(C, k_size, k_size)
                 m += 1  #
                 fw += stride
             fh += stride
@@ -354,4 +349,15 @@ def grad_conv2d(cache, weight, grad_out):
     grad_Xcol = torch.mm(weight_reshaped.t(), cache)
     # Clean
     del cache, weight_reshaped, grad_out
+    return grad_Xcol
+
+
+def grad_maxpool2d(xcol_size, max_track, grad_out):
+    rows, cols = xcol_size
+    grad_Xcol = torch.Tensor(rows, cols).fill_(0)
+    grad_out = grad_out.permute(2, 3, 0, 1).contiguous()
+    grad_out = grad_out.view(-1)
+    grad_Xcol[max_track, range(max_track.size(0))] = grad_out
+    # Clean
+    del grad_out
     return grad_Xcol

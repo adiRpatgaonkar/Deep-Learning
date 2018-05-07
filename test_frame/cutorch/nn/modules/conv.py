@@ -24,11 +24,11 @@ class Conv2d(Module):
         assert pad >= 0, ("Invalid padding value. Should be >= 0")
         assert stride > 0, ("Invalid stride. Should be > 0")
         self.idx = -1
+        self.channels = channels
         self.kernel_size = kernel_size
         self.kernels, self.padding, self.stride = kernels, pad, stride
         self.input = None  # TODO:CLEAN
         self.data = 0  # TODO:CLEAN
-        self.height = self.width = 0
         self.output_dim = [0, 0, 0]
         self.batch_ims = None # im2col data.  # TODO:CLEAN
         # Parameters' creation
@@ -64,19 +64,25 @@ class Conv2d(Module):
         assert self.input.dim() in (3, 4), ("Input tensor should be 3D or 4D")
         if self.input.dim() == 3: # Convert to 4D tensor
             self.input = torch.unsqueeze(self.input, 0)
-        self.batches, self.channels, self.height, self.width = self.input.size()
+        self.N, self.C, self.H, self.W = self.input.size()
+        assert self.C == self.channels, \
+               "Input channels should be {}. Got {} channels".format(self.channels, self.C)
         self.output_dim[0] = self.kernels
-        self.output_dim[1] = ((self.width - self.kernel_size + 2 * self.padding) / self.stride + 1)
-        self.output_dim[2] = ((self.height - self.kernel_size + 2 * self.padding) / self.stride + 1)
+        self.output_dim[1] = ((self.H - self.kernel_size + 2 * self.padding) / self.stride + 1)
+        self.output_dim[2] = ((self.W - self.kernel_size + 2 * self.padding) / self.stride + 1)
 
     def prepare_input(self):
-        """ Prepare in features """
+        """ 
+        Prepare in features
+        1. Padding
+        2. im2col
+        """
         # 1. Padding: self.input should be 4D
         if self.padding > 0:
             self.input = F.pad_image(self.input, self.padding)
             if type(self.input) is np.ndarray: # If numpy array, convert to tensor before conv op.
                 self.input = torch.from_numpy(self.input)
-        return F.im2col(self.input, self.kernel_size, self.stride, task="conv")
+        return F.im2col(self.input, self.kernel_size, self.stride)
  
     def forward(self, in_features):
         """ Convolution op (Auto-correlation i.e. no kernel flipping) """
@@ -87,13 +93,12 @@ class Conv2d(Module):
             self.input = in_features 
         self.create_output_vol()
         print("Input to conv layer:", self.input.size())
-        N = self.input.size(0) 
         self.input = self.prepare_input() # im2col'ed input
-        print("Post im2col:", self.input.size())
+        #print("Post im2col:", self.input.size())
         self.data = F.conv_2d(self.input, self.weight.data.view(self.weight.data.size(0), -1), 
                               self.bias.data.view(self.bias.data.size(0), -1))
         # Reshape to the o/p feature volume
-        self.data = self.data.view(N, self.output_dim[0], self.output_dim[1], 
+        self.data = self.data.view(self.N, self.output_dim[0], self.output_dim[1], 
                                    self.output_dim[2])
         # print("Reshaped:", self.data.size())
         # Clean
@@ -119,9 +124,8 @@ class Conv2d(Module):
         else:
             self.grad['input'] = F.grad_conv2d(cache, self.weight.data, gradients['input']) 
         # De-im2col grad ins i.e. F.col2im(self.grad['input'])
-            self.grad['input'] = F.col2im(self.grad['input'], (self.batches, self.channels,
-                                                               self.height, self.width),
-                                          self.kernel_size, self.stride, task="conv")
+            self.grad['input'] = F.col2im(self.grad['input'], (self.N, self.C, self.H, self.W),
+                                          self.kernel_size, self.stride)
         # Clean
         del gradients, cache
         return self.grad

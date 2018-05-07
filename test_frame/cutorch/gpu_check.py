@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import torch
 
+
 def available():
     global used
     if torch.cuda.is_available():

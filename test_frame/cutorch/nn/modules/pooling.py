@@ -31,7 +31,7 @@ class MaxPool2d(Module):
             self.stride = stride
         self.input = None  # TODO:CLEAN
         self.data = 0  # TODO:CLEAN
-        self.height = self.width = 0
+        self.N = self.H = self.W = 0
         self.output_dim = [0, 0, 0]  # For a single image
         self.batch_ims = None # im2col data.  # TODO:CLEAN
         # Gradients' creation
@@ -45,15 +45,16 @@ class MaxPool2d(Module):
         assert self.input.dim() in (3, 4), ("Input tensor should be 3D or 4D")
         if self.input.dim() == 3: # Convert to 4D tensor
             self.input = torch.unsqueeze(self.input, 0)
-        self.height, self.width = self.input.size()[2:]
+        self.N, self.C, self.H, self.W = self.input.size()
         self.output_dim[0] = self.input.size(1)
-        self.output_dim[1] = ((self.width - self.kernel_size) / self.stride) + 1
-        self.output_dim[2] = ((self.height - self.kernel_size) / self.stride) + 1
+        self.output_dim[1] = ((self.H - self.kernel_size) / self.stride) + 1
+        self.output_dim[2] = ((self.W - self.kernel_size) / self.stride) + 1
 
     def prepare_input(self):
         """ Prepare in features """
-        # 1. im2col operation (Batch op) 
-        return F.im2col(self.input, self.kernel_size, self.stride, task="pool") 
+        # 1. im2col operation (Batch op) Different than conv's im2col
+        self.input_reshaped = self.input.view(self.N * self.C, 1, self.H, self.W)
+        return F.im2col(self.input_reshaped, self.kernel_size, self.stride) 
 
     def forward(self, in_features):
         """ Pooling op """
@@ -71,10 +72,17 @@ class MaxPool2d(Module):
         print("Post_max_pool:", self.data.size()) 
         self.data = self.data.view(N, self.output_dim[0], 
                                    self.output_dim[1], self.output_dim[2])
-        # print("Reshaped:", self.data.size())
+        print("Reshaped:", self.data.size())
         # Clean
         del in_features
         return self
 
-    def backward(self):
-        pass
+    def backward(self, gradients):
+        self.grad['input'] = F.grad_maxpool2d(self.input.size(), self.max_track, gradients['input'])
+        print(self.grad['input'].size())
+        self.grad['input'] = F.col2im(self.grad['input'], (self.N * self.C, 1, self.H, self.W),
+                                      self.kernel_size, self.stride)
+         # Different than conv's col2im
+        self.grad['input'] = self.grad['input'].view(self.N, self.C, self.H, self.W)
+        return self.grad
+                                    
