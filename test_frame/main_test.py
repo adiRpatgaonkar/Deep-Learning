@@ -72,5 +72,6 @@ from collections import OrderedDict as OD
 gradients = OD()
 gradients['input'] = torch.randn(2, 16, 14, 14)
 grad = cnn.layer1[3].backward(gradients)
+grad = cnn.layer1[2].backward(grad)
 grad = cnn.layer1[1].backward(grad)
 grad = cnn.layer1[0].backward(grad)

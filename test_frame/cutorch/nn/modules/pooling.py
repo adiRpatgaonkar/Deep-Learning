@@ -53,8 +53,8 @@ class MaxPool2d(Module):
     def prepare_input(self):
         """ Prepare in features """
         # 1. im2col operation (Batch op) Different than conv's im2col
-        self.input_reshaped = self.input.view(self.N * self.C, 1, self.H, self.W)
-        return F.im2col(self.input_reshaped, self.kernel_size, self.stride) 
+        return F.im2col(self.input.view(self.N * self.C, 1, self.H, self.W), 
+                        self.kernel_size, self.stride)
 
     def forward(self, in_features):
         """ Pooling op """
@@ -79,10 +79,11 @@ class MaxPool2d(Module):
 
     def backward(self, gradients):
         self.grad['input'] = F.grad_maxpool2d(self.input.size(), self.max_track, gradients['input'])
-        print(self.grad['input'].size())
         self.grad['input'] = F.col2im(self.grad['input'], (self.N * self.C, 1, self.H, self.W),
                                       self.kernel_size, self.stride)
          # Different than conv's col2im
         self.grad['input'] = self.grad['input'].view(self.N, self.C, self.H, self.W)
+        # Clean
+        del gradients
         return self.grad
                                     
