@@ -20,8 +20,8 @@ class Linear(Module):
         self.idx = -1
         self.in_features = in_features
         self.out_features = out_features
-        self.input = None # CLEAN
-        self.data = 0 # CLEAN
+        self.input = None  # CLEAN
+        self.data = 0  # CLEAN
         # Parameters' creation
         self._parameters = []
         self.weight = Parameter(weight=beta*torch.randn(self.in_features, self.out_features),
@@ -30,12 +30,12 @@ class Linear(Module):
             self.bias = Parameter(bias=torch.Tensor(1, out_features).fill_(0),
                                   require_gradient=True)
         # Gradients' creation
-        self.grad = OrderedDict() # CLEAN
+        self.grad = OrderedDict()  # CLEAN
         if self.weight.require_gradient:
             self.grad['weight'] = 0
         if bias and self.bias.require_gradient:
             self.grad['bias'] = 0
-        self.grad['input'] = 0
+        self.grad['in'] = 0  # CLEAN
         # Finish param setup
         self.init_param_setup()
 
@@ -58,24 +58,24 @@ class Linear(Module):
         return self
 
     def backward(self, gradients):
-        # gradients['input'] are actually output gradients
-        # grad['input'] are actual input gradients
-        # print(self.input.t(), gradients['input'])
-        if gradients['input'].dim() == 1:
-            gradients['input'] = gradients['input'].unsqueeze(0)
+        # gradients['in'] are actually output gradients
+        # grad['in'] are actual input gradients
+        # print(self.input.t(), gradients['in'])
+        if gradients['in'].dim() == 1:
+            gradients['in'] = gradients['in'].unsqueeze(0)
 
         if self.weight.require_gradient:
-            self.grad['weight'] = f.gradient_weight(self.input, gradients['input'])
+            self.grad['weight'] = f.gradient_weight(self.input, gradients['in'])
             self.weight.gradient = self.grad['weight']
 
         if self.bias.require_gradient:
-            self.grad['bias'] = f.gradient_bias(gradients['input'])
+            self.grad['bias'] = f.gradient_bias(gradients['in'])
             self.bias.gradient = self.grad['bias']
         if self.idx == '0':
             # No gradients required for input layer (idx == 0)
-            self.grad['input'] = torch.Tensor(self.input.size())
+            self.grad['in'] = torch.Tensor(self.input.size())
         else:
-            self.grad['input'] = f.gradient_linear(self.weight.data, gradients['input'])
+            self.grad['in'] = f.gradient_linear(self.weight.data, gradients['in'])
         # Clean
         del gradients
         return self.grad

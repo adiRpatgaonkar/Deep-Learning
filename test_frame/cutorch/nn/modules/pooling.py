@@ -35,8 +35,8 @@ class MaxPool2d(Module):
         self.output_dim = [0, 0, 0]  # For a single image
         self.batch_ims = None # im2col data.  # TODO:CLEAN
         # Gradients' creation
-        self.grad = OrderedDict()
-        self.grad['output'] = 0
+        self.grad = OrderedDict()  # CLEAN
+        self.grad['in'] = 0 
     
     def create_output_vol(self):
         """ Create output volume """
@@ -78,11 +78,11 @@ class MaxPool2d(Module):
         return self
 
     def backward(self, gradients):
-        self.grad['input'] = F.grad_maxpool2d(self.input.size(), self.max_track, gradients['input'])
-        self.grad['input'] = F.col2im(self.grad['input'], (self.N * self.C, 1, self.H, self.W),
+        self.grad['in'] = F.grad_maxpool2d(self.input.size(), self.max_track, gradients['in'])
+        self.grad['in'] = F.col2im(self.grad['in'], (self.N * self.C, 1, self.H, self.W),
                                       self.kernel_size, self.stride)
          # Different than conv's col2im
-        self.grad['input'] = self.grad['input'].view(self.N, self.C, self.H, self.W)
+        self.grad['in'] = self.grad['in'].view(self.N, self.C, self.H, self.W)
         # Clean
         del gradients
         return self.grad

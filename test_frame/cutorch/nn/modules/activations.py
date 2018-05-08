@@ -19,10 +19,10 @@ class ReLU(Module):
         super(ReLU, self).__init__()
         self.idx = -1
         self.input = None  # CLEAN
-        self.data = 0 # CLEAN
+        self.data = 0  # CLEAN
         # Gradients' creation
-        self.grad = OrderedDict() # CLEAN
-        self.grad['input'] = 0
+        self.grad = OrderedDict()  # CLEAN
+        self.grad['in'] = 0  # CLEAN
 
     def forward(self, in_features):
         if not torch.is_tensor(in_features):
@@ -39,9 +39,9 @@ class ReLU(Module):
         :param gradients: gradients from the last 
                           back-propagated layer
         """
-        # gradients['input'] are actually output gradients
-        # grad['input'] are actual input gradients
-        self.grad['input'] = f.gradient_relu(self.data, gradients['input'])
+        # gradients['in'] are actually output gradients
+        # grad['in'] are actual input gradients
+        self.grad['in'] = f.gradient_relu(self.data, gradients['in'])
         # Clean
         del gradients
         return self.grad
@@ -72,12 +72,14 @@ class Softmax(Module):
             return self
         elif Module.is_eval:
             return self.predict()
+        else:
+            raise AssertionError("Mode not specified: (train/eval)")
 
     def backward(self, targets):
         # targets: LongTensor of labels
-        # grad['input'] are actual input gradients
+        # grad['in'] are actual input gradients
         # Gradient of softmax outputs @ fprop
-        self.grad['input'] = f.gradient_softmax(self.data, targets)
+        self.grad['in'] = f.gradient_softmax(self.data, targets)
         # Clean
         del targets
         return self.grad

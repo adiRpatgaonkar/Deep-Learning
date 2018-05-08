@@ -50,7 +50,9 @@ class CNN(nn.Module):
             nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.MaxPool2d(2))
-        self.fc = nn.Linear(5*5*32, 10)
+        self.fc = nn.Sequential(
+            nn.Linear(5*5*32, 10),
+            nn.Softmax())
 
     def forward(self, x):
         out = self.layer1(x)
@@ -62,15 +64,15 @@ class CNN(nn.Module):
 
 image = (torch.LongTensor(2, 3, 32, 32).random_(0, 255)).float()
 cnn = CNN()
-global outputs
+cnn.train()
 outputs = cnn(image)
-print("Net-out:", outputs.data.size())
-print(cnn.layer1[1].parameters())
+print("Net-out:", outputs.data, outputs.data.size())
+print(cnn.layer1[1].parameters(), cnn.forward_path)
 # Backprop testing
 # Dummy grads
 from collections import OrderedDict as OD
 gradients = OD()
-gradients['input'] = torch.randn(2, 16, 14, 14)
+gradients['in'] = torch.randn(2, 16, 14, 14)
 grad = cnn.layer1[3].backward(gradients)
 grad = cnn.layer1[2].backward(grad)
 grad = cnn.layer1[1].backward(grad)

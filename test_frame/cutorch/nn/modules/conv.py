@@ -44,7 +44,7 @@ class Conv2d(Module):
             self.grad['weight'] = 0
         if bias and self.bias.require_gradient:
             self.grad['bias'] = 0
-        self.grad['output'] = 0
+        self.grad['in'] = 0  # CLEAN
          
         # Finish param setup
         self.init_param_setup()
@@ -106,25 +106,25 @@ class Conv2d(Module):
         return self
 
     def backward(self, gradients):
-        # gradients['input'] are actually output gradients
-        # grad['input'] are actual input gradients
+        # gradients['in'] are actually output gradients
+        # grad['in'] are actual input gradients
         
         if self.bias.require_gradient:
-            self.grad['bias'] = F.grad_conv2d_bias(gradients['input'])
+            self.grad['bias'] = F.grad_conv2d_bias(gradients['in'])
             self.bias.gradient = self.grad['bias']
 
         if self.weight.require_gradient:
-            self.grad['weight'], cache = F.grad_conv2d_weight(self.input, gradients['input'])   
+            self.grad['weight'], cache = F.grad_conv2d_weight(self.input, gradients['in'])   
             # Reshape to the size of the layer's kernels
             self.grad['weight'] = self.grad['weight'].view(self.weight.data.size())
         self.idx = '1'
         if self.idx == '0':
             # No gradients required for input layer (idx == 0)
-            self.grad['input'] = torch.Tensor(self.input.size())
+            self.grad['in'] = torch.Tensor(self.input.size())
         else:
-            self.grad['input'] = F.grad_conv2d(cache, self.weight.data, gradients['input']) 
-        # De-im2col grad ins i.e. F.col2im(self.grad['input'])
-            self.grad['input'] = F.col2im(self.grad['input'], (self.N, self.C, self.H, self.W),
+            self.grad['in'] = F.grad_conv2d(cache, self.weight.data, gradients['in']) 
+        # De-im2col grad ins i.e. F.col2im(self.grad['in'])
+            self.grad['in'] = F.col2im(self.grad['in'], (self.N, self.C, self.H, self.W),
                                           self.kernel_size, self.stride)
         # Clean
         del gradients, cache

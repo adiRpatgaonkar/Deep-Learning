@@ -41,7 +41,7 @@ class BatchNorm2d(Module):
             self.grad['beta'] = 0
         if self.gamma.require_gradient:
             self.grad['gamma'] = 0
-        self.grad['input'] = 0
+        self.grad['in'] = 0
         # Finish param setup
         self.init_param_setup()
 
@@ -68,12 +68,12 @@ class BatchNorm2d(Module):
 
     def backward(self, gradients):
         if self.beta.require_gradient:
-            self.grad['beta'] = F.gradient_beta(gradients['input'])
+            self.grad['beta'] = F.gradient_beta(gradients['in'])
             self.beta.gradient = self.grad['beta']
         if self.gamma.require_gradient:
-            self.grad['gamma'] = F.gradient_gamma(gradients['input'])
+            self.grad['gamma'] = F.gradient_gamma(gradients['in'])
             self.gamma.gradient = self.grad['gamma']
-        self.grad['input'] = F.gradient_bnorm2d(self.gamma.data, self.cache, gradients['input'])
+        self.grad['in'] = F.gradient_bnorm2d(self.gamma.data, self.cache, gradients['in'])
         # Clean
         del gradients 
         return self.grad

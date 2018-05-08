@@ -19,6 +19,7 @@ class Module(object):
         self._hypers = OD()
         # For capturing connections b/w layers only
         self._forward_graph = OD()
+        self.forward_path = OD()
         self._param_graph = OD()
         self._state_dict = OD({'accuracy': 0, 'weight': OD()})
         self.modules = OD()
@@ -41,6 +42,8 @@ class Module(object):
                             self._add_parameters(member.idx, member.parameters())
         self._add_forward_hooks()
         result = self.forward(*inputs)
+        if not type(self).__name__ in names.all:
+            self.register_forward_hooks(string=True) 
         return result
 
     def __getitem__(self, component, idx=None):
@@ -160,14 +163,18 @@ class Module(object):
         if self not in Module._forward_hooks.values():
             Module._forward_hooks[str(len(Module._forward_hooks))] = self
 
-    def register_forward_hooks(self):
+    def register_forward_hooks(self, string=False):
         # Hook => layer module
         for hook in Module._forward_hooks.values():
             if type(hook).__name__ in names.layers:
                 if hook not in self._forward_graph:
-                    idx = len(self._forward_graph)
-                    self._forward_graph[str(idx)] = hook
-                    self._param_graph[str(idx)] = hook.parameters()
+                    if string:
+                        idx = len(self.forward_path)
+                        self.forward_path[str(idx)] = type(hook).__name__
+                    elif not string:
+                        idx = len(self._forward_graph)
+                        self._forward_graph[str(idx)] = hook
+                        self._param_graph[str(idx)] = hook.parameters()
 
     def forward_graph(self):
         return self._forward_graph
