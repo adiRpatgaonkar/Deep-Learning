@@ -106,22 +106,27 @@ def pad_image(image, p):
 #                                               #
 #################################################
 
-def batchnorm_2d(x, beta, gamma, epsilon):
+def batchnorm_2d(x, beta, gamma, epsilon, mean=None, var=None):
     assert x.dim() == 4, "Input should be a 4D Tensor"
     N, C, H, W = x.size()
-    mean, variance = [], []
-    # Mean: w.r.t channels
-    for channel in range(C):
-        mean.append(torch.mean(x[:, channel, :, :]))
-    mean = torch.Tensor(mean)
-    # print(mean)
-    # Variance: w.r.t channels
+    if not mean and not var:
+        # Training
+        mean, variance = [], []
+        # Mean: w.r.t channels
+        for channel in range(C):
+            mean.append(torch.mean(x[:, channel, :, :]))
+        mean = torch.Tensor(mean) # New mean
+        
+        # print(mean)
+        # Variance: w.r.t channels
+        x_mu = (x - mean.view(1, C, 1, 1))
+        x_mu_sq = x_mu ** 2
+        for channel in range(C):
+            variance.append(torch.mean(x_mu_sq[:, channel, :, :]))
+        variance = torch.Tensor(variance)  # sigma^2 # New var
+    # else use running mean as mean and var is given
     x_mu = (x - mean.view(1, C, 1, 1))
-    x_mu_sq = x_mu ** 2
-    for channel in range(C):
-        variance.append(torch.mean(x_mu_sq[:, channel, :, :]))
-    variance = torch.Tensor(variance)  # sigma^2
-    # print(variance)
+    x_mu_sq = x_mu ** 2 
     sqrt_var = torch.sqrt(variance.view(1, C, 1, 1) + epsilon)
     invr_var = 1.0 / sqrt_var
     # Normalized input.

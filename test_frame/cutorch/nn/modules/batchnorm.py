@@ -16,7 +16,7 @@ from .. import functionals as F
 
 class BatchNorm2d(Module):
     """ Batch Norm 2D module. *Under construction* """
-    def __init__(self, num_features, beta=None, gamma=None, eps=1e-5):
+    def __init__(self, num_features, running=True, beta=None, gamma=None, eps=1e-5):
         super(BatchNorm2d, self).__init__()
         self.idx = -1
         self.channels = num_features
@@ -60,8 +60,12 @@ class BatchNorm2d(Module):
             self.input = in_features
         assert self.input.size(1) == self.channels, ("input channels should be {}".format(self.channels))
         print("Input to B_normed2d layer:", self.input.size())
-        self.data, self.mean, self.variance, self.cache = \
-        F.batchnorm_2d(self.input, self.beta.data, self.gamma.data, self.epsilon)
+        if Module.is_train:
+            self.data, self.mean, self.variance, self.cache = \
+            F.batchnorm_2d(self.input, self.beta.data, self.gamma.data, self.epsilon)
+        elif Module.is_eval:
+            self.data, _, _, _ = \
+            F.batchnorm_2d(self.input, self.beta.data, self.gamma.data, self.epsilon, mean=self.mean, var=self.var) 
         # Clean
         del in_features
         return self
