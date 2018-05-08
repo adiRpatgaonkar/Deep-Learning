@@ -5,38 +5,36 @@ import cutorch.nn as nn
 import cutorch.nn.functionals as F
 import cutorchvision.datasets as dsets
 from cutorchvision.transforms import Transforms
+from evaluate import evaluate 
 
 using_gpu = False
-# if cutorch.gpu_check.available():
-#     using_gpu = True
-# else:
-#     using_gpu = False
+if cutorch.gpu_check.available():
+    using_gpu = True
+else:
+    using_gpu = False
 
 # Hyperparameters
 max_epochs = 10
-learning_rate, lr_decay = 2e-2, 5e-5
+learning_rate, lr_decay = 3e-3, 5e-5
 reg = 1e-3
 batch_size = 100
 
 # Get training data for training and Cross validation
-trainset = dsets.CIFAR10(dir="cutorchvision/data",
-                         download=True, train=True,
-                         form="tensor")
+trainset = dsets.CIFAR10(dir="cutorchvision/data", download=True, 
+                         train=True, form="tensor")
 # Data augmentation
-trainset = Transforms(dataset=trainset,
-                      lr_flip=True, crop=False)
-# For testing
-testset = dsets.CIFAR10(dir="cutorchvision/data",
-                        download=True, test=True,
-                        form="tensor")
-# Testing data for validation
-test_loader = cutorch.utils.data.DataLoader(data=testset.data,
-                                            batch_size=10000,
-                                            shuffled=False)
+trainset = Transforms(dataset=trainset, lr_flip=True, crop=False)
+train_loader = cutorch.utils.data.DataLoader(data=trainset.data, 
+                                             batch_size=100, 
+                                             shuffled=True, 
+                                             cross_val=True)
 
-train_loader = cutorch.utils.data.DataLoader(data=trainset.data,
-                                             batch_size=batch_size,
-                                             shuffled=True)
+# For testing
+testset = dsets.CIFAR10(dir="cutorchvision/data", download=True, 
+                        test=True, form="tensor")
+test_loader = cutorch.utils.data.DataLoader(data=testset.data, 
+                                            batch_size=100,
+                                            shuffled=False)
 
 
 class CNN(nn.Module):
@@ -74,12 +72,17 @@ for epoch in range(max_epochs):
         if using_gpu:
             images = images.cuda()
             labels = labels.cuda()
-
         cnn.train()
         optimizer.zero_grad()
         outputs = cnn(images)
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
-        print ("Epoch [{}/{}], Iter[{}/{}] Loss:{:4f}".format(epoch+1, max_epochs, 
-                                                            i+1, len(trainset.data)//batch_size, loss.data)) 
+        total, accuracy = evaluate(cnn, train_loader[-1], "cross-validate")
+        print("\nL.R:[{:.5f}]".format(cnn.hypers('lr')), end=" ")
+        print("Epoch:[{}/{}]".format(epoch + 1, max_epochs), end=" ")
+        print("Iter:[{}/{}]".format(i + 1, train_loader.num_batches), end=" ")
+        print("error:[{:.5f}]".format(loss.data), end=" ")
+        print("CVal accuracy on {} images: {} %".format(total, accuracy))
+        # total = evaluate(cnn, test_loader, "test")
+        # print("Val accuracy on {} images: {} %".format(total, cnn.results['accuracy']))

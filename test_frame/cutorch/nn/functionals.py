@@ -3,6 +3,7 @@ from __future__ import print_function
 import math
 
 import torch
+import torch.nn.functional as F
 import numpy as np
 
 
@@ -54,7 +55,7 @@ def im2col(batch, kernel_size, stride):
         batch_i2c = torch.cat((batch_i2c, i2c_per_im), 1)
         # print("Bim2c",batch_im2col)
     # Clean
-    del batch, i2c_per_im, im_col
+    del i2c_per_im, im_col
     return batch_i2c
 
 
@@ -82,22 +83,15 @@ def col2im(input, x_size, k_size, stride):
             fw = k_size
         fh = k_size
         batch_c2i = torch.cat((batch_c2i, c2i_per_im.unsqueeze(0)), 0)
-    del input, batch, col, c2i_per_im
+    # Clean
+    del batch, col, c2i_per_im
     return batch_c2i
 
 
 def pad_image(image, p):
     # Works for a batch of images
     # i.e. 4D tensor
-    if torch.is_tensor(image):
-        if image.dim() != 4:
-            raise ValueError("Works for 4D Tensor only.")
-        image = image.numpy()
-    elif type(image) != np.ndarray:
-        raise TypeError("Padding will be done on a numpy array only.")
-    image = np.pad(image, mode='constant', constant_values=0,
-                   pad_width=((0, 0), (0, 0), (p, p), (p, p)))
-    return image
+    return F.pad(image, (p, p, p, p), "constant", 0)
 
 
 #################################################
@@ -106,10 +100,10 @@ def pad_image(image, p):
 #                                               #
 #################################################
 
-def batchnorm_2d(x, beta, gamma, epsilon, mean=None, var=None):
+def batchnorm_2d(x, beta, gamma, epsilon, r_mean=None, r_var=None):
     assert x.dim() == 4, "Input should be a 4D Tensor"
     N, C, H, W = x.size()
-    if not mean and not var:
+    if r_mean is None and r_var is None:
         # Training
         mean, variance = [], []
         # Mean: w.r.t channels
@@ -125,6 +119,9 @@ def batchnorm_2d(x, beta, gamma, epsilon, mean=None, var=None):
             variance.append(torch.mean(x_mu_sq[:, channel, :, :]))
         variance = torch.Tensor(variance)  # sigma^2 # New var
     # else use running mean as mean and var is given
+    else:
+        mean = r_mean
+        variance = r_var
     x_mu = (x - mean.view(1, C, 1, 1))
     x_mu_sq = x_mu ** 2 
     sqrt_var = torch.sqrt(variance.view(1, C, 1, 1) + epsilon)
@@ -136,8 +133,9 @@ def batchnorm_2d(x, beta, gamma, epsilon, mean=None, var=None):
     out = gamma.view(1, C, 1, 1) * x_hat + beta.view(1, C, 1, 1)
     # print(out)
     cache = (x_hat, invr_var)  # To be used for backwarding BN2D
-    del x, x_mu, x_mu_sq, sqrt_var
     # Clean
+    del x_mu, x_mu_sq, sqrt_var
+    
     return out, mean, variance, cache
 
 
@@ -276,8 +274,6 @@ def gradient_relu(activations, gradients):
     # Commented out. Leading to a nan loss
     # gradients[activations == 0] = random.randint(1, 10) / 10.0
     gradients[activations <= 0] = 0
-    # Clean
-    del activations
     return gradients
 
 
@@ -285,8 +281,6 @@ def gradient_softmax(inputs, targets):
     d_probs = inputs
     d_probs[range(len(inputs)), targets] -= 1
     d_probs /= len(inputs)
-    # Clean
-    del inputs
     return d_probs
 
 
@@ -323,18 +317,15 @@ def gradient_bnorm2d(gamma, cache, grad_out):
     grad_in = (1. / N) * invr_var * (
                 (N * grad_xhat) - sum_grad_xhat.view(1, C, 1, 1) - (x_hat * sum_xhat_grad_xhat.view(1, C, 1, 1)))
     # Clean
-    del gamma, cache, grad_out, x_hat, invr_var, grad_xhat, sum_grad_xhat, sum_xhat_grad_xhat
+    del x_hat, invr_var, grad_xhat, sum_grad_xhat, sum_xhat_grad_xhat
     return grad_in
 
 
 def grad_conv2d_bias(grad_out):
     C = grad_out.size(1)
     grad_bias = []
-
     for c in range(C):
         grad_bias.append(torch.sum(grad_out[:, c, :, :]))
-    # Clean
-    del grad_out
     return torch.Tensor(grad_bias).unsqueeze(1)
 
 
@@ -343,17 +334,12 @@ def grad_conv2d_weight(input, grad_out):
     grad_out = grad_out.permute(1, 2, 3, 0).contiguous()
     grad_out = grad_out.view(C, -1)
     grad_weight = torch.mm(grad_out, input.t())
-    # Clean
-    del input
     return grad_weight, grad_out
 
 
 def grad_conv2d(cache, weight, grad_out):
     C = grad_out.size(1)
-    weight_reshaped = weight.view(C, -1)
-    grad_Xcol = torch.mm(weight_reshaped.t(), cache)
-    # Clean
-    del cache, weight_reshaped, grad_out
+    grad_Xcol = torch.mm(weight.view(C, -1).t(), cache)
     return grad_Xcol
 
 
@@ -366,6 +352,4 @@ def grad_maxpool2d(xcol_size, max_track, grad_out):
         grad_out = grad_out.permute(2, 3, 0, 1).contiguous()
         grad_out = grad_out.view(-1)
     grad_Xcol[max_track, range(max_track.size(0))] = grad_out
-    # Clean
-    del grad_out
     return grad_Xcol

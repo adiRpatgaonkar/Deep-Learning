@@ -52,8 +52,6 @@ class Linear(Module):
             self.input = in_features.data
         else:
             self.input = in_features
-        # Clean
-        del in_features
         self.data = f.linear(self.input, self.weight.data, self.bias.data)
         return self
 
@@ -76,7 +74,5 @@ class Linear(Module):
             self.grad['in'] = torch.Tensor(self.input.size())
         else:
             self.grad['in'] = f.gradient_linear(self.weight.data, gradients['in'])
-        # Clean
-        del gradients
         return self.grad
 

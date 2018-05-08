@@ -18,15 +18,17 @@ def evaluate(model, dataset, task):
     if isinstance(dataset, tuple) and task == "cross-validate":
         dataset = [dataset]  # Usually for cross-validation
     for images, labels in dataset:
-        if cutorch.gpu.used:
-            images = images.cuda()  # Move image batch to GPU
-            labels = labels.cuda()
+        if 'used' in cutorch.gpu.__dict__.keys():
+            if cutorch.gpu.used:
+                images = images.cuda()  # Move image batch to GPU
+                labels = labels.cuda()
         outputs = model(images)
         _, predicted = outputs.data
         total += len(labels)
         correct += (predicted == labels).sum()
-        if cutorch.gpu.used:  # GPU cache cleaning. Unsure of effectiveness
-            torch.cuda.empty_cache()
+        if 'used' in cutorch.gpu.__dict__.keys():
+            if cutorch.gpu.used:  # GPU cache cleaning. Unsure of effectiveness
+                torch.cuda.empty_cache()
     if task == "cross-validate":
         # ++++ Cross validation accuracy ++++ #
         accuracy['cval'].append(100 * correct / total)  # To plot

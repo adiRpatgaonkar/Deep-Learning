@@ -30,8 +30,6 @@ class ReLU(Module):
         else:
             self.input = in_features
         self.data = f.relu(self.input)
-        # Clean
-        del in_features
         return self
 
     def backward(self, gradients):
@@ -42,8 +40,6 @@ class ReLU(Module):
         # gradients['in'] are actually output gradients
         # grad['in'] are actual input gradients
         self.grad['in'] = f.gradient_relu(self.data, gradients['in'])
-        # Clean
-        del gradients
         return self.grad
 
 
@@ -66,8 +62,6 @@ class Softmax(Module):
         else:
             self.input = in_features
         self.data = f.softmax(self.input)
-        # Clean
-        del in_features
         if Module.is_train:
             return self
         elif Module.is_eval:
@@ -80,8 +74,6 @@ class Softmax(Module):
         # grad['in'] are actual input gradients
         # Gradient of softmax outputs @ fprop
         self.grad['in'] = f.gradient_softmax(self.data, targets)
-        # Clean
-        del targets
         return self.grad
 
     def predict(self):

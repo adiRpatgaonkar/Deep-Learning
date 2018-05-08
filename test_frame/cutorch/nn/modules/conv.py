@@ -80,8 +80,6 @@ class Conv2d(Module):
         # 1. Padding: self.input should be 4D
         if self.padding > 0:
             self.input = F.pad_image(self.input, self.padding)
-            if type(self.input) is np.ndarray: # If numpy array, convert to tensor before conv op.
-                self.input = torch.from_numpy(self.input)
         return F.im2col(self.input, self.kernel_size, self.stride)
  
     def forward(self, in_features):
@@ -103,8 +101,6 @@ class Conv2d(Module):
         self.data = self.data.view(self.N, self.output_dim[0], self.output_dim[1], 
                                    self.output_dim[2])
         # print("Reshaped:", self.data.size())
-        # Clean
-        del in_features
         return self
 
     def backward(self, gradients):
@@ -130,6 +126,6 @@ class Conv2d(Module):
             self.grad['in'] = F.col2im(self.grad['in'], (self.N, self.C, self.H, self.W),
                                           self.kernel_size, self.stride)
         # Clean
-        del gradients, cache
+        del cache
         return self.grad
 

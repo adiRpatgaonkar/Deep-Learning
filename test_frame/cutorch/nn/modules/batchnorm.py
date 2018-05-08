@@ -65,9 +65,8 @@ class BatchNorm2d(Module):
             F.batchnorm_2d(self.input, self.beta.data, self.gamma.data, self.epsilon)
         elif Module.is_eval:
             self.data, _, _, _ = \
-            F.batchnorm_2d(self.input, self.beta.data, self.gamma.data, self.epsilon, mean=self.mean, var=self.var) 
-        # Clean
-        del in_features
+            F.batchnorm_2d(self.input, self.beta.data, self.gamma.data, self.epsilon, 
+                           r_mean=self.mean, r_var=self.variance)
         return self
 
     def backward(self, gradients):
@@ -77,8 +76,6 @@ class BatchNorm2d(Module):
         if self.gamma.require_gradient:
             self.grad['gamma'] = F.gradient_gamma(gradients['in'])
             self.gamma.gradient = self.grad['gamma']
-        self.grad['in'] = F.gradient_bnorm2d(self.gamma.data, self.cache, gradients['in'])
-        # Clean
-        del gradients 
+        self.grad['in'] = F.gradient_bnorm2d(self.gamma.data, self.cache, gradients['in']) 
         return self.grad
 

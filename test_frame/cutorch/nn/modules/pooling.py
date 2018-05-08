@@ -33,7 +33,6 @@ class MaxPool2d(Module):
         self.data = 0  # TODO:CLEAN
         self.N = self.H = self.W = 0
         self.output_dim = [0, 0, 0]  # For a single image
-        self.batch_ims = None # im2col data.  # TODO:CLEAN
         # Gradients' creation
         self.grad = OrderedDict()  # CLEAN
         self.grad['in'] = 0 
@@ -73,8 +72,6 @@ class MaxPool2d(Module):
         self.data = self.data.view(N, self.output_dim[0], 
                                    self.output_dim[1], self.output_dim[2])
         #print("Reshaped:", self.data.size())
-        # Clean
-        del in_features
         return self
 
     def backward(self, gradients):
@@ -83,7 +80,5 @@ class MaxPool2d(Module):
                                       self.kernel_size, self.stride)
          # Different than conv's col2im
         self.grad['in'] = self.grad['in'].view(self.N, self.C, self.H, self.W)
-        # Clean
-        del gradients
         return self.grad
                                     

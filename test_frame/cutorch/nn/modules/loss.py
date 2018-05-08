@@ -35,7 +35,6 @@ class CrossEntropyLoss(Module):
         if f.nan_check(self.data):
             # Quit if loss is NaN.
             sys.exit('Loss is NaN\nExiting ...\n')
-        del module
         return self
 
     def backward(self):
