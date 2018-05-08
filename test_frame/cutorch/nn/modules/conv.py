@@ -95,6 +95,8 @@ class Conv2d(Module):
         print("Input to conv layer:", self.input.size())
         self.input = self.prepare_input() # im2col'ed input
         #print("Post im2col:", self.input.size())
+        print(self.input.size(), self.weight.data.view(self.weight.data.size(0), -1).size(), 
+        self.bias.data.size())
         self.data = F.conv_2d(self.input, self.weight.data.view(self.weight.data.size(0), -1), 
                               self.bias.data.view(self.bias.data.size(0), -1))
         # Reshape to the o/p feature volume
@@ -111,7 +113,8 @@ class Conv2d(Module):
         
         if self.bias.require_gradient:
             self.grad['bias'] = F.grad_conv2d_bias(gradients['in'])
-            self.bias.gradient = self.grad['bias']
+            self.grad['bias'] = self.grad['bias'].unsqueeze(1).unsqueeze(1)
+            self.bias.gradient = self.grad['bias'] 
 
         if self.weight.require_gradient:
             self.grad['weight'], cache = F.grad_conv2d_weight(self.input, gradients['in'])   

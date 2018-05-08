@@ -198,5 +198,5 @@ class Module(object):
             gradients = module.backward(gradients)
             # Store gradients @ current iteration
             # for every module
-            self.gradients[module.idx] = gradients
+            # self.gradients[module.idx] = gradients
         # self.update_parameters(lr=0.05)

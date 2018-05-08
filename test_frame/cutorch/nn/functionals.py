@@ -335,7 +335,7 @@ def grad_conv2d_bias(grad_out):
         grad_bias.append(torch.sum(grad_out[:, c, :, :]))
     # Clean
     del grad_out
-    return torch.Tensor(grad_bias)
+    return torch.Tensor(grad_bias).unsqueeze(1)
 
 
 def grad_conv2d_weight(input, grad_out):
@@ -360,8 +360,11 @@ def grad_conv2d(cache, weight, grad_out):
 def grad_maxpool2d(xcol_size, max_track, grad_out):
     rows, cols = xcol_size
     grad_Xcol = torch.Tensor(rows, cols).fill_(0)
-    grad_out = grad_out.permute(2, 3, 0, 1).contiguous()
-    grad_out = grad_out.view(-1)
+    if grad_out.dim() == 2:
+        grad_out = grad_out.t().contiguous().view(-1)
+    elif grad_out.dim() == 4:
+        grad_out = grad_out.permute(2, 3, 0, 1).contiguous()
+        grad_out = grad_out.view(-1)
     grad_Xcol[max_track, range(max_track.size(0))] = grad_out
     # Clean
     del grad_out
