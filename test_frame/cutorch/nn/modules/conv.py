@@ -92,11 +92,11 @@ class Conv2d(Module):
         else:
             self.input = in_features 
         self.create_output_vol()
-        print("Input to conv layer:", self.input.size())
+        #print("Input to conv layer:", self.input.size())
         self.input = self.prepare_input() # im2col'ed input
         #print("Post im2col:", self.input.size())
-        print(self.input.size(), self.weight.data.view(self.weight.data.size(0), -1).size(), 
-        self.bias.data.size())
+        #print(self.input.size(), self.weight.data.view(self.weight.data.size(0), -1).size(), 
+        #self.bias.data.size())
         self.data = F.conv_2d(self.input, self.weight.data.view(self.weight.data.size(0), -1), 
                               self.bias.data.view(self.bias.data.size(0), -1))
         # Reshape to the o/p feature volume

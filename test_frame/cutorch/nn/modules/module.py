@@ -108,10 +108,12 @@ class Module(object):
                     for param in hook.parameters():
                         param.gradient = 0
                 self.gradients = OD()
-
+            if "r-graphs" in objects:
+                Module._forward_hooks = OD()
+                self._backward_hooks = OD()
 
     def state_dict(self):
-        self.clean(["input", "output", "gradient"])
+        self.clean(["input", "output", "gradient", "r-graphs"])
         return deepcopy(self)
 
     def see_modules(self):
@@ -124,7 +126,7 @@ class Module(object):
             print("")
         print(")\n")
 
-    def set_hyperparameters(self, **kwargs):
+    def set_hypers(self, **kwargs):
         self._hypers = kwargs
 
     def hypers(self, name):
@@ -140,7 +142,7 @@ class Module(object):
         else:
             return self._param_graph
 
-    def update_parameters(self, lr, reg=None):
+    def update_params(self, lr, reg=None):
         self._hypers['lr'] = lr
         for module in self.forward_graph().values():
             for param in module.parameters():

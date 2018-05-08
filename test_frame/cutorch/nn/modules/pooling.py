@@ -65,14 +65,14 @@ class MaxPool2d(Module):
             self.input = in_features   
         self.create_output_vol()
         N = self.input.size(0)
-        print("Input to max_pool2d layer:", self.input.size())
+        #print("Input to max_pool2d layer:", self.input.size())
         self.input = self.prepare_input() # im2col'ed input
-        print("Post im2col:", self.input.size())
+        #print("Post im2col:", self.input.size())
         self.data, self.max_track = F.max_pool2d(self.input)
-        print("Post_max_pool:", self.data.size()) 
+        #print("Post_max_pool:", self.data.size()) 
         self.data = self.data.view(N, self.output_dim[0], 
                                    self.output_dim[1], self.output_dim[2])
-        print("Reshaped:", self.data.size())
+        #print("Reshaped:", self.data.size())
         # Clean
         del in_features
         return self

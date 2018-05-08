@@ -6,6 +6,7 @@ import cutorch.nn.functionals as F
 import cutorchvision.datasets as dsets
 from cutorchvision.transforms import Transforms
 
+using_gpu = False
 # if cutorch.gpu_check.available():
 #     using_gpu = True
 # else:
@@ -13,7 +14,7 @@ from cutorchvision.transforms import Transforms
 
 # Hyperparameters
 max_epochs = 10
-learning_rate, lr_decay = 5e-2, 5e-5
+learning_rate, lr_decay = 2e-2, 5e-5
 reg = 1e-3
 batch_size = 100
 
@@ -64,35 +65,21 @@ class CNN(nn.Module):
         out = self.fc(out)
         return out
 
-import torch
-image = (torch.LongTensor(100, 3, 32, 32).random_(0, 255)).float()
 cnn = CNN()
 criterion = nn.CrossEntropyLoss()
 optimizer = cutorch.optim.Optimizer(cnn, lr=learning_rate, lr_decay=lr_decay, reg=reg)
-'''
-cnn.train()
-outputs = cnn(image)
-print("Net-out:", outputs.data, outputs.data.size())
-print(cnn.layer1[1].parameters(), cnn.forward_path)
-# Backprop testing
-# Dummy grads
-from collections import OrderedDict as OD
-gradients = OD()
-gradients['in'] = torch.randn(100, 16, 14, 14)
-grad = cnn.layer1[3].backward(gradients)
-grad = cnn.layer1[2].backward(grad)
-grad = cnn.layer1[1].backward(grad)
-grad = cnn.layer1[0].backward(grad)
-cnn.eval()
-print(outputs.data)
-'''
-for epoch in range(2):
-   for i, (images, labels) in enumerate(train_loader):
+
+for epoch in range(max_epochs):
+    for i, (images, labels) in enumerate(train_loader):
+        if using_gpu:
+            images = images.cuda()
+            labels = labels.cuda()
+
         cnn.train()
         optimizer.zero_grad()
         outputs = cnn(images)
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
-        print ('Epoch [%d/%d], Iter[%d/%d] Loss: %.4f'
-                %(epoch + 1, 2, i + 1, len(trainset.data)//batch_size, loss.data)) 
+        print ("Epoch [{}/{}], Iter[{}/{}] Loss:{:4f}".format(epoch+1, max_epochs, 
+                                                            i+1, len(trainset.data)//batch_size, loss.data)) 

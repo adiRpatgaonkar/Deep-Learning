@@ -22,12 +22,12 @@ class Optimizer(object):
         self.lr = self.lr0
         self.lr_decay = lr_decay
         self.reg = reg
-        model.set_hyperparameters(lr=self.lr, lr_decay=self.lr_decay, 
+        model.set_hypers(lr=self.lr, lr_decay=self.lr_decay, 
                                   reg=self.reg)
 
     # Stepper
     def step(self):
-        self.model.update_parameters(lr=self.lr, reg=self.reg)
+        self.model.update_params(lr=self.lr, reg=self.reg)
         self.curr_iter += 1
         self.lr = self.time_decay()
         self.model.clean(["input", "output"])

@@ -59,7 +59,7 @@ class BatchNorm2d(Module):
         else:
             self.input = in_features
         assert self.input.size(1) == self.channels, ("input channels should be {}".format(self.channels))
-        print("Input to B_normed2d layer:", self.input.size())
+        #print("Input to B_normed2d layer:", self.input.size())
         if Module.is_train:
             self.data, self.mean, self.variance, self.cache = \
             F.batchnorm_2d(self.input, self.beta.data, self.gamma.data, self.epsilon)
