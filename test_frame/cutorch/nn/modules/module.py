@@ -103,7 +103,7 @@ class Module(object):
             if "output" in objects:
                 hook.data = 0
             if "gradient" in objects:
-                hook.grad_in = None
+                hook.grad_in = 0
                 if '_parameters' in hook.__dict__.keys() and len(hook.__dict__['_parameters']) > 0:
                     for param in hook.parameters():
                         param.grad = 0
@@ -120,11 +120,13 @@ class Module(object):
         print("\n" + type(self).__name__, end=" ")
         print("(")
         for idx, module in self.modules.items():
-            print(" {}. {} ".format(idx, type(module).__name__), end="")
+            print(" ({}) -> {} ".format(idx, type(module).__name__), end="")
             if 'in_features' in module.__dict__ and 'out_features' in module.__dict__:
                 print("({}x{})".format(module.in_features, module.out_features), end="")
-            print("")
-        print(")\n")
+            if 'in_channels' in module.__dict__ and 'out_channels' in module.__dict__:
+                print("({} > {})".format(module.in_channels, module.out_channels), end="")
+            print("->",)
+        print(")")
 
     def set_hypers(self, **kwargs):
         self._hypers = kwargs

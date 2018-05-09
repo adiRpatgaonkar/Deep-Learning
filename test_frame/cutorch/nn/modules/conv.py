@@ -18,25 +18,25 @@ from .. import functionals as F
 class Conv2d(Module):
     """2D Conv layer class"""
 
-    def __init__(self, channels, kernels, kernel_size=3, pad=0, stride=1, bias=True, beta=0.01):
+    def __init__(self, in_channels, out_channels, kernel_size, padding=0, stride=1, bias=True, beta=0.01):
         super(Conv2d, self).__init__()
         # Layer construct check
-        assert pad >= 0, ("Invalid padding value. Should be >= 0")
+        assert padding >= 0, ("Invalid padding value. Should be >= 0")
         assert stride > 0, ("Invalid stride. Should be > 0")
         self.idx = -1
-        self.channels = channels
+        self.in_channels = in_channels
         self.kernel_size = kernel_size
-        self.kernels, self.padding, self.stride = kernels, pad, stride
+        self.out_channels, self.pad, self.stride = out_channels, padding, stride
         self.input = None  # TODO:CLEAN
         self.data = 0  # TODO:CLEAN
         self.output_dim = [0, 0, 0]
         self.batch_ims = None # im2col data.  # TODO:CLEAN
         # Parameters' creation
         self._parameters = []
-        self.weight = Parameter(weight=beta*torch.randn(self.kernels, channels, self.kernel_size, self.kernel_size),
+        self.weight = Parameter(weight=beta*torch.randn(out_channels, in_channels, kernel_size, kernel_size),
                                 require_gradient=True)
         if bias is True:
-            self.bias = Parameter(bias=torch.Tensor(self.kernels, 1, 1, 1).fill_(1),
+            self.bias = Parameter(bias=torch.Tensor(self.out_channels, 1, 1, 1).fill_(1),
                                   require_gradient=True)  # print(self.biases)
         # Gradients' creation
         self.grad_in = None  # TODO:CLEAN
@@ -60,11 +60,11 @@ class Conv2d(Module):
         if self.input.dim() == 3: # Convert to 4D tensor
             self.input = torch.unsqueeze(self.input, 0)
         self.N, self.C, self.H, self.W = self.input.size()
-        assert self.C == self.channels, \
-               "Input channels should be {}. Got {} channels".format(self.channels, self.C)
-        self.output_dim[0] = self.kernels
-        self.output_dim[1] = ((self.H - self.kernel_size + 2 * self.padding) / self.stride + 1)
-        self.output_dim[2] = ((self.W - self.kernel_size + 2 * self.padding) / self.stride + 1)
+        assert self.C == self.in_channels, \
+               "Input channels should be {}. Got {} channels".format(self.in_channels, self.C)
+        self.output_dim[0] = self.out_channels
+        self.output_dim[1] = ((self.H - self.kernel_size + 2 * self.pad) / self.stride + 1)
+        self.output_dim[2] = ((self.W - self.kernel_size + 2 * self.pad) / self.stride + 1)
 
     def prepare_input(self):
         """ 
@@ -73,12 +73,12 @@ class Conv2d(Module):
         2. im2col
         """
         # 1. Padding: self.input should be 4D
-        if self.padding > 0:
-            self.input = F.pad_image(self.input, self.padding)
+        if self.pad > 0:
+            self.input = F.pad_image(self.input, self.pad)
         return F.im2col(self.input, self.kernel_size, self.stride)
  
     def forward(self, in_features):
-        """ Convolution op (Auto-correlation i.e. no kernel flipping) """
+        """ Convolution op (Cross-correlation i.e. no kernel flipping) """
         # Check for input tensor
         if not torch.is_tensor(in_features):
             self.input = in_features.data
@@ -87,7 +87,7 @@ class Conv2d(Module):
         self.create_output_vol()
         #print("Input to conv layer:", self.input.size())
         self.input = self.prepare_input() # im2col'ed input
-        #print("Post im2col:", self.input.size())
+        print("Post im2col:", self.input.size())
         #print(self.input.size(), self.weight.data.view(self.weight.data.size(0), -1).size(), 
         #self.bias.data.size())
         self.data = F.conv_2d(self.input, self.weight.data.view(self.weight.data.size(0), -1), 

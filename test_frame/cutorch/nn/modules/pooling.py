@@ -16,17 +16,17 @@ from .. import functionals as F
 class MaxPool2d(Module):
     """Max/Mean pooling layer class"""
 
-    def __init__(self, f, stride=None):
+    def __init__(self, spatial_extent, stride=None):
         super(MaxPool2d, self).__init__()
         # Layer construct check
-        assert f >= 2, ("Invalid padding value. Should be >= 2")
+        assert spatial_extent >= 2, ("Invalid padding value. Should be >= 2")
         if stride:
             assert stride > 0, ("Invalid stride. Should be > 0")
         self.idx = -1
-        self.kernel_size = f
+        self.kernel_size = spatial_extent
         # If stride is not given, set equal to spatial extent
         if stride is None:
-            self.stride = f
+            self.stride = spatial_extent
         else:
             self.stride = stride
         self.input = None  # TODO:CLEAN
@@ -44,7 +44,7 @@ class MaxPool2d(Module):
         if self.input.dim() == 3: # Convert to 4D tensor
             self.input = torch.unsqueeze(self.input, 0)
         self.N, self.C, self.H, self.W = self.input.size()
-        self.output_dim[0] = self.input.size(1)
+        self.output_dim[0] = self.C  # Depth remains the same
         self.output_dim[1] = ((self.H - self.kernel_size) / self.stride) + 1
         self.output_dim[2] = ((self.W - self.kernel_size) / self.stride) + 1
 

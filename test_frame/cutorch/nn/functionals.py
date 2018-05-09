@@ -254,24 +254,24 @@ def nan_check(data):
 #                                               #
 #################################################
 
-def gradient_linear(weight, gradient_output):
-    return torch.mm(gradient_output, weight.t())
+def gradient_linear(weight, grad_out):
+    return torch.mm(grad_out, weight.t())
 
 
-def gradient_weight(inputs, gradient_output):
-    return torch.mm(inputs.t(), gradient_output)
+def gradient_weight(inputs, grad_out):
+    return torch.mm(inputs.t(), grad_out)
 
 
-def gradient_bias(gradient_output):
+def gradient_bias(grad_out):
     # TODO: Find out WHY dim = 0 ?
-    return torch.sum(gradient_output, dim=0, keepdim=True)
+    return torch.sum(grad_out, dim=0, keepdim=True)
 
 
-def gradient_relu(activations, gradients):
+def gradient_relu(activations, grad_out):
     # Commented out. Leading to a nan loss
     # gradients[activations == 0] = random.randint(1, 10) / 10.0
-    gradients[activations <= 0] = 0
-    return gradients
+    grad_out[activations <= 0] = 0
+    return grad_out
 
 
 def gradient_softmax(inputs, targets):
@@ -282,6 +282,7 @@ def gradient_softmax(inputs, targets):
 
 
 def gradient_beta(grad_out):
+    """ BatchNorm2d backward """
     # print("dout:", grad_out)
     grad_beta = []
     for c in range(grad_out.size(1)):
@@ -290,6 +291,7 @@ def gradient_beta(grad_out):
 
 
 def gradient_gamma(grad_out):
+    """ BatchNorm2d backward """
     # print("dout:", grad_out)
     grad_gamma = []
     for c in range(grad_out.size(1)):
@@ -300,7 +302,7 @@ def gradient_gamma(grad_out):
 def gradient_bnorm2d(gamma, cache, grad_out):
     N, C, H, W = grad_out.size()
     x_hat, invr_var = cache
-    grad_xhat = grad_out.clone()
+    grad_xhat = grad_out
     sum_grad_xhat = []
     sum_xhat_grad_xhat = []
     for c in range(C):
@@ -334,9 +336,7 @@ def grad_conv2d_weight(input, grad_out):
 
 
 def grad_conv2d(cache, weight, grad_out):
-    C = grad_out.size(1)
-    grad_Xcol = torch.mm(weight.view(C, -1).t(), cache)
-    return grad_Xcol
+    return torch.mm(weight.view(grad_out.size(1), -1).t(), cache)
 
 
 def grad_maxpool2d(xcol_size, max_track, grad_out):

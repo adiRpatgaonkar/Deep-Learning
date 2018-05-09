@@ -11,8 +11,12 @@ from ..utils.model_store import save
 class Optimizer(object):
     """Schedules L.R and saves the optimum parameters"""
 
-    def __init__(self, model, lr, lr_decay=0, reg=0):
+    def __init__(self, model, lr, lr_decay=0, reg=None):
         # Store model instance via the parameters method
+        assert lr >= 0, "Learning rate should be >= 0"
+        assert lr_decay >= 0, "L.R decay should be >= 0"
+        if reg:
+            assert reg >= 0, "Reg strength should be >= 0"
         print("#StochasticGradientDescent:")
         # Capture model (Alias)
         self.model = model
@@ -29,7 +33,8 @@ class Optimizer(object):
     def step(self):
         self.model.update_params(lr=self.lr, reg=self.reg)
         self.curr_iter += 1
-        self.lr = self.time_decay()
+        if self.lr_decay != 0:
+            self.lr = self.time_decay()
         self.model.clean(["input", "output"])
 
     # Clear Grad

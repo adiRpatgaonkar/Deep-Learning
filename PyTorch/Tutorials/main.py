@@ -45,7 +45,12 @@ class CNN(nn.Module):
             nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.MaxPool2d(2))
-        self.fc = nn.Linear(5*5*32, 10)
+        self.fc = nn.Sequential(
+            nn.Linear(5*5*32, 120),
+            nn.ReLU(),
+            nn.Linear(120, 84),
+            nn.ReLU(),
+            nn.Linear(84, 10))
 
     def forward(self, x):
         out = self.layer1(x)
@@ -57,11 +62,11 @@ class CNN(nn.Module):
 cnn = CNN()
 if torch.cuda.is_available():
     cnn.cuda()
-#print train_dataset
+print(cnn)
 
 # Loss & Optimizer
 criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(cnn.parameters(), lr=learning_rate)
+optimizer = torch.optim.SGD(cnn.parameters(), lr=learning_rate)
 
 # Train the Model
 for epoch in range(epochs):

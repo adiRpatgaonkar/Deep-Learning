@@ -15,8 +15,8 @@ else:
 
 # Hyperparameters
 max_epochs = 10
-learning_rate, lr_decay = 6e-3, 5e-5
-reg = 1e-3
+learning_rate, lr_decay = 5e-4, 5e-5
+#reg = 1e-3
 batch_size = 100
 
 # Get training data for training and Cross validation
@@ -41,31 +41,38 @@ class CNN(nn.Module):
     # Net
     def __init__(self):
         super(CNN, self).__init__()
-        self.layer1 = nn.Sequential(
-            nn.Conv2d(3, 16, kernel_size=5),
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(3, 16, 5),
             nn.BatchNorm2d(16),
             nn.ReLU(),
             nn.MaxPool2d(2))
-
-        self.layer2 = nn.Sequential(
-            nn.Conv2d(16, 32, kernel_size=5),
+        self.conv2 = nn.Sequential(
+            nn.Conv2d(16, 32, 5),
             nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.MaxPool2d(2))
         self.fc = nn.Sequential(
-            nn.Linear(5*5*32, 10),
+            nn.Linear(5*5*32, 120),
+            nn.ReLU(),
+            nn.Linear(120, 84),
+            nn.ReLU(),
+            nn.Linear(84, 10),
             nn.Softmax())
 
+        self.conv1.see_modules()
+        self.conv2.see_modules()
+        self.fc.see_modules()
+
     def forward(self, x):
-        out = self.layer1(x)
-        out = self.layer2(out)
+        out = self.conv1(x)
+        out = self.conv2(out)
         out = out.data.view(out.data.size(0), -1)
         out = self.fc(out)
         return out
 
 cnn = CNN()
 criterion = nn.CrossEntropyLoss()
-optimizer = cutorch.optim.Optimizer(cnn, lr=learning_rate, lr_decay=lr_decay, reg=reg)
+optimizer = cutorch.optim.Optimizer(cnn, lr=learning_rate, lr_decay=lr_decay)
 
 for epoch in range(max_epochs):
     for i, (images, labels) in enumerate(train_loader):
@@ -76,6 +83,7 @@ for epoch in range(max_epochs):
         optimizer.zero_grad()
         outputs = cnn(images)
         loss = criterion(outputs, labels)
+        #loss.data += F.l2_reg(reg, cnn.parameters())
         loss.backward()
         optimizer.step()
         total, accuracy = evaluate(cnn, train_loader[-1], "cross-validate")
