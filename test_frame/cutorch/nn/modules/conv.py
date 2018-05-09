@@ -83,11 +83,11 @@ class Conv2d(Module):
         if not torch.is_tensor(in_features):
             self.input = in_features.data
         else:
-            self.input = in_features 
+            self.input = in_features
         self.create_output_vol()
         #print("Input to conv layer:", self.input.size())
         self.input = self.prepare_input() # im2col'ed input
-        print("Post im2col:", self.input.size())
+        # print("Post im2col:", self.input.size())
         #print(self.input.size(), self.weight.data.view(self.weight.data.size(0), -1).size(), 
         #self.bias.data.size())
         self.data = F.conv_2d(self.input, self.weight.data.view(self.weight.data.size(0), -1), 
