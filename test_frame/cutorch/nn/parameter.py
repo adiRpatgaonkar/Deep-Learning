@@ -9,7 +9,7 @@ class Parameter:
                 if isinstance(value, bool):
                     self.require_gradient = value
                     if self.require_gradient:
-                        self.gradient = 0
+                        self.grad = None
                 continue
             self.tag = key
             self.data = value

@@ -33,9 +33,8 @@ class MaxPool2d(Module):
         self.data = 0  # TODO:CLEAN
         self.N = self.H = self.W = 0
         self.output_dim = [0, 0, 0]  # For a single image
-        # Gradients' creation
-        self.grad = OrderedDict()  # CLEAN
-        self.grad['in'] = 0 
+        # Grad input
+        self.grad_in = None
     
     def create_output_vol(self):
         """ Create output volume """
@@ -74,11 +73,11 @@ class MaxPool2d(Module):
         #print("Reshaped:", self.data.size())
         return self
 
-    def backward(self, gradients):
-        self.grad['in'] = F.grad_maxpool2d(self.input.size(), self.max_track, gradients['in'])
-        self.grad['in'] = F.col2im(self.grad['in'], (self.N * self.C, 1, self.H, self.W),
+    def backward(self, grad_out):
+        self.grad_in = F.grad_maxpool2d(self.input.size(), self.max_track, grad_out)
+        self.grad_in = F.col2im(self.grad_in, (self.N * self.C, 1, self.H, self.W),
                                       self.kernel_size, self.stride)
          # Different than conv's col2im
-        self.grad['in'] = self.grad['in'].view(self.N, self.C, self.H, self.W)
-        return self.grad
+        self.grad_in = self.grad_in.view(self.N, self.C, self.H, self.W)
+        return self.grad_in
                                     

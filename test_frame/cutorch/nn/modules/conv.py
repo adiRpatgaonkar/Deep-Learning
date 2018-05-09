@@ -39,12 +39,7 @@ class Conv2d(Module):
             self.bias = Parameter(bias=torch.Tensor(self.kernels, 1, 1, 1).fill_(1),
                                   require_gradient=True)  # print(self.biases)
         # Gradients' creation
-        self.grad = OrderedDict()  # TODO:CLEAN
-        if self.weight.require_gradient:
-            self.grad['weight'] = 0
-        if bias and self.bias.require_gradient:
-            self.grad['bias'] = 0
-        self.grad['in'] = 0  # CLEAN
+        self.grad_in = None  # TODO:CLEAN
          
         # Finish param setup
         self.init_param_setup()
@@ -103,29 +98,28 @@ class Conv2d(Module):
         # print("Reshaped:", self.data.size())
         return self
 
-    def backward(self, gradients):
+    def backward(self, grad_out):
         # gradients['in'] are actually output gradients
         # grad['in'] are actual input gradients
         
         if self.bias.require_gradient:
-            self.grad['bias'] = F.grad_conv2d_bias(gradients['in'])
-            self.grad['bias'] = self.grad['bias'].unsqueeze(1).unsqueeze(1)
-            self.bias.gradient = self.grad['bias'] 
+            self.bias.grad = F.grad_conv2d_bias(grad_out)
+            self.bias.grad = self.bias.grad.unsqueeze(1).unsqueeze(1)
 
         if self.weight.require_gradient:
-            self.grad['weight'], cache = F.grad_conv2d_weight(self.input, gradients['in'])   
+            self.weight.grad, cache = F.grad_conv2d_weight(self.input, grad_out)   
             # Reshape to the size of the layer's kernels
-            self.grad['weight'] = self.grad['weight'].view(self.weight.data.size())
-        self.idx = '1'
+            self.weight.grad = self.weight.grad.view(self.weight.data.size())
+
         if self.idx == '0':
             # No gradients required for input layer (idx == 0)
-            self.grad['in'] = torch.Tensor(self.input.size())
+            self.grad_in = torch.Tensor(self.input.size())
         else:
-            self.grad['in'] = F.grad_conv2d(cache, self.weight.data, gradients['in']) 
+            self.grad_in = F.grad_conv2d(cache, self.weight.data, grad_out) 
         # De-im2col grad ins i.e. F.col2im(self.grad['in'])
-            self.grad['in'] = F.col2im(self.grad['in'], (self.N, self.C, self.H, self.W),
+            self.grad_in = F.col2im(self.grad_in, (self.N, self.C, self.H, self.W),
                                           self.kernel_size, self.stride)
         # Clean
         del cache
-        return self.grad
+        return self.grad_in
 

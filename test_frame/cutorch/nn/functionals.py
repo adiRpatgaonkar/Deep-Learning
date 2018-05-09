@@ -43,9 +43,8 @@ def im2col(batch, kernel_size, stride):
         i2c_per_im = torch.Tensor()
         for i in range(0, image.size(1) - kernel_size + 1, stride):
             for j in range(0, image.size(2) - kernel_size + 1, stride):
-                im_col = image[:, i:fh, j:fw]
-                im_col = im_col.contiguous()  # tensor must be contiguous to flatten it
-                im_col.unsqueeze_(0)  # Stretch to 4D tensor
+                im_col = image[:, i:fh, j:fw].contiguous().unsqueeze(0)
+                # tensor must be contiguous to flatten it
                 im_col = im_col.view(im_col.size(0), -1)
                 i2c_per_im = torch.cat((i2c_per_im, im_col.t()), 1)  # Cat as col vector
                 fw += stride
@@ -59,32 +58,30 @@ def im2col(batch, kernel_size, stride):
     return batch_i2c
 
 
-def col2im(input, x_size, k_size, stride):
+def col2im(batch, x_size, k_size, stride):
     """ col2im or de-im2col for 2D tensors """
-    assert input.dim() == 2, "Input should be a 2D tensor."
+    assert batch.dim() == 2, "Input should be a 2D tensor."
     assert len(x_size) == 4, "Input size should have 4 values for 4D tensor."
     batch_c2i = torch.Tensor()
     N, C, H, W = x_size
-    batch = torch.chunk(input, N, dim=1)
+    batch = torch.chunk(batch, N, dim=1)
     # To parse across width and height (temp vars).
     # Keep kernel_size constant
     fh = fw = k_size
     for image in batch:
         m = 0  # Number of locations convolved(mth col)
-
         c2i_per_im = torch.zeros(C, H, W)
         for i in range(0, H - k_size + 1, stride):
             for j in range(0, W - k_size + 1, stride):
-                col = image[:, m].contiguous()
-                c2i_per_im[:, i:fh, j:fw] = col.view(C, k_size, k_size)
-                m += 1  #
+                c2i_per_im[:, i:fh, j:fw] = image[:, m].contiguous().view(C, k_size, k_size)
+                m += 1  # Iterate on mth location
                 fw += stride
             fh += stride
             fw = k_size
         fh = k_size
         batch_c2i = torch.cat((batch_c2i, c2i_per_im.unsqueeze(0)), 0)
     # Clean
-    del batch, col, c2i_per_im
+    del batch, c2i_per_im
     return batch_c2i
 
 
@@ -135,12 +132,12 @@ def batchnorm_2d(x, beta, gamma, epsilon, r_mean=None, r_var=None):
     cache = (x_hat, invr_var)  # To be used for backwarding BN2D
     # Clean
     del x_mu, x_mu_sq, sqrt_var
-    
     return out, mean, variance, cache
 
 
 def conv_2d(input, weight, bias=None):
-    # Use post im2col op 
+    # Use post im2col op
+    # print(input, weight)
     if bias is None:
         return torch.mm(weight, input)
     else:
@@ -331,8 +328,7 @@ def grad_conv2d_bias(grad_out):
 
 def grad_conv2d_weight(input, grad_out):
     C = grad_out.size(1)
-    grad_out = grad_out.permute(1, 2, 3, 0).contiguous()
-    grad_out = grad_out.view(C, -1)
+    grad_out = grad_out.permute(1, 2, 3, 0).contiguous().view(C, -1)
     grad_weight = torch.mm(grad_out, input.t())
     return grad_weight, grad_out
 
@@ -349,7 +345,6 @@ def grad_maxpool2d(xcol_size, max_track, grad_out):
     if grad_out.dim() == 2:
         grad_out = grad_out.t().contiguous().view(-1)
     elif grad_out.dim() == 4:
-        grad_out = grad_out.permute(2, 3, 0, 1).contiguous()
-        grad_out = grad_out.view(-1)
+        grad_out = grad_out.permute(2, 3, 0, 1).contiguous().view(-1)
     grad_Xcol[max_track, range(max_track.size(0))] = grad_out
     return grad_Xcol

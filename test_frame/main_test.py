@@ -15,7 +15,7 @@ else:
 
 # Hyperparameters
 max_epochs = 10
-learning_rate, lr_decay = 3e-3, 5e-5
+learning_rate, lr_decay = 6e-3, 5e-5
 reg = 1e-3
 batch_size = 100
 
@@ -84,5 +84,5 @@ for epoch in range(max_epochs):
         print("Iter:[{}/{}]".format(i + 1, train_loader.num_batches), end=" ")
         print("error:[{:.5f}]".format(loss.data), end=" ")
         print("CVal accuracy on {} images: {} %".format(total, accuracy))
-        # total = evaluate(cnn, test_loader, "test")
+        #total = evaluate(cnn, test_loader, "test")
         # print("Val accuracy on {} images: {} %".format(total, cnn.results['accuracy']))

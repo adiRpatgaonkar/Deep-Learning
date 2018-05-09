@@ -36,12 +36,7 @@ class BatchNorm2d(Module):
             self.gamma = Parameter(gamma=torch.ones(self.channels),
                                    require_gradient=True)
         # Gradients' creation
-        self.grad = OrderedDict()  # TODO:CLEAN
-        if self.beta.require_gradient:
-            self.grad['beta'] = 0
-        if self.gamma.require_gradient:
-            self.grad['gamma'] = 0
-        self.grad['in'] = 0
+        self.grad_in = None  # CLEAN
         # Finish param setup
         self.init_param_setup()
 
@@ -69,13 +64,11 @@ class BatchNorm2d(Module):
                            r_mean=self.mean, r_var=self.variance)
         return self
 
-    def backward(self, gradients):
+    def backward(self, grad_out):
         if self.beta.require_gradient:
-            self.grad['beta'] = F.gradient_beta(gradients['in'])
-            self.beta.gradient = self.grad['beta']
+            self.beta.grad = F.gradient_beta(grad_out)
         if self.gamma.require_gradient:
-            self.grad['gamma'] = F.gradient_gamma(gradients['in'])
-            self.gamma.gradient = self.grad['gamma']
-        self.grad['in'] = F.gradient_bnorm2d(self.gamma.data, self.cache, gradients['in']) 
-        return self.grad
+            self.gamma.grad = F.gradient_gamma(grad_out)
+        self.grad_in = F.gradient_bnorm2d(self.gamma.data, self.cache, grad_out) 
+        return self.grad_in
 

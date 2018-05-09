@@ -103,10 +103,10 @@ class Module(object):
             if "output" in objects:
                 hook.data = 0
             if "gradient" in objects:
-                hook.grad = OD()
+                hook.grad_in = None
                 if '_parameters' in hook.__dict__.keys() and len(hook.__dict__['_parameters']) > 0:
                     for param in hook.parameters():
-                        param.gradient = 0
+                        param.grad = 0
                 self.gradients = OD()
             if "r-graphs" in objects:
                 Module._forward_hooks = OD()
@@ -148,9 +148,9 @@ class Module(object):
             for param in module.parameters():
                 if reg is not None and param.tag == 'weight':
                     # Add regularization gradient contribution
-                    param.gradient += (reg * param.data)
+                    param.grad += (reg * param.data)
                 # Parameter update
-                param.data = param.data + (-lr * param.gradient)
+                param.data = param.data + (-lr * param.grad)
 
     def _add_module(self, idx, module):
         if idx not in self.modules.keys():
