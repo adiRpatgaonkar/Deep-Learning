@@ -1,8 +1,11 @@
 """
-# TODO
-# PIPELINE
+#TODO
+--> BUG:
+Cross-validation on last batch
+Bug in evaluation i.e. class performance
+--> PIPELINE
 Correct abstractions in code
-# MODEL IMPROVEMENTS
+--> MODEL IMPROVEMENTS
 Momentum
 LogSoftmax
 """

@@ -1,10 +1,10 @@
 from __future__ import print_function
 
-import sys
 import math
 
 import torch
 import torch.nn.functional as F
+import numpy as np
 
 
 def flatten(data):
@@ -34,14 +34,28 @@ def flatten(data):
 
 def im2col(batch, kernel_size, stride):
     """ im2col for batch inputs i.e. 4D Tensors """
-    assert torch.__version__ == '0.4.0', "This commit only works for torch >= 0.4.0."
-    assert batch.dim() == 4, "Only 4D tensors supported. Got {}D".format(batch.dim)
-
-    batch_i2c = F.unfold(batch, kernel_size, stride=stride)  # 3D output (num_ex x H x W)
-    i2c_out = torch.empty(0, 0)
-    for i2c in batch_i2c:
-        i2c_out = torch.cat((i2c_out, i2c.squeeze(0)), 1)
-    return i2c_out
+    assert batch.dim() == 4, "Input batch should be 4D tensor"
+    batch_i2c = torch.Tensor()
+    # To parse across width and height (temp vars).
+    # Keep kernel_size constant
+    fh = fw = kernel_size
+    for image in batch:
+        i2c_per_im = torch.Tensor()
+        for i in range(0, image.size(1) - kernel_size + 1, stride):
+            for j in range(0, image.size(2) - kernel_size + 1, stride):
+                im_col = image[:, i:fh, j:fw].contiguous().unsqueeze(0)
+                # tensor must be contiguous to flatten it
+                im_col = im_col.view(im_col.size(0), -1)
+                i2c_per_im = torch.cat((i2c_per_im, im_col.t()), 1)  # Cat as col vector
+                fw += stride
+            fh += stride
+            fw = kernel_size  # Reset kernel width
+        fh = kernel_size  # Reset kernel height
+        batch_i2c = torch.cat((batch_i2c, i2c_per_im), 1)
+        # print("Bim2c",batch_im2col)
+    # Clean
+    del i2c_per_im, im_col
+    return batch_i2c
 
 
 def col2im(batch, x_size, k_size, stride):
