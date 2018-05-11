@@ -29,6 +29,10 @@ parser.add_argument(
     "--test",
     action="store_true",
     help="Test the model")
+parser.add_argument(
+    "--infer",
+    action="store_true",
+    help="inference the model")
 
 args = parser.parse_args()
 if args.gpu_id:
@@ -37,4 +41,5 @@ if args.gpu_id:
 print("\n" + str(args) + "\n")
 
 if len(sys.argv) == 1:
+    parser.print_help()
     sys.exit("Nothing to do")

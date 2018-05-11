@@ -12,7 +12,10 @@ ims_per_class = 1000
 
 def evaluate(model, dataset, device, task="test"):
     assert task == "test" or task == "cross_val", \
-           "Invalid task for evaluation. Expected test/cross_val" 
+           "Invalid task for evaluation. Expected test/cross_val"
+    if device != "cpu":
+        if not next(model.parameters()).is_cuda:
+            model.to(device)
     model.eval()  # Switch: evaluation mode
     correct = 0
     total = 0 

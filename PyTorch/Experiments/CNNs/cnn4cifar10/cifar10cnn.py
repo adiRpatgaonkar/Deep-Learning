@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import argparse
+from copy import deepcopy  # Save snapshot of best model weights
 
 # Neural net libs
 import torch
@@ -12,8 +13,9 @@ import torchvision.transforms as transforms
 from torch.autograd import Variable
 
 from whatodo import args as do    # Argument parser
-from models4cifar10 import *      # Models defined for cifar10
+from models4cifar10 import models      # Models defined for cifar10
 from evalcifar10 import evaluate  # Evaluation tasks for cifar10 
+from infercifar10 import see
 
 # Device setup
 device = torch.device("cuda:" + do.gpu_id if do.gpu_id is not None and torch.cuda.is_available() else "cpu")
@@ -28,20 +30,20 @@ if do.load:
     if not isinstance(model, nn.Module):
         print("Loading model from state dict ...", end=" ")
         # Create a new model & revive it's state
-        cnn = Model(ID)  
+        cnn = models(ID)  
         cnn.load_state_dict(model) 
         print("done.")
     else:
         print("Loaded saved model.")
         cnn = model
         del model
-      
+
 if do.train:
     # Hyper Params
-    max_epochs = 5
+    max_epochs = 15
     learning_rate = 0.0005
 
-if do.train or do.test:
+if do.train or do.test or do.infer:
     # Batch size
     batch_size = 100
     # Data normalized with:
@@ -49,11 +51,11 @@ if do.train or do.test:
     rgb_std = (0.2023, 0.1994, 0.2010)
 
 # Cifar10 dataset
-# Training: train + test data
+# Training & inference: train + test data
 # Testing: test data only
-if do.train: 
+if do.train or do.infer: 
     # Train data augmentation
-    print("\nDefined transforms for train data augmentation.\n")
+    print("Defined transforms for train data augmentation.\n")
     augmented_train = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
@@ -66,7 +68,7 @@ if do.train:
     # Train data loader (Input pipeline)
     train_loader = torch.utils.data.DataLoader(dataset=trainset,
         batch_size=batch_size, shuffle=True)
-if do.train or do.test:
+if do.train or do.test or do.infer:
     # Test data transforms
     transform_test = transforms.Compose([
         transforms.ToTensor(),
@@ -78,13 +80,12 @@ if do.train or do.test:
     test_loader = torch.utils.data.DataLoader(dataset=testset, 
         batch_size=batch_size, shuffle=False)
 
-
 if do.train:
     if not do.load:
-        # If not training a loaded model
+        # If not training a "loaded" model
         # Create a brand new model
-        cnn = Model(ID)
-
+        cnn = models(ID)
+    
     cnn.to(device)
     print("\nModel id -> {}".format(ID))
     print("{}\n".format(cnn))
@@ -116,23 +117,27 @@ if do.train:
                 # Cross-validate
                 total, cval_acc = evaluate(cnn, [(images, labels)], device, task="cross_val")
                 print("Cross-val on {} images: {} %".format(total, cval_acc))
-        # Validate (test set) & check for the best model
+        # Validate (test set)
         total, pres_acc = evaluate(cnn, test_loader, device=device, task="test")
         print("Validation on {} images: {} %".format(total, pres_acc), end="; ")
+        # Check for the best model weights
         if best_acc < pres_acc:
             best_acc = pres_acc
+            # Save the best model weights
             if do.bm:
-                torch.save(cnn.state_dict(), "cifar10_cnn_best.pkl")
-        print("Best val accuracy: {} %".format(best_acc)) 
+                best_model_wts = deepcopy(cnn.state_dict())
+                if (epoch+1) == max_epochs:
+                    torch.save(best_model_wts, "cifar10_cnn_best_wts.pkl")
+        print("Best val accuracy: {} %".format(best_acc))
+        # Save the final model weights
+        if do.fm and (epoch+1) == max_epochs:
+            torch.save(cnn.state_dict(), "cifar10_cnn_final_wts.pkl")
+        print("")
         # Epoch end
-
+#cnn = models("cnn1")
+see(cnn.conv1[0].weight[0].detach(), mean=rgb_mean, std=rgb_std)
 if do.test:
     print("Testing starts ...")
     # Final testing of the model. Sanity check.
     total, accuracy = evaluate(cnn, test_loader, device, task="test")
     print("Accuracy of the {} on {} test images: {} %".format(ID, total, accuracy))
-
-if do.fm:
-    # Save final model
-    torch.save(cnn.state_dict(), "cifar10_cnn_final.pkl")
-
