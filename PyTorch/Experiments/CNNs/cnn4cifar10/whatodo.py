@@ -35,7 +35,7 @@ parser.add_argument(
     help="inference the model")
 
 args = parser.parse_args()
-if args.gpu_id:
+if type(args.gpu_id) == int:
     args.gpu_id = str(args.gpu_id)
 
 print("\n" + str(args) + "\n")

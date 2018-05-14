@@ -9,7 +9,6 @@ classes = ('airplane', 'automobile',
            'ship', 'truck')
 def see(input, mean=None, std=None, title=None):
     # DEBUG
-    print(input, input.size(), input.dtype)
     # Visualize a tensor
     assert torch.is_tensor(input), \
     "Expected tensor input. Got {}".format(type(input))
@@ -30,7 +29,7 @@ def see(input, mean=None, std=None, title=None):
             inp = np.clip(inp, 0, 1)
 
         if title:
-            plt.title(classes[title])
+            plt.title(title)
         plt.imshow(inp)
         plt.show()
         #plt.pause(0.001)

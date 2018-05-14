@@ -13,7 +13,7 @@ import torchvision.transforms as transforms
 from torch.autograd import Variable
 
 from whatodo import args as do    # Argument parser
-from models4cifar10 import models      # Models defined for cifar10
+from models4cifar10 import models # Models defined for cifar10
 from evalcifar10 import evaluate  # Evaluation tasks for cifar10 
 from infercifar10 import see
 
@@ -21,7 +21,7 @@ from infercifar10 import see
 device = torch.device("cuda:" + do.gpu_id if do.gpu_id is not None and torch.cuda.is_available() else "cpu")
 print("\nUsing", device, "\n")
 
-ID = "cnn1"
+ID = "cnn4"
 
 if do.load:
     # model can be a state dict or nn.Module object
@@ -40,7 +40,7 @@ if do.load:
 
 if do.train:
     # Hyper Params
-    max_epochs = 15
+    max_epochs = 50
     learning_rate = 0.0005
 
 if do.train or do.test or do.infer:
@@ -123,19 +123,20 @@ if do.train:
         # Check for the best model weights
         if best_acc < pres_acc:
             best_acc = pres_acc
-            # Save the best model weights
+            # Save the best model weights-snapshot
             if do.bm:
                 best_model_wts = deepcopy(cnn.state_dict())
-                if (epoch+1) == max_epochs:
-                    torch.save(best_model_wts, "cifar10_cnn_best_wts.pkl")
         print("Best val accuracy: {} %".format(best_acc))
-        # Save the final model weights
+        # Save the best & final model weights
+        if do.bm and (epoch+1) == max_epochs:
+            torch.save(best_model_wts, "cifar10_"+ID+"_best_wts.pkl")
         if do.fm and (epoch+1) == max_epochs:
-            torch.save(cnn.state_dict(), "cifar10_cnn_final_wts.pkl")
+            torch.save(cnn.state_dict(), "cifar10_"+ID+"_final_wts.pkl")
         print("")
         # Epoch end
-#cnn = models("cnn1")
-see(cnn.conv1[0].weight[0].detach(), mean=rgb_mean, std=rgb_std)
+rgb_mean = (0.4914, 0.4822, 0.4465)
+rgb_std = (0.2023, 0.1994, 0.2010)
+see(cnn.conv1[0].weight[15].detach(), mean=rgb_mean, std=rgb_std, title="Conv layer 1 last kernel")
 if do.test:
     print("Testing starts ...")
     # Final testing of the model. Sanity check.
