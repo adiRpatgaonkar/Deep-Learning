@@ -1,56 +1,61 @@
-# CIFAR-10 using CNN using Pytorch
-
 from __future__ import print_function
 
-import argparse
 from copy import deepcopy  # Save snapshot of best model weights
 
 # Neural net libs
 import torch
 import torch.nn as nn
-import torchvision.datasets as dsets
-import torchvision.transforms as transforms
 from torch.autograd import Variable
 
-from whatodo import args as do    # Argument parser
-from models4cifar10 import models # Models defined for cifar10
-from evalcifar10 import evaluate  # Evaluation tasks for cifar10 
-from infercifar10 import see
+from imagenetdata import get_dataset, get_loader, rgb_mean, rgb_std
+from inferimagenet import see
+from models4imagenet import models
 
 # Device setup
-device = torch.device("cuda:" + do.gpu_id if do.gpu_id is not None and torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 print("\nUsing", device, "\n")
 
-ID = do.mid
+# Hyper Params
+max_epochs = 2
+learning_rate = 0.0005
 
-if do.load:
-    # model can be a state dict or nn.Module object
-    model = torch.load(do.load)
+# Batch size
+batch_size = 100
 
-    if not isinstance(model, nn.Module):
-        print("Loading model from state dict ...", end=" ")
-        # Create a new model & revive it's state
-        cnn = models(ID)  
-        cnn.load_state_dict(model) 
-        print("done.")
-    else:
-        print("Loaded saved model.")
-        cnn = model
-        del model
+# Imagenet dataset
+# Train dataset
+trainset = get_dataset("train")
+valset = get_dataset("test")
 
-if do.train:
-    # Hyper Params
-    max_epochs = do.epochs
-    learning_rate = do.lr
+# Data loaders
+train_loader = get_loader("train", trainset)
+val_loader = get_loader("test", valset, s=False)
 
-if do.train or do.test or do.infer:
-    # Batch size
-    batch_size = do.bs
-    # Data normalized with:
-    rgb_mean = (0.4914, 0.4822, 0.4465)
-    rgb_std = (0.2023, 0.1994, 0.2010)
+# Build model
+ID = "cnn4"
+cnn = models(ID)
+cnn.to(device)
+print("\nModel id -> {}".format(ID))
+print("{}\n".format(cnn))
 
-# Cifar10 dataset
+# Loss & Optimizer
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(cnn.parameters(), lr=learning_rate)
+scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.05)
+
+for i, (images, labels) in enumerate(train_loader):
+    if i == 0:
+        images = images.to(device)
+        labels = labels.to(device)
+        outputs = cnn(images)
+        loss = criterion(outputs, labels)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        print(loss.item())
+        break
+
+'''
 # Training & inference: train + test data
 # Testing: test data only
 if do.train or do.infer: 
@@ -155,3 +160,4 @@ if do.test:
 rgb_mean = (0.4914, 0.4822, 0.4465)
 rgb_std = (0.2023, 0.1994, 0.2010)
 see(cnn.conv1[0].weight[15].detach(), mean=rgb_mean, std=rgb_std, title="Conv layer 1 last kernel (trained)")
+'''
