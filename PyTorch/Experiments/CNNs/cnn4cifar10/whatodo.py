@@ -32,7 +32,27 @@ parser.add_argument(
 parser.add_argument(
     "--infer",
     action="store_true",
-    help="inference the model")
+    help="Inference the model")
+parser.add_argument(
+    "--model",
+    dest="mid",
+    type=str,
+    help="Model ID used to build")
+parser.add_argument(
+    "--epochs",
+    type=int,
+    default=10,
+    help="Maximum number of epochs to run")
+parser.add_argument(
+    "--lr",
+    type=float,
+    default=0,
+    help="Base learning rate")
+parser.add_argument(
+    "--bs",
+    type=int,
+    default=1,
+    help="Batch size for training/testing")
 
 args = parser.parse_args()
 if type(args.gpu_id) == int:

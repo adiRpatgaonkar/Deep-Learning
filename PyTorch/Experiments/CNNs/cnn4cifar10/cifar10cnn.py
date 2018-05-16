@@ -21,7 +21,7 @@ from infercifar10 import see
 device = torch.device("cuda:" + do.gpu_id if do.gpu_id is not None and torch.cuda.is_available() else "cpu")
 print("\nUsing", device, "\n")
 
-ID = "cnn4"
+ID = do.mid
 
 if do.load:
     # model can be a state dict or nn.Module object
@@ -40,12 +40,12 @@ if do.load:
 
 if do.train:
     # Hyper Params
-    max_epochs = 50
-    learning_rate = 0.0005
+    max_epochs = do.epochs
+    learning_rate = do.lr
 
 if do.train or do.test or do.infer:
     # Batch size
-    batch_size = 100
+    batch_size = do.bs
     # Data normalized with:
     rgb_mean = (0.4914, 0.4822, 0.4465)
     rgb_std = (0.2023, 0.1994, 0.2010)
@@ -93,13 +93,18 @@ if do.train:
     # Loss & Optimizer
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(cnn.parameters(), lr=learning_rate)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50)
 
+    net_iter = 0
     num_batches = len(trainset)//batch_size
     best_acc = 0  # Best accuracy tracking
-    print("Training starts ...\n") 
+    print("Training starts ...\n")
+    print("Hypers:\nMax-epochs: {}\nLearning-rate: {}\nBatch-size: {}\n".format(max_epochs, learning_rate, batch_size))
     for epoch in range(max_epochs):
         print("-"*58, "Epoch:[{}/{}]".format(epoch+1, max_epochs))
+        scheduler.step()
         for i, (images, labels) in enumerate(train_loader):
+            net_iter += 1
             if (i+1) < num_batches:
                 # Train
                 images = images.to(device)
@@ -111,8 +116,9 @@ if do.train:
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
-                if (i+1) % 100 == 0: 
-                    print ("Iter:[{}/{}] Error:{:.4f}".format(i+1, num_batches, loss.item()))
+                if (i+1) % 100 == 0:
+                    print("Net_iter:[{}/{}]".format(net_iter, max_epochs*num_batches), end=" ") 
+                    print("Iter:[{}/{}] Error:{:.4f}".format(i+1, num_batches, loss.item()))
             elif (i+1) == num_batches:
                 # Cross-validate
                 total, cval_acc = evaluate(cnn, [(images, labels)], device, task="cross_val")
@@ -126,19 +132,25 @@ if do.train:
             # Save the best model weights-snapshot
             if do.bm:
                 best_model_wts = deepcopy(cnn.state_dict())
+                best_iter = net_iter
         print("Best val accuracy: {} %".format(best_acc))
         # Save the best & final model weights
         if do.bm and (epoch+1) == max_epochs:
-            torch.save(best_model_wts, "cifar10_"+ID+"_best_wts.pkl")
+            torch.save(best_model_wts, "cifar10_"+ID+"_best_wts_"+str(best_iter)+".pkl")
         if do.fm and (epoch+1) == max_epochs:
-            torch.save(cnn.state_dict(), "cifar10_"+ID+"_final_wts.pkl")
+            torch.save(cnn.state_dict(), "cifar10_"+ID+"_final_wts_"+str(net_iter)+".pkl")
         print("")
+	    # Unsure of effectiveness
+        if device != "cpu":
+            torch.cuda.empty_cache()
         # Epoch end
-rgb_mean = (0.4914, 0.4822, 0.4465)
-rgb_std = (0.2023, 0.1994, 0.2010)
-see(cnn.conv1[0].weight[15].detach(), mean=rgb_mean, std=rgb_std, title="Conv layer 1 last kernel")
+
 if do.test:
     print("Testing starts ...")
     # Final testing of the model. Sanity check.
     total, accuracy = evaluate(cnn, test_loader, device, task="test")
-    print("Accuracy of the {} on {} test images: {} %".format(ID, total, accuracy))
+    print("Accuracy of {} on {} test images: {} %".format(ID, total, accuracy))
+
+rgb_mean = (0.4914, 0.4822, 0.4465)
+rgb_std = (0.2023, 0.1994, 0.2010)
+see(cnn.conv1[0].weight[15].detach(), mean=rgb_mean, std=rgb_std, title="Conv layer 1 last kernel")
