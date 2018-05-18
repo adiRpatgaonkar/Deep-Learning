@@ -39,6 +39,6 @@ def get_loader(task, dataset, bs=128, s=True, pin_memory=True):
     # Input pipeline
     loader = torch.utils.data.DataLoader(dataset=dataset,
         batch_size=bs, shuffle=s, pin_memory=pin_memory,
-        num_workers=4)
+        num_workers=1)
     print("done.")
     return loader

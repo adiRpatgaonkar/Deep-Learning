@@ -138,22 +138,38 @@ class CNN_4(nn.Module):
             nn.Dropout(0.4))
         self.fc = nn.Linear(2048, 10)
 
-    def forward(self, x):
+    def forward(self, x, vis=None):
+        if vis is True:
+            self.out_buffer = []
         out = self.conv1(x)
+        if vis is True:
+            self.out_buffer.append(out)
         #print(out.size())
         out = self.conv2(out)
+        if vis is True:
+            self.out_buffer.append(out)
         #print(out.size())
         out = self.conv3(out)
+        if vis is True:
+            self.out_buffer.append(out)
         #print(out.size())
         out = self.conv4(out)
+        if vis is True:
+            self.out_buffer.append(out)
         #print(out.size())
         out = self.conv5(out)
+        if vis is True:
+            self.out_buffer.append(out)
         #print(out.size())
         out = self.conv6(out)
+        if vis is True:
+            self.out_buffer.append(out)
         #print(out.size())
         out = out.view(out.size(0), -1)
         #print(out.size())
         out = self.fc(out)
+        if vis is True:
+            self.out_buffer.append(out)
         #print(out.size())
         return out
 

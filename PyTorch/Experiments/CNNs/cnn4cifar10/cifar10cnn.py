@@ -87,7 +87,7 @@ if do.train:
         cnn = models(ID)
     
     cnn.to(device)
-    see(cnn.conv1[0].weight[15].detach(), mean=rgb_mean, std=rgb_std, title="Conv layer 1 last kernel (initial)")
+    #see(cnn.conv1[0].weight[15].detach(), mean=rgb_mean, std=rgb_std, title="Conv layer 1 last kernel (initial)")
     print("\nModel id -> {}".format(ID))
     print("{}\n".format(cnn))
 
@@ -150,8 +150,9 @@ if do.test:
     print("Testing starts ...")
     # Final testing of the model. Sanity check.
     total, accuracy = evaluate(cnn, test_loader, device, task="test")
+    #print(cnn.__dict__.keys())
+    #see(cnn.out_buffer[3][0][0], title="cnn weights 6th conv layer")
     print("Accuracy of {} on {} test images: {} %".format(ID, total, accuracy))
 
-rgb_mean = (0.4914, 0.4822, 0.4465)
-rgb_std = (0.2023, 0.1994, 0.2010)
-see(cnn.conv1[0].weight[15].detach(), mean=rgb_mean, std=rgb_std, title="Conv layer 1 last kernel (trained)")
+
+#see(cnn.conv1[5].weight[15].detach(), mean=rgb_mean, std=rgb_std, title="Conv layer 1 last kernel (trained)")

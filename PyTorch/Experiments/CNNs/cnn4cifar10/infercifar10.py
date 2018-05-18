@@ -7,22 +7,25 @@ classes = ('airplane', 'automobile',
            'deer', 'dog',
            'frog', 'horse',
            'ship', 'truck')
-def see(input, mean=None, std=None, title=None):
+def see(inputs, mean=None, std=None, title=None):
     # DEBUG
     # Visualize a tensor
-    assert torch.is_tensor(input), \
-    "Expected tensor input. Got {}".format(type(input))
-    assert input.dim() in (3, 4), \
-    "Expected 3D or 4D tensor. Got {}D".format(input.dim())
+    assert torch.is_tensor(inputs), \
+    "Expected tensor input. Got {}".format(type(inputs))
+    assert inputs.dim() in (2, 3, 4), \
+    "Expected 3D or 4D tensor. Got {}D".format(inputs.dim())
     
-    if input.is_cuda:
-        input = input.cpu()
+    if inputs.is_cuda:
+        inputs = inputs.cpu()
 
-    if input.dim() == 3:
-        input = input.unsqueeze(0)
+    if inputs.dim() in (2, 3):
+        inputs = inputs.unsqueeze(0)
     
-    for inp in input:
-        inp = inp.numpy().transpose((1, 2, 0))
+    for inp in inputs:
+        inp = inp.numpy()
+
+        if inp.shape[0] == 3:
+            inp = inp.transpose((1, 2, 0))
 
         if mean and std:
             inp = std * inp + mean
@@ -30,6 +33,7 @@ def see(input, mean=None, std=None, title=None):
 
         if title:
             plt.title(title)
-        plt.imshow(inp)
+        print(inp, inp.shape)
+        plt.imshow(inp, cmap="gray", interpolation="nearest")
         plt.show()
         #plt.pause(0.001)
