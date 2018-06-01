@@ -37,3 +37,4 @@ def see(inputs, mean=None, std=None, title=None):
         plt.imshow(inp, cmap="gray", interpolation="nearest")
         plt.show()
         #plt.pause(0.001)
+        

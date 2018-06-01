@@ -85,7 +85,7 @@ if do.train:
         # If not training a "loaded" model
         # Create a brand new model
         cnn = models(ID)
-    
+
     cnn.to(device)
     #see(cnn.conv1[0].weight[15].detach(), mean=rgb_mean, std=rgb_std, title="Conv layer 1 last kernel (initial)")
     print("\nModel id -> {}".format(ID))

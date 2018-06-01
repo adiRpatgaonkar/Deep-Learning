@@ -1,5 +1,36 @@
 import torch.nn as nn
 
+
+def models(model_id):
+    if model_id == 'cnn0':
+        return CNN_0()
+    if model_id == 'cnn1':
+        return CNN_1()
+    if model_id == 'cnn2':
+        return CNN_2()
+    if model_id == 'cnn3':
+        return CNN_3()
+    if model_id == 'cnn4':
+        return CNN_4()
+
+# CNN Model (1 conv layers, 1 fc layers)
+# model_id -> cnn1
+class CNN_0(nn.Module):
+    def __init__(self):
+        super(CNN_0, self).__init__()
+        self.conv = nn.Sequential(
+            nn.Conv2d(3, 16, kernel_size=5),
+            nn.BatchNorm2d(16),
+            nn.ReLU(),
+            nn.MaxPool2d(2))
+        self.fc = nn.Linear(14*14*16, 10)
+
+    def forward(self, x):
+        out = self.conv(x)
+        out = out.view(out.size(0), -1)
+        out = self.fc(out)
+        return out
+
 # CNN Model (2 conv layers, 3 fc layers)
 # model_id -> cnn1
 class CNN_1(nn.Module):
@@ -100,6 +131,7 @@ class CNN_3(nn.Module):
 
 
 # CNN Model (6 conv layers, 1 fc layer, dropouts in Conv layers)
+#TODO This model has a visualization feature. Messy code. Can / should be changed.
 # Credits: https://appliedmachinelearning.wordpress.com/2018/03/24/achieving-90-accuracy-in-object-recognition-task-on-cifar-10-dataset-with-keras-convolutional-neural-networks/
 # Abhijeet Kumar
 # model_id -> cnn4
@@ -173,13 +205,3 @@ class CNN_4(nn.Module):
         #print(out.size())
         return out
 
-
-def models(model_id):
-    if model_id == 'cnn1':
-        return CNN_1()
-    if model_id == 'cnn2':
-        return CNN_2()
-    if model_id == 'cnn3':
-        return CNN_3()
-    if model_id == 'cnn4':
-        return CNN_4()

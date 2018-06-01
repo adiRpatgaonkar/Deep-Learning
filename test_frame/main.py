@@ -38,7 +38,7 @@ reg = 1e-3
 trainset = dsets.CIFAR10(dir="cutorchvision/data", download=True, 
                          train=True, form="tensor")
 # Data augmentation
-trainset = Transforms(dataset=trainset, lr_flip=True, crop=False)
+#trainset = Transforms(dataset=trainset, lr_flip=True, crop=False)
 train_loader = cutorch.utils.data.DataLoader(data=trainset.data, 
                                              batch_size=100, 
                                              shuffled=True, 
@@ -51,6 +51,7 @@ test_loader = cutorch.utils.data.DataLoader(data=testset.data,
                                             batch_size=10000,
                                             shuffled=False)
 
+print(trainset.data)
 
 # Fully connected layer model
 class FCM(nn.Module):

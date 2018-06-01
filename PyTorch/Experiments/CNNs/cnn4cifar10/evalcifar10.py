@@ -10,7 +10,7 @@ classes = ('airplane', 'automobile',
            'ship', 'truck')
 ims_per_class = 1000
 
-def evaluate(model, dataset, device, task="test", vis=None):
+def evaluate(model, dataset, device, task="test"):
     assert task == "test" or task == "cross_val", \
            "Invalid task for evaluation. Expected test/cross_val"
     if device != "cpu":
@@ -25,7 +25,7 @@ def evaluate(model, dataset, device, task="test", vis=None):
         for images, labels in dataset:
             images = images.to(device)  # Move image batch to GPU
             labels = labels.to(device)
-            outputs = model(images, vis=vis)
+            outputs = model(images)
             # Softmax classifier
             _, predicted = torch.max(outputs.data, 1)
             total += len(labels)
